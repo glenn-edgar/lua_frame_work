@@ -1,0 +1,120 @@
+/*
+**
+** File: termHandler.c
+** Derived work from cmdEdit.c
+** which was released under BSD license
+**
+**
+**
+**
+*/
+
+
+
+
+
+
+
+
+
+
+#include <stdio.h>
+#include <errno.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <ctype.h>
+#include <signal.h>
+#include <limits.h>
+#include <termios.h>
+
+#include "termHandler.h"
+
+
+
+
+
+
+#define setTermSettings(fd,argp) tcsetattr(fd,TCSANOW,argp)
+#define getTermSettings(fd,argp) tcgetattr(fd, argp);
+
+/* Current termio and the previous termio before starting sh */
+static struct termios initial_settings, new_settings;
+
+
+static
+volatile int handlers_sets = 0; /* Set next bites: */
+
+
+
+
+
+static void cmdedit_reset_term(void);
+
+
+
+/* special for recount position for scroll and remove terminal margin effect */
+
+enum {
+	SET_ATEXIT = 1,         /* when atexit() has been called
+				   and get euid,uid,gid to fast compare */
+	SET_WCHG_HANDLERS = 2,  /* winchg signal handler */
+	SET_RESET_TERM = 4,     /* if the terminal needs to be reset upon exit */
+};
+
+
+
+void initializeTerminal(void)
+{
+
+
+
+	getTermSettings(0, (void *) &initial_settings);
+	memcpy(&new_settings, &initial_settings, sizeof(struct termios));
+	new_settings.c_lflag &= ~ICANON;        /* unbuffered input */
+	/* Turn off echoing and CTRL-C, so we can trap it */
+	new_settings.c_lflag &= ~(ECHO | ECHONL | ISIG);
+	/* Hmm, in linux c_cc[] not parsed if set ~ICANON */
+	new_settings.c_cc[VMIN] = 1;
+	new_settings.c_cc[VTIME] = 0;
+	/* Turn off CTRL-C, so we can trap it */
+	new_settings.c_cc[VINTR] = _POSIX_VDISABLE;
+
+	setTermSettings(0, (void *) &new_settings);
+	handlers_sets |= SET_RESET_TERM;
+
+}
+
+
+void initializeTerminal(void);
+
+void restoreTerminal( void)
+{
+	setTermSettings(0, (void *) &new_settings);
+	handlers_sets |= SET_RESET_TERM;
+
+
+	setTermSettings(0, (void *) &initial_settings);
+	handlers_sets &= ~SET_RESET_TERM;
+
+
+	cmdedit_reset_term();
+}
+
+
+
+static void cmdedit_reset_term(void)
+{
+	if ((handlers_sets & SET_RESET_TERM) != 0) {
+/* sparc and other have broken termios support: use old termio handling. */
+		setTermSettings(STDIN_FILENO, (void *) &initial_settings);
+		handlers_sets &= ~SET_RESET_TERM;
+	}
+	if ((handlers_sets & SET_WCHG_HANDLERS) != 0) {
+		/* reset SIGWINCH handler to previous (default) */
+		
+		handlers_sets &= ~SET_WCHG_HANDLERS;
+	}
+	fflush(stdout);
+}

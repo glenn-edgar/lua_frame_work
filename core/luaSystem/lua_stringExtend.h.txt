@@ -1,0 +1,36 @@
+/*
+**
+** Copyright 2008 Onyx Engineering
+** This file is licenesed MIT
+**
+** File: lua_stringExtend.h
+** The purpose of this file is to extend
+** the lua library String
+**
+**
+**
+**
+*/
+
+
+#ifndef _LUA_STRING_EXT_H_
+#define _LUA_STRING_EXT_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "lua.h"
+
+
+void extendStringPackage( lua_State *L );
+
+
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif
+

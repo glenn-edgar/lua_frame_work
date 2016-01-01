@@ -1,0 +1,53 @@
+/*
+**
+**
+** File: cs_semaphore.h
+   Copyright 2008 OnyxEngineering
+    This file is licensed as MIT
+**
+**
+*/
+
+
+#ifndef _CS_SEMAPHORE_H_
+#define _CS_SEMAPHORE_H_
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+
+#include <unistd.h>
+#include <sys/ipc.h>
+
+int cs_create_event_semaphore( key_t semaphoreId, unsigned numberOfSemaphores );
+
+int cs_create_private_semaphore( key_t semaphoreId, unsigned numberOfSemaphores );
+    
+int cs_create_global_semaphore( key_t semaphoreId, unsigned numberOfSemaphores );
+
+int cs_get_semaphore( key_t semaphoreId );
+
+int cs_wait_for_semaphore( int semaphore, int semaphoreSubIndex );
+
+
+int cs_timed_wait_for_semaphore( int semaphore, int semaphoreSubIndex, unsigned milliseconds );
+     
+int cs_no_wait_for_semaphore( int semaphore, int semaphoreSubIndex );
+
+int cs_release_semaphore( int semaphore, int semaphoreSubIndex );
+
+int cs_terminate_semaphore( int semaphore );
+
+
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+
+
+

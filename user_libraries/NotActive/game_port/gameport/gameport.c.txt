@@ -1,0 +1,48 @@
+/*
+**
+** File: gameport.c
+**
+**
+**
+**
+*/
+
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <asm/types.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <linux/hiddev.h>
+#include <linux/joystick.h>
+
+
+int main( void )
+{
+
+  int fd;
+  struct hiddev_devinfo device_info;
+  struct js_event e;
+
+  fd = open("/dev/input/js0",O_RDONLY);
+  assert( fd > 0 );
+
+  ioctl( fd,HIDIOCGDEVINFO, &device_info);
+  printf("vendor 0x%04hx product 0x%04hx version 0x%04hx \n",
+          device_info.vendor, device_info.product, device_info.version);
+  printf("has %d applications \n",device_info.num_applications );
+  printf("and is on bus: %d devnum: %d ifnum: %d \n",device_info.busnum, device_info.devnum, device_info.ifnum);
+
+  while( 1)
+  {
+     read( fd, &e, sizeof(e));
+     printf("type %x number %x  value %x time %x \n",e.type,e.number,e.value, e.time );
+  } 
+
+  close(fd);
+}
+

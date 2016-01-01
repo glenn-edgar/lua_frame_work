@@ -1,0 +1,541 @@
+/*
+   
+   Copyright 2008 Onyx Engineering
+   This file is licensed MIT
+   File: lua_pat_string.c
+   Sets up the lua Interface between
+
+
+*/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+
+
+#include "mongo.h"
+
+
+
+
+static mongo_connection connection;
+
+static int lua_mongo_connect( lua_State *L )
+{
+   int returnCode;
+   char  *host;
+   int   port;
+   mongo_connection_options options;
+   host = (char *)lua_tostring(L,1);
+   port = lua_tointeger(L,2);
+   
+   strcpy(options.host, host );
+   options.port = port;
+   returnCode = mongo_connect( &connection, &options );
+   lua_pushinteger(L,returnCode );
+   return 1;
+}
+
+static int lua_mongo_connect_pair( lua_State *L )
+{
+   int returnCode;
+   char  *host_left;
+   int    port_left;
+   char  *host_right;
+   int   port_right;
+
+
+   mongo_connection_options options_left;
+   mongo_connection_options options_right;
+
+
+   host_left = (char *)lua_tostring(L,1);
+   port_left = lua_tointeger(L,2);
+   host_right = (char *)lua_tostring(L,1);
+   port_right = lua_tointeger(L,2);
+   
+   strcpy(options_left.host, host_left );
+   options_left.port = port_left;
+
+   strcpy(options_right.host, host_right );
+   options_left.port = port_right;
+
+   returnCode = mongo_connect_pair( &connection, &options_left,&options_right );
+   lua_pushinteger(L,returnCode );
+   return 1;
+}
+    
+static int lua_mongo_reconnect( lua_State *L )
+{
+   int returnCode;
+   returnCode = mongo_reconnect( &connection );
+   lua_pushinteger(L,returnCode );
+   return 1;
+}
+
+static int lua_mongo_disconnect( lua_State *L )
+{
+   int returnCode;
+   returnCode = mongo_disconnect( &connection );
+   lua_pushinteger(L,returnCode );
+   return 1;
+}
+static int lua_mongo_destroy( lua_State *L )
+{
+   int returnCode;
+   returnCode = mongo_destroy( &connection );
+   lua_pushinteger(L,returnCode );
+   return 1;
+}
+
+
+
+
+static int lua_mongo_insert(  lua_State *L )
+{
+    char *nameSpace;
+    bson *data;
+   
+
+    nameSpace = (char *)lua_tostring(L,1);
+    data = (bson *)lua_topointer(L,2);
+    mongo_insert( &connection, nameSpace, data );
+    return 0;
+}
+
+
+static int lua_mongo_update( lua_State *L )
+{
+   char *name_space;
+   bson *cond;
+   bson *op;
+   int   flags;
+   int   multi_flag;
+   int   upsert_flag;
+  
+
+   name_space   = (char *)lua_tostring(L,1);
+   cond         = (bson *)lua_topointer(L,2);
+   op           = (bson *)lua_topointer(L,3);
+   multi_flag   = lua_tointeger(L,4);
+   upsert_flag  = lua_tointeger(L,5);
+   flags = 0;
+   if( multi_flag != 0 ) { flags |= MONGO_UPDATE_UPSERT; }
+   if( upsert_flag != 0 ){ flags |= MONGO_UPDATE_MULTI; }
+
+   mongo_update(&connection, name_space, cond, op, flags);
+   return 0;
+}
+
+static int lua_mongo_remove(lua_State *L)
+{
+   char  *name_space;
+   bson *cond;
+ 
+   name_space   = (char *)lua_tostring(L,1);
+   cond         = (bson *)lua_topointer(L,2);
+
+   mongo_remove(&connection, name_space, cond);
+   return 0;
+}
+
+static int lua_mongo_find( lua_State *L )
+{
+    mongo_cursor *cursor;
+    char         *name_space;
+    bson         *query;
+    bson         *fields;
+    int          nToReturn;
+    int          nToSkip;
+    int          options;  // sort flag 1 assending -1 decessending ????
+
+    name_space = (char *)lua_tostring(L,1);
+    query      = (bson *)lua_topointer(L,2);
+    fields     = (bson *)lua_topointer(L,3);
+    nToReturn  = lua_tointeger(L,4);
+    nToSkip    = lua_tointeger(L,5);
+    options    = lua_tointeger(L,6);
+    cursor = mongo_find( &connection, 
+                         name_space, 
+                         query, 
+                         fields ,
+                         nToReturn ,
+                         nToSkip, 
+                         options);
+
+   lua_pushlightuserdata (L, cursor );
+
+   return 1;
+}
+
+
+static int lua_mongo_cursor_next( lua_State *L )
+{
+   mongo_cursor *cursor;
+
+   cursor = (mongo_cursor *)lua_topointer(L,1);
+   if( mongo_cursor_next(cursor ) )
+   {
+      lua_pushlightuserdata(L,cursor );
+      lua_pushlightuserdata (L, &cursor->current );
+   }
+   else
+   { 
+      lua_pushlightuserdata(L,cursor );
+      lua_pushlightuserdata(L,NULL );
+   }
+   
+   return 2;
+}
+
+
+static int lua_mongo_cursor_destroy( lua_State *L )
+{
+   mongo_cursor *cursor;
+   
+
+   cursor = (mongo_cursor *)lua_topointer(L,1);
+   mongo_cursor_destroy(cursor);
+   return 0;
+}
+
+static int lua_mongo_count( lua_State *L )
+{
+   int count;
+   char *data_base;
+   char *collection;
+   bson *query;
+
+   data_base  = (char *)lua_tostring(L,1);
+   collection = (char *)lua_tostring(L,2);
+   query      = (bson *)lua_topointer(L,3);
+
+   count = mongo_count(&connection, data_base, collection, query);
+   lua_pushinteger(L,1);
+   return 1;
+}
+
+
+static int lua_mongo_create_index( lua_State *L )
+{
+  int   status;
+  char *name_space;
+  bson *key;
+  int   unique_index;
+  int   drop_dups;
+  int   options;
+  bson *out = NULL;  //remove warning
+ 
+
+  name_space     = (char *)lua_tostring(L,1);
+  key            = (bson *)lua_topointer(L,2);
+  unique_index   =         lua_tointeger(L,3);
+  drop_dups      =         lua_tointeger(L,4);
+  options        = 0;
+  if( unique_index != 0 ){ options |=  MONGO_INDEX_UNIQUE; }
+  if( drop_dups    != 0 ){ options |=  MONGO_INDEX_DROP_DUPS; }
+  
+  status = mongo_create_index(&connection,name_space, key, options, out);
+  lua_pushinteger(L,status);
+  lua_pushlightuserdata(L,out);  
+  return 2;
+
+}
+
+static int lua_mongo_create_simple_index( lua_State *L )
+{
+  int   status;
+  char *name_space;
+  char   *field;
+  int   unique_index;
+  int   drop_dups;
+  int   options;
+  bson *out = NULL;  //remove warning
+ 
+
+  name_space     = (char *)lua_tostring(L,1);
+  field          = (char *)lua_tostring(L,2);
+  unique_index   = lua_tointeger(L,3);
+  drop_dups      = lua_tointeger(L,4);
+  options        = 0;
+  if( unique_index != 0 ){ options |=  MONGO_INDEX_UNIQUE; }
+  if( drop_dups    != 0 ){ options |=  MONGO_INDEX_DROP_DUPS; }
+  
+  status = mongo_create_simple_index(&connection,name_space, field, options, out);
+  lua_pushinteger(L,status);
+  lua_pushlightuserdata(L,out);  
+  return 2;
+
+}
+
+
+
+static int lua_mongo_run_command( lua_State *L )
+{
+   char *data_base;
+   bson *out = NULL;  //remove warning
+   bson *command;
+   int   status;
+
+   data_base = (char *)lua_tostring(L,1);
+   command   = (bson *)lua_topointer(L,2);
+   status =  mongo_run_command(&connection, data_base,command, out);
+
+   lua_pushinteger(L,status);
+   lua_pushlightuserdata(L,out);  
+   return 2;
+}
+
+
+
+static int lua_mongo_simple_int_command( lua_State *L )
+{
+  char   *data_base;
+  char   *cmd;
+  int    arg;
+  bson *out = NULL;  //remove warning
+  int    status;
+
+  data_base = (char *)lua_tostring(L,1);
+  cmd       = (char *)lua_tostring(L,2);
+  arg       = lua_tointeger(L,3);
+
+  status = mongo_simple_int_command(&connection, data_base, cmd, arg, out);
+  lua_pushinteger(L,status);
+  lua_pushlightuserdata(L,out);  
+  return 2;
+
+
+}
+
+
+
+static int lua_mongo_simple_str_command( lua_State *L )
+{
+  char *data_base;
+  char *arg;
+  char *cmd;
+   bson *out = NULL;  //remove warning
+  int   status;
+  
+  data_base = (char *)lua_tostring(L,1);
+  cmd       = (char *)lua_tostring(L,2);
+  arg       = (char *)lua_tostring(L,3);
+
+  status = mongo_simple_str_command(&connection, data_base, cmd, arg, out);
+  lua_pushinteger(L,status);
+  lua_pushlightuserdata(L,out);  
+  return 2;
+
+}
+
+
+
+static int lua_mongo_cmd_drop_db( lua_State *L )
+{
+  int status;
+  char *database;
+  
+  database = (char *)lua_tostring(L,1);
+  status = mongo_cmd_drop_db(&connection, database);
+  lua_pushinteger(L,status );
+  return 1;
+}
+
+
+static int lua_mongo_cmd_drop_collection(lua_State *L)
+{
+  int   status;
+  char *data_base;
+  char *collection;
+  bson *out = NULL;  //remove warning
+ 
+  data_base =  (char *)lua_tostring(L,1);
+  collection = (char *)lua_tostring(L,2);
+  status =  mongo_cmd_drop_collection(&connection, data_base, collection, out);
+  lua_pushinteger(L,status);
+  lua_pushlightuserdata(L,out);  
+  return 2;
+}
+
+
+static int lua_mongo_cmd_add_user( lua_State *L )
+{
+  char *data_base;
+  char *user;
+  char *password;
+
+  data_base = (char *)lua_tostring(L,1);
+  user      = (char *)lua_tostring(L,2);
+  password  = (char *)lua_tostring(L,3);
+
+  mongo_cmd_add_user(&connection,data_base, user, password);
+
+  return 0;
+}
+
+
+
+static int lua_mongo_cmd_authenticate( lua_State *L )
+{
+  int status;
+  char *data_base;
+  char *user;
+  char *password;
+
+
+  data_base = (char *)lua_tostring(L,1);
+  user      = (char *)lua_tostring(L,2);
+  password  = (char *)lua_tostring(L,3);
+  status = mongo_cmd_authenticate(&connection, data_base, user, password );
+  lua_pushinteger(L,status ); 
+  return 1;
+}
+
+static int lua_mongo_cmd_ismaster( lua_State *L )
+{
+  int  status;
+   bson *out = NULL;  //remove warning
+    
+  status =  mongo_cmd_ismaster(&connection, out);
+  lua_pushinteger(L,status);
+  lua_pushlightuserdata(L,out);
+  return 2;
+}
+
+
+static int lua_mongo_cmd_get_last_error( lua_State *L )
+{
+   int  status;
+   char *data_base;
+   bson *out = NULL;  //remove warning
+  
+   data_base = (char *)lua_tostring(L,1);
+   status = mongo_cmd_get_last_error(&connection, data_base, out );
+   lua_pushinteger(L,status);
+   lua_pushlightuserdata (L, out );
+   return 2;
+}
+
+
+
+static int lua_mongo_cmd_get_prev_error( lua_State *L )
+{
+   int  status;
+   char *data_base;
+   bson *out = NULL;  //remove warning
+  
+   data_base = (char *)lua_tostring(L,1);
+   status = mongo_cmd_get_prev_error(&connection, data_base, out );
+   lua_pushinteger(L,status);
+   lua_pushlightuserdata (L, out );
+   return 2;
+}
+
+static int lua_mongo_cmd_reset_error( lua_State *L )
+{
+   char *data_base;
+
+   data_base = (char *)lua_tostring(L,1);
+   mongo_cmd_reset_error( &connection, data_base );
+   return 0;
+}
+
+static int lua_mongo_help( lua_State *L )
+{
+  printf(".help()    -- dumps out commands \r\n\r\n");
+  return 0;
+}   
+
+static int description( lua_State *L )
+{
+  lua_pushstring(L,"provide lua interface to mongo db ");
+  return 1;
+}
+
+
+static const struct luaL_reg  lua_mongodb[] = 
+{
+   
+   {"connect",              lua_mongo_connect },
+   {"connect_pair",         lua_mongo_connect_pair },    
+   {"reconnect",            lua_mongo_reconnect },
+   {"disconnect",           lua_mongo_disconnect },
+   {"destroy",              lua_mongo_destroy },   {"insert",               lua_mongo_insert },
+   {"update",               lua_mongo_update },
+   {"remove",               lua_mongo_remove },
+   {"find",                 lua_mongo_find   },
+   {"next",                 lua_mongo_cursor_next },
+   {"destroy",              lua_mongo_cursor_destroy },
+   {"count",                lua_mongo_count },
+   {"create_index",         lua_mongo_create_index },
+   {"create_simple_index",  lua_mongo_create_simple_index },
+   {"run_cmd",              lua_mongo_run_command },
+   {"simple_int_cmd",       lua_mongo_simple_int_command },
+   {"simple_str_cmd",       lua_mongo_simple_str_command },
+   {"drop_db",              lua_mongo_cmd_drop_db },
+   {"drop_collection",      lua_mongo_cmd_drop_collection },
+   {"add_user",             lua_mongo_cmd_add_user },
+   {"authenticate",         lua_mongo_cmd_authenticate },
+   {"ismaster",             lua_mongo_cmd_ismaster },
+   {"get_last_error",       lua_mongo_cmd_get_last_error },
+   {"get_prev_error",       lua_mongo_cmd_get_prev_error },
+   {"cmd_reset_error",      lua_mongo_cmd_reset_error    },
+   {"help",                 lua_mongo_help   },
+   {"description",           description         },
+   { NULL, NULL },      
+   
+};
+
+
+
+
+
+
+
+extern void lua_dobuffer( lua_State * L, const char *buffer, int size, char *chunkName );
+
+
+
+
+
+// added  for possible script support
+static int lua_loadScript(lua_State *L)
+{
+  
+
+
+  #include "init.h"
+
+  return 0;
+}
+
+int lua_mongo_db( lua_State *L )
+{
+   
+   luaL_openlib(L,"mongodb",lua_mongodb,0 );
+   return 1;
+}
+
+
+
+
+int lua_register_mongodb( lua_State *L  )
+{
+   
+   lua_mongo_db( L );
+   // load bson library
+   lua_loadScript( L );
+   return 1;
+}
+
+
+
+

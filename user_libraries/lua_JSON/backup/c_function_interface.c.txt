@@ -1,0 +1,172 @@
+/*
+
+
+*/
+
+
+
+
+#include <ctype.h>
+#include <errno.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+
+
+#include "lauxlib.h"
+
+#include "c_supportCtrl.h"
+#include "c_function_interface.h"
+#include "lua_parameter_pack.h"
+#include "basicMemOps.h"
+#include "FPsystem.h"
+
+extern FILE *lout;
+extern FILE *lin;
+
+typedef int ( *C_INTERFACE )(  int arg1,
+                               int arg2,
+                               int arg3,
+                               int arg4,
+                               int arg5,
+                               int arg6,
+                               int arg7,
+                               int arg8,
+                               int arg9,
+                               int arg10 );
+
+static const C_FUNCTION_INTERFACE *
+findFunction( const C_FUNCTION_INTERFACE *interface, 
+              const char *name );
+  
+
+static int lua_c_functionCall( lua_State *L )
+{
+   const C_FUNCTION_INTERFACE *c_functionInterface;
+   const char                 *name;
+   long                       arg[10];
+   int                        argCount;
+   int                        luaArgCount;
+   int                        loopCount;
+   C_INTERFACE                cInterface;
+   int                        returnValue;
+
+
+   luaArgCount = 0;
+   memset( arg,0,sizeof(arg));  
+   c_functionInterface = lua_topointer( L,1 );
+   name                = lua_tostring( L, 2 );
+   
+   c_functionInterface = findFunction( c_functionInterface, name );
+  
+   if( c_functionInterface == NULL )
+   {
+      luaL_error(L,"Bad function Name %s \r\n",name );
+      goto end;
+   }
+   argCount = strlen( c_functionInterface->format);
+   for( loopCount = 0; loopCount < argCount; loopCount++)
+   {
+      arg[ loopCount ] = lua_tointeger(L, 3 + loopCount );
+   }
+   cInterface = (C_INTERFACE)c_functionInterface->address;
+   returnValue = cInterface( arg[0],arg[1],arg[2],arg[3],arg[4],
+                             arg[5],arg[6],arg[7],arg[8],arg[9] );
+   lua_pushinteger(L,returnValue );
+   luaArgCount = 1;
+end:
+    
+    return luaArgCount;
+}
+
+
+static int lua_c_functionList( lua_State *L )
+{
+   const C_FUNCTION_INTERFACE *c_functionInterface;
+      
+   c_functionInterface = lua_topointer( L,-1 );
+   while(1)
+   {
+     if( c_functionInterface->magic != FUNCTION_MAGIC )
+     {
+       goto end;
+     }
+     fprintf( lout, "Function name %s parameters %s \n",
+              c_functionInterface->name,
+              c_functionInterface->format );
+
+     c_functionInterface++;
+   }
+end:
+    // no parameters returned
+    return 0;
+}
+
+
+
+static int lua_c_functionHelp( lua_State *L )
+{  
+   fprintf(lout,"---------- list of defined C functions -----\n");
+   fprintf(lout,".call           -- calls a c function  ----- \n");
+   fprintf(lout,".list           -- lists functions and format \n"); 
+   fprintf(lout,".help           -- prints out cmds \n\n");
+   return 0;
+}
+
+static const struct luaL_reg  lua_c_structLib[] = 
+{
+   {"call",                  lua_c_functionCall  },
+   {"list",                  lua_c_functionList  },
+   {"help",                  lua_c_functionHelp  },
+   { NULL, NULL }     
+   
+};
+
+
+void initializeEmbedded_C_Functions( lua_State *L )
+{
+
+
+  luaL_openlib(L,"c_func",lua_c_structLib,0 );
+  
+
+}
+
+/*
+**
+** Static support functions
+**
+**
+*/
+
+static const C_FUNCTION_INTERFACE * 
+findFunction( const C_FUNCTION_INTERFACE *interface,
+              const char *name )
+{
+  const C_FUNCTION_INTERFACE *returnValue;
+  
+  returnValue = NULL;
+ 
+  while(1)
+  {
+    if( interface->magic != FUNCTION_MAGIC )
+    {
+      goto end;
+    }
+    if( strcmp( interface->name,name ) == 0 )
+    {
+      returnValue = interface;
+      goto end;
+    }
+    interface++;
+  }
+end:
+  return returnValue;
+
+}
+  
+
+
+

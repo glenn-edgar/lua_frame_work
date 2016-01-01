@@ -1,0 +1,25 @@
+/*
+**
+** Copyright 2008 Onyx Engineering
+** This file is licensed MIT
+** File: lua_serial.h
+**
+** Interface file for lua_serial.h
+**
+**
+**
+**
+*/
+
+#ifndef _LUA_SMTP_H_
+#define _LUA_SMTP_H_
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+
+
+int lua_smtpClient( lua_State *L );
+
+#endif

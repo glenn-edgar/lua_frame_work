@@ -1,0 +1,10 @@
+
+#Copyright Onyx Engineering 2008
+#This software is licensed as MIT license
+
+CC =gcc
+CPP =gcc
+
+AR = ar
+ARFLAGS = -rc
+RANLIB = ranlib

@@ -1,0 +1,52 @@
+8
+
+dir
+9
+file:///media/E:/luaBox/subversion/trunk/monitorBox/sqlLite/sqlLiteShell
+file:///media/E:/luaBox/subversion
+
+
+
+2008-06-13T18:53:08.396323Z
+7
+user
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+dd4caa5d-634c-429c-af5e-653961527ab9
+
+shell.c
+file
+
+
+
+
+2008-06-13T18:53:56.000000Z
+ff0cf7cf93ff4c0dace53debaad2fa86
+2008-06-13T18:53:08.396323Z
+7
+user
+
+Makefile
+file
+
+
+
+
+2008-06-13T18:53:56.000000Z
+8b1271ebb55d7b482ee7db0bb5742fd4
+2008-06-13T18:53:08.396323Z
+7
+user
+

@@ -1,0 +1,59 @@
+/*
+** 
+**  Copyright 2008 Indyme Corporation
+**  All rights reserved
+**  This file setups the TGS dynamic library
+**
+**
+**
+**
+**
+*/
+
+
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <assert.h>
+#include <string.h>
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+#include "mongoose.h"
+
+#include "luaWeb.h"
+
+
+
+extern void lua_dobuffer( lua_State * L, const char *buffer, int size, char *chunkName );
+
+
+
+
+static int lua_loadScript(lua_State *L)
+{
+  
+
+  #include "init.h"
+
+  return 0;
+}
+
+
+
+
+
+
+int lua_registerLibrary( lua_State *L  )
+{
+   
+   // register lua functions to access c functions
+   lua_webRegister( L );
+   // load lua Start up script
+   lua_loadScript( L );
+
+   return 1;
+}
+

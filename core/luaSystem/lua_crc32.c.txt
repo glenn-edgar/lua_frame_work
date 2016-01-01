@@ -1,0 +1,137 @@
+/*
+**
+** Copyright 2008 Onyx Engineering
+** This file is licensed MIT
+** File: ms_hash32.c
+** Calculate 32crc as a hash value
+**
+**
+**
+**
+**
+**
+**
+*/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+
+#include "lua.h"
+#include "lauxlib.h"
+
+#define CRC32_FINAL_XOR     0xFFFFFFFF
+#define CRC_TABLE_SIZE	    256
+
+static const unsigned crc32Table[ CRC_TABLE_SIZE ] = 
+{
+   0x00000000, 0x04C11DB7, 0x09823B6E, 0x0D4326D9,
+  0x130476DC, 0x17C56B6B, 0x1A864DB2, 0x1E475005,
+  0x2608EDB8, 0x22C9F00F, 0x2F8AD6D6, 0x2B4BCB61,
+  0x350C9B64, 0x31CD86D3, 0x3C8EA00A, 0x384FBDBD,
+  0x4C11DB70, 0x48D0C6C7, 0x4593E01E, 0x4152FDA9,
+  0x5F15ADAC, 0x5BD4B01B, 0x569796C2, 0x52568B75,
+  0x6A1936C8, 0x6ED82B7F, 0x639B0DA6, 0x675A1011,
+  0x791D4014, 0x7DDC5DA3, 0x709F7B7A, 0x745E66CD,
+  0x9823B6E0, 0x9CE2AB57, 0x91A18D8E, 0x95609039,
+  0x8B27C03C, 0x8FE6DD8B, 0x82A5FB52, 0x8664E6E5,
+  0xBE2B5B58, 0xBAEA46EF, 0xB7A96036, 0xB3687D81,
+  0xAD2F2D84, 0xA9EE3033, 0xA4AD16EA, 0xA06C0B5D,
+  0xD4326D90, 0xD0F37027, 0xDDB056FE, 0xD9714B49,
+  0xC7361B4C, 0xC3F706FB, 0xCEB42022, 0xCA753D95,
+  0xF23A8028, 0xF6FB9D9F, 0xFBB8BB46, 0xFF79A6F1,
+  0xE13EF6F4, 0xE5FFEB43, 0xE8BCCD9A, 0xEC7DD02D,
+  0x34867077, 0x30476DC0, 0x3D044B19, 0x39C556AE,
+  0x278206AB, 0x23431B1C, 0x2E003DC5, 0x2AC12072,
+  0x128E9DCF, 0x164F8078, 0x1B0CA6A1, 0x1FCDBB16,
+  0x018AEB13, 0x054BF6A4, 0x0808D07D, 0x0CC9CDCA,
+  0x7897AB07, 0x7C56B6B0, 0x71159069, 0x75D48DDE,
+  0x6B93DDDB, 0x6F52C06C, 0x6211E6B5, 0x66D0FB02,
+  0x5E9F46BF, 0x5A5E5B08, 0x571D7DD1, 0x53DC6066,
+  0x4D9B3063, 0x495A2DD4, 0x44190B0D, 0x40D816BA,
+  0xACA5C697, 0xA864DB20, 0xA527FDF9, 0xA1E6E04E,
+  0xBFA1B04B, 0xBB60ADFC, 0xB6238B25, 0xB2E29692,
+  0x8AAD2B2F, 0x8E6C3698, 0x832F1041, 0x87EE0DF6,
+  0x99A95DF3, 0x9D684044, 0x902B669D, 0x94EA7B2A,
+  0xE0B41DE7, 0xE4750050, 0xE9362689, 0xEDF73B3E,
+  0xF3B06B3B, 0xF771768C, 0xFA325055, 0xFEF34DE2,
+  0xC6BCF05F, 0xC27DEDE8, 0xCF3ECB31, 0xCBFFD686,
+  0xD5B88683, 0xD1799B34, 0xDC3ABDED, 0xD8FBA05A,
+  0x690CE0EE, 0x6DCDFD59, 0x608EDB80, 0x644FC637,
+  0x7A089632, 0x7EC98B85, 0x738AAD5C, 0x774BB0EB,
+
+};
+
+static unsigned crc32;
+
+
+static int lua_initCrc32( lua_State *L )
+{
+   crc32 = 0;
+   return 0;
+} 
+
+
+
+static int  lua_computeCrc32( lua_State *L )						
+{
+    size_t length;
+    char   *pointer;
+    int    index;
+   
+    pointer = (char *)lua_tolstring( L, -1, &length);
+
+    for( index =  0; index < length; index++)
+    {
+        crc32 = crc32Table[((crc32 >> 24) ^ *pointer++)] ^ (crc32 << 8);	
+
+    }
+    return 0;
+    
+}
+
+
+static int lua_getCrc32( lua_State *L )
+{
+  lua_pushinteger(L, crc32^CRC32_FINAL_XOR );
+  return 1;
+}
+
+static int description( lua_State *L )
+{
+  lua_pushstring(L,"lua interface to crc32 functions");
+  return 1;
+}
+
+static int lua_crcHelp( lua_State *L )
+{
+  printf("Lua CRC32 functions \n");
+  printf(".init()             initialize crc computation \n");
+  printf(".compute(string)    adds string to crc calculation \n");
+  printf(".get()              returns crc results \n");
+  printf(".help()             print out command descriptions \n");
+  return 0;
+}
+
+static const struct luaL_reg  lua_crc32[] = 
+{
+   {"init",           lua_initCrc32     },
+   {"compute",        lua_computeCrc32  },
+   {"get",            lua_getCrc32      },
+   {"help",           lua_crcHelp       },
+   {"description",    description   },
+   { NULL, NULL },      
+   
+};
+
+
+
+int lua_crc32_load( lua_State *L )
+{
+   
+
+
+   luaL_openlib(L,"crc32",lua_crc32,0 );
+   return 1;
+}
+

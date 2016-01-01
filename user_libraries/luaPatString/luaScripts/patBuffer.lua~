@@ -1,0 +1,154 @@
+---
+---
+--- lua pattern / lua string buffer higher functionality
+---
+---
+---
+
+patBuf = {}
+
+---
+---  creates master string pattern
+---
+---
+
+function patBuf.createObject( objectSize, stringData )
+  local returnValue, addr, len
+  returnValue = {}
+  if objectSize > 0 then
+     returnValue.stringBuffer = strBuf.create(objectSize)
+     if stringData ~= nil then
+       strBuf.appendString(returnValue.stringBuffer,stringData)
+     end
+  else
+      returnValue.stringBuffer = nil
+  end
+  returnValue.patString = patStr.create()
+  if returnValue.stringBuffer ~= nil then
+     addr, len = strBuf.getBuffer( returnValue.stringBuffer)
+     patStr.toPat( returnValue.patString,addr,len)
+  end
+  return returnValue
+ 
+end
+
+---
+--- free master string pattern
+---
+---
+function patBuf.freeObject( x )
+  if returnValue.stringBuffer ~= nil then
+     strBuf.terminate(returnValue.stringBuffer)
+     returnValue.stringBuffer = nil
+  end
+  if returnValue.patString ~= nil then
+     patStr.terminate(returnValue.patString)
+     returnValue.patString = nil
+  end
+  x = nil
+end
+
+
+function patBuf.createArray( number_of_pat_buffers )
+  local returnValue, temp
+  returnValue = {}
+  for i = 1, number_of_pat_buffers do
+    temp = patBuf.createObject( 0 ) -- no attached storage
+    table.insert( returnValue,temp);
+  end
+  return returnValue
+end
+
+function patBuf.freeArray( patArray)
+   local returnValue, temp 
+
+   temp = table.remove (patArray)
+   while temp ~= nil do
+     patBuf.freeObject(temp)
+     temp.remove(patArray)
+   end
+   patArray = nil
+end
+      
+  
+function patBuf.extractString(x)
+  return patStr.extract(x.patString,0,-1)
+end
+
+function patBuf.reset(x) 
+  local addr,len
+    
+   addr, len = strBuf.getBuffer( x.stringBuffer)
+   patStr.toPat( x.patString,addr,len)
+
+end
+
+function patBuf.split( referencePat, patArray, splitString )
+  local tempElement
+  local count
+  local tempPat
+  local temp
+ 
+  tempPat = referencePat
+  count = 1
+  tempElement = patArray[count]
+  while tempElement ~= nil do
+    
+ 
+    temp = patStr.find(tempPat.patString, splitString, 0) 
+    if temp < 0 then
+      patStr.copy( tempElement.patString, tempPat.patString, 0 ,-1)
+      tempElement = nil
+    else
+      patStr.copy( tempElement.patString, tempPat.patString,0,temp-1)
+      patStr.findAndAdvance(tempPat.patString, splitString, 0 ) 
+      count = count +1
+      tempElement = patArray[count]
+ 
+   end
+  
+ end
+ patBuf.reset(referencePat)
+ return count
+
+end
+
+
+function patBuf.dump( x )
+  print("dumping PatBuf ")
+  print("PatBuf PatString container ",patStr.extract(x.patString,0,-1))
+  if x.stringBuffer ~= nil then
+   print("PatBuf StringBuffer container",strBuf.extract(x.stringBuffer,0,-1))
+  end
+end
+
+
+function patBuf.dumpArray( x )
+  print("dumping PatBuf Array ")
+  for i,j in ipairs( x ) do
+     print("Array index ",i)
+     patBuf.dump(j)
+  end
+end   
+
+
+
+function patBuf.description()
+  return "Provides combined patStr and strBuf functionality"
+end
+
+function patBuf.help()
+ print("help functions for patBuf ")
+ print(".createObject( objectSize [,string]) -- creates patBuf with optional string")
+ print(" -- object Size can be zero with no buffer created ");
+ print(".freeObject( x ) -- free path object ");
+ print(".createArray( number_of_pat_buffers ) -- create array of pat objects ");
+ print(".freeArray( patArray)  -- frees pat buf arrays")
+ print(".extractString(x) -- extracts string in patString object")
+ print(".reset(x) -- reset patBuf to match attached string Buffer") 
+ print(".split( referencePat, patArray, match_string ) -- split object into array op pats ")
+ print(".dump(x) -- dumps data of patBuf object ")
+ print(".dumpArray(x) -- dumps array of pat objects")
+end
+
+

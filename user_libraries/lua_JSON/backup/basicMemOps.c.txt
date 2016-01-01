@@ -1,0 +1,626 @@
+/*
+**
+File: basicMemOps.c
+This file implements low level memory accesses
+**
+*/
+
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "c_mallocMgr.h"
+#include "basicMemOps.h"
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+#include "FPsystem.h"
+
+extern FILE *lout;
+extern FILE *lin;
+
+
+
+
+
+
+
+  
+
+  
+
+
+static int lua_basicOpsCopy( lua_State *L )
+{
+  void *writeAddress;
+  void *readAddress;
+  int  size;
+  writeAddress = lua_touserdata( L,-3 );
+  readAddress  = lua_touserdata( L, -2 );
+  size         = lua_tointeger( L, -1 );
+  memcpy( writeAddress, readAddress, size );
+  return 0;
+}
+
+ 
+static int lua_basicOpsSet( lua_State *L )
+{
+  void *address;
+  char   set;
+  int    size;
+
+  address = lua_touserdata( L,-3 );
+  set     = (char )(lua_tointeger(L,-2) & 0xff);
+  size    = lua_tointeger(L,-1);
+  memset( address,set,size);
+  return 0;
+}
+
+static int lua_basicOpsClear( lua_State *L )
+{
+  void *address;
+  int    size;
+
+  address = lua_touserdata( L,-2 );
+  size    = lua_tointeger(L,-1);
+  memset( address,0,size);
+  return 0;
+}
+
+
+
+
+static int lua_baseOpsReadInteger( lua_State *L )
+{
+  int *address;
+  
+  address = lua_touserdata(L, -1);
+  lua_pushinteger(L,*address);
+  return 1;
+}
+
+static int lua_baseOpsWriteInteger( lua_State *L )
+{
+  int *address;
+  int  integer;
+
+  address = lua_touserdata(L, -2 );
+  integer  = lua_tointeger(L, -1);
+  *address = integer;
+  return 0;
+}
+
+static int lua_baseOpsReadNumber( lua_State *L )
+{
+  lua_Number *address;
+  
+  address = lua_touserdata(L, -1);
+
+  lua_pushnumber(L,*address);
+  return 1;
+}
+
+static int lua_baseOpsWriteNumber( lua_State *L )
+{
+  lua_Number *address;
+  lua_Number number;
+
+  address = lua_touserdata(L,-2);
+  number  = lua_tonumber(L,-1);
+  *address = number;
+  return 0;
+}
+
+
+static int lua_baseOpsReadString( lua_State *L )
+{
+  char *stringAddress;
+
+  stringAddress = lua_touserdata(L, -1 );
+  lua_pushstring( L, stringAddress );
+  
+  return 1;
+}
+
+
+static int lua_baseOpsWriteString( lua_State *L )
+{
+   const char *stringAddress;
+   const  char *writeAddress;
+  
+   writeAddress  = (char *)lua_touserdata(L,-2);
+   stringAddress = lua_tostring( L,-1);
+   strcpy( (char *)writeAddress, stringAddress);
+   return 0;
+}
+
+static int lua_baseOpsRead_L_String( lua_State *L )
+{
+  const char *stringAddress;
+  int  length;
+  
+  stringAddress = lua_touserdata( L, -2 );
+  length        = lua_tointeger( L, -1 );
+  lua_pushlstring( L, stringAddress, length );
+  return 1;
+}
+
+static int lua_baseOpsWrite_L_String( lua_State *L )
+{
+   const char *stringAddress;
+   int  stringLength;
+   const char *writeAddress;
+
+   writeAddress  = (char *)lua_touserdata(L, -3 );
+   stringAddress = lua_tostring(L,-2);
+   stringLength = lua_tointeger(L,-1);
+   memcpy((char *)writeAddress,stringAddress,stringLength);
+   return 0;
+}
+
+static int lua_baseOpsReadPointer( lua_State *L )
+{
+   void *memoryAddress;
+   char *pointerValue;
+   char **tempPtr;
+
+   memoryAddress = lua_touserdata( L, -1 );
+    
+
+   tempPtr = (char **)memoryAddress;
+   pointerValue = *tempPtr;
+   lua_pushlightuserdata( L, (void *)pointerValue );
+   return 1;
+   
+}
+
+static int lua_baseOpsWritePointer( lua_State *L )
+{
+   void *memoryAddress;
+   void *pointerValue;
+   char **tempPtr;
+
+
+   memoryAddress = lua_touserdata( L, -2 );
+   
+   pointerValue  = lua_touserdata( L, -1 );
+
+   tempPtr = (char **)memoryAddress;
+   // casting void pointer to make sense
+   *tempPtr = (char *)pointerValue;
+
+   return 0;
+}
+
+
+static int lua_basicOpsAllocateMem( lua_State *L )
+{ 
+  void *returnValue;
+  int  size;
+  int  mallocIndex;
+ 
+  mallocIndex = lua_tointeger( L, -2 );
+  size = lua_tointeger( L, -1 );
+  returnValue = mallocManager_allocate( L, mallocIndex, size );
+  lua_pushlightuserdata( L, returnValue );
+  return 1;
+}
+
+static int lua_basicOpsFreeMem( lua_State *L )
+{
+   int   mallocIndex; 
+   void  *memoryAddress;
+  
+   mallocIndex = lua_tointeger( L, -2 );
+   memoryAddress = lua_touserdata( L, -1 );
+   mallocManager_free( L, mallocIndex, memoryAddress );
+
+  return 0;
+}
+
+static int lua_btoPointer( lua_State *L )
+{
+  
+  int  tempInt;
+
+  tempInt = lua_tointeger(L, -1);
+  lua_pushlightuserdata( L, (void *)tempInt );
+  return 1;
+}
+
+static int lua_btoInteger( lua_State *L )
+{
+  void *tempPtr;
+  
+  tempPtr = lua_touserdata(L,-1);
+  lua_pushinteger(L,(int)tempPtr );
+  return 1;
+}
+
+static int lua_baddPointer( lua_State *L )
+{
+  void *tempPtr;
+  int  tempInt;
+  int  increment;
+
+  tempPtr = lua_touserdata(L,-2);
+  increment = lua_tointeger(L,-1);
+  
+  tempInt = (int)tempPtr;
+  tempInt += increment;
+  lua_pushlightuserdata(L , (void *)tempInt );
+  return 1;
+}
+
+static int lua_baseOpsReadShort( lua_State *L)
+{
+  short *address;
+  
+  
+  address = (short *) lua_touserdata(L, -1);
+  lua_pushinteger(L, (int)(*address) );
+  return 1;
+}
+
+static int lua_baseOpsReadByte( lua_State *L )
+{
+  char *address;
+  
+  
+  address = (char *) lua_touserdata(L, -1);
+  lua_pushinteger(L, (int)(*address) );
+  return 1;
+}
+
+
+static int  lua_baseOpsReadLong( lua_State *L )
+{
+  long *address;
+  
+  
+  address = (long *) lua_touserdata(L, -1);
+  lua_pushinteger(L, (int)(*address) );
+  return 1;
+}
+
+
+static int lua_baseOpsWriteShort( lua_State *L )
+{
+  short *address;
+  int    integer;
+
+  address = lua_touserdata(L, -2 );
+  integer  = lua_tointeger(L, -1);
+  *address = integer;
+  return 0;
+}
+
+
+static int lua_baseOpsWriteByte( lua_State *L )
+{
+  char *address;
+  int  integer;
+
+  address = lua_touserdata(L, -2 );
+  integer  = lua_tointeger(L, -1);
+  *address = (long)integer;
+  return 0;
+}
+
+static int lua_baseOpsWriteLong( lua_State *L )
+{
+  long *address;
+  int  integer;
+
+  address = lua_touserdata(L, -2 );
+  integer  = lua_tointeger(L, -1);
+  *address = (long )integer;
+  return 0;
+}
+
+ 
+static int lua_basicOpsHelp( lua_State *L )
+{   
+   fprintf(lout,".readInteger      -- reads an integer at a specified location \r\n");
+   fprintf(lout,".readShort        -- reads a short at a specified location  \r\n");
+   fprintf(lout,".readByte         -- reads a byte at a specified location  \r\n");
+   fprintf(lout,".readLong         -- read a long at a specified location   \r\n");
+   fprintf(lout,".readNumber       -- read a number at a specified location  \r\n");
+   fprintf(lout,".writeInteger     -- writes an integer at a specifed location \r\n");
+   fprintf(lout, ".writeShort       -- writes a short at a specified location  \r\n");
+   fprintf(lout, ".writeByte        -- writes a byte at a specified location  \r\n");
+   fprintf(lout,".writeLong        -- writes a long at a specified location  \r\n");
+   fprintf(lout, ".writeNumber      -- writes a number at a specified location \r\n");
+   fprintf(lout,".readString       -- reads a string \r\n");
+   fprintf(lout,".writeString      -- writes a string \r\n");
+   fprintf(lout,".readLuaString    -- read lua string ( byte sequence) \r\n");
+   fprintf(lout, ".writeLuaString   -- write lua string ( byte sequence ) \r\n");
+   fprintf(lout,".readPointer      -- read pointer \r\n");
+   fprintf(lout,".writePointer     -- write pointer \r\n");
+   fprintf(lout,".allocateMemory   -- allocate memory \r\n");
+   fprintf(lout,".freeMemory       -- free memory \r\n");
+   fprintf(lout,".copy             -- same a memcpy(address1,address2,size)");
+   fprintf(lout,".set              -- same as memset(address,value,size ) ");
+   fprintf(lout,".clear            -- clears an area of memory \r\n");
+   fprintf(lout,".toPointer        -- converts pointer to integer \r\n");
+   fprintf(lout,".toInteger        -- converts integer to pointer \r\n");
+   fprintf(lout,".addPointer        -- add pointer by integer amount \r\n");
+   fprintf(lout,".help  -- prints out cmds \r\n");
+   return 0;
+}
+
+static const struct luaL_reg  lua_basicOpsLib[] = 
+{
+   {"readInteger",      lua_baseOpsReadInteger },
+   {"readShort",        lua_baseOpsReadShort   },
+   {"readByte",         lua_baseOpsReadByte    },
+   {"readLong",         lua_baseOpsReadLong    },
+   {"readNumber",       lua_baseOpsReadNumber  },
+   {"writeInteger",     lua_baseOpsWriteInteger },
+   {"writeShort",       lua_baseOpsWriteShort },
+   {"writeByte",        lua_baseOpsWriteByte },
+   {"writeLong",        lua_baseOpsWriteLong },
+   {"writeNumber",      lua_baseOpsWriteNumber },
+   {"readString",       lua_baseOpsReadString     },
+   {"writeString",      lua_baseOpsWriteString    },
+   {"readLuaString",    lua_baseOpsRead_L_String  },
+   {"writeLuaString",   lua_baseOpsWrite_L_String },
+   {"readPointer",      lua_baseOpsReadPointer  },
+   {"writePointer",     lua_baseOpsWritePointer },
+   {"allocateMemory",   lua_basicOpsAllocateMem },
+   {"freeMemory",       lua_basicOpsFreeMem },
+   {"copy",             lua_basicOpsCopy    },
+   {"set",              lua_basicOpsSet     },
+   {"clear",            lua_basicOpsClear   },
+   {"toPointer",        lua_btoPointer      },
+   {"toInteger",        lua_btoInteger      },
+   {"addPointer",       lua_baddPointer     },
+   {"help",             lua_basicOpsHelp  },
+   { NULL, NULL }     
+   
+};
+
+
+void initializeBasicMemOperations( lua_State *L )
+{
+
+  luaL_openlib(L,"basicOps",lua_basicOpsLib,0 );
+  
+
+}
+
+
+void readCommonScalar( lua_State *L, 
+                       int        format, 
+                       void      *address )
+{
+    
+   
+    int          *tempInt;
+    char         *tempStr;
+    long         *tempLong;
+    double       *tempDouble;
+    short        *tempShort;
+    char         *tempChar;
+
+    
+    if( format == CFM_INT )
+    {
+       tempInt = address;
+       lua_pushinteger( L,*tempInt);
+    }
+    else if ( format == CFM_STR )
+    { 
+       tempStr = address;
+       lua_pushstring( L, tempStr);
+    }
+    else if( format == CFM_LONG )
+    {
+       tempLong = address;
+       lua_pushinteger( L, (int)*tempLong );
+    }
+    else if( format == CFM_DOUBLE )
+    { 
+      tempDouble = address;
+      lua_pushnumber( L, *tempDouble );
+    }
+    else if( format == CFM_SHORT )
+    {
+       tempShort = address;
+       lua_pushinteger( L,(int)*tempShort );
+    }
+    else if( format == CFM_CHAR )
+    {
+        tempChar = address;
+        lua_pushinteger( L, (int)*tempChar );
+    }
+    else if( format == CFM_PTR )
+    {
+        tempLong = address;
+        lua_pushlightuserdata( L,  (void *)(*tempLong ));
+    }
+    else
+    {
+        luaL_error( L, "Unrecognized Format ");
+        lua_pushnil( L);
+    }
+
+}
+
+
+
+
+void writeCommonScalar( lua_State *L, 
+                        int       format, 
+                        void     *address )
+{
+    
+   
+    int          *tempInt;
+    char         *tempStr;
+    long         *tempLong;
+    double       *tempDouble;
+    short        *tempShort;
+    char         *tempChar;
+ 
+    
+    
+    if( format == CFM_INT )
+    {
+       tempInt = address;
+       *tempInt = lua_tointeger( L,-1 );
+    }
+    else if ( format == CFM_STR )
+    { 
+       tempStr = address;
+       strcpy( tempStr, lua_tostring(L,-1 ) );
+       
+    }
+    else if( format == CFM_LONG )
+    {
+       tempLong = address;
+       *tempLong =  (long)lua_tointeger(L, -1);
+    }
+    else if( format == CFM_DOUBLE )
+    { 
+      tempDouble = address;
+      *tempDouble = (double)lua_tonumber(L , -1);
+    }
+    else if( format == CFM_SHORT )
+    {
+       tempShort = address;
+       *tempShort = (short)lua_tointeger(L, -1);
+    }
+    else if( format == CFM_CHAR )
+    {
+        tempChar = address;
+        *tempChar = (char) lua_tointeger(L, -1);
+    }
+    else if( format == CFM_PTR )
+    {
+        tempLong = address;
+        *tempLong = (long)lua_topointer(L, -1);
+    }
+    else
+    {
+         luaL_error( L, "Unrecognized Format ");
+    }
+
+}
+
+unsigned determineStructure( int format )
+{
+    
+   unsigned returnValue; 
+   
+   returnValue = 0; 
+    if( ( format == CFM_STRUCT ) ||
+        ( format == CFM_STRUCT_PTR) )
+    {
+      returnValue = 1;
+    }
+    return returnValue;
+}    
+
+
+unsigned getScalarSize( int format, void *address )
+{
+  char *stringPtr;
+  int   returnValue;
+
+   if( format == CFM_INT )
+    {
+       returnValue = sizeof(int);
+    }
+    else if ( format == CFM_STR )
+    { 
+       stringPtr = (char *)address;
+       returnValue = strlen( address );
+       
+    }
+    else if( format == CFM_LONG )
+    {
+       returnValue = sizeof(long);
+    }
+    else if( format == CFM_DOUBLE )
+    { 
+      returnValue = sizeof(double);
+    }
+    else if( format == CFM_SHORT )
+    {
+       returnValue = sizeof(short);
+       
+    }
+    else if( format == CFM_CHAR )
+    {
+        returnValue = sizeof(char);
+    }
+    else if( ( format == CFM_PTR ) || ( format == CFM_STRUCT_PTR))
+    {
+        returnValue = sizeof(void*);
+    }
+    else
+    {   
+        returnValue = (int)NULL;
+ 
+    }
+    return returnValue;
+}
+
+char *getTypeString( int format )
+{
+  
+  char   *returnValue;
+
+  switch( format)
+  {
+    case CFM_INT:
+       returnValue = "integer";
+       break;
+  
+    case CFM_STR:
+       returnValue = "string";
+       break;
+       
+       
+    case CFM_LONG:
+       returnValue = "long";
+       break;
+   
+    
+    case CFM_DOUBLE:
+        returnValue = "double";
+        break;
+    
+    case CFM_SHORT:
+        returnValue = "short";
+        break;
+    
+    case CFM_CHAR:
+        returnValue = "char";
+        break;
+
+     case CFM_PTR:
+        returnValue = "pointer";
+        break;
+
+     case CFM_STRUCT_PTR:
+        returnValue = "structPointer";
+        break;
+
+     case CFM_STRUCT:
+        returnValue = "struct";
+        break;
+
+     default:
+        returnValue = NULL;
+   }
+   return returnValue;
+}
+   
+    
+
+

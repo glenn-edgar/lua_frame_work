@@ -1,0 +1,789 @@
+/*
+** 
+** lua_jansson.c
+** This file provides the bindings for jansson package
+**
+**
+**
+*/
+
+
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <assert.h>
+#include <string.h>
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+
+#include "jansson.h"
+
+
+static int lua_json_typeof( lua_State *L )
+{
+  json_t *json;
+  int     returnValue;
+
+  json = (json_t *)lua_topointer(L,1);
+  returnValue = json_typeof(json);
+  lua_pushinteger(L,returnValue );
+  return 1;
+}
+
+static int lua_is_object( lua_State *L )
+{
+  json_t *json;
+  int     returnValue;
+
+  json = (json_t *)lua_topointer(L,1);
+  returnValue = json_is_object(json);
+  lua_pushinteger(L,returnValue );
+  return 1;
+}
+
+static int lua_is_array( lua_State *L )
+{
+  json_t *json;
+  int     returnValue;
+
+  json = (json_t *)lua_topointer(L,1);
+  returnValue = json_is_string(json);
+  lua_pushinteger(L,returnValue );
+  return 1;
+}
+
+static int lua_is_string( lua_State *L )
+{
+  json_t *json;
+  int     returnValue;
+
+  json = (json_t *)lua_topointer(L,1);
+  returnValue = json_is_string(json);
+  lua_pushinteger(L,returnValue );
+  return 1;
+}
+
+
+static int lua_is_integer( lua_State *L )
+{
+  json_t *json;
+  int     returnValue;
+
+  json = (json_t *)lua_topointer(L,1);
+  returnValue = json_is_integer(json);
+  lua_pushinteger(L,returnValue );
+  return 1;
+}
+
+
+static int lua_is_real( lua_State *L )
+{
+  json_t *json;
+  int     returnValue;
+
+  json = (json_t *)lua_topointer(L,1);
+  returnValue = json_is_real(json);
+  lua_pushinteger(L,returnValue );
+  return 1;
+}
+
+static int lua_is_number( lua_State *L )
+{
+  json_t *json;
+  int     returnValue;
+
+  json = (json_t *)lua_topointer(L,1);
+  returnValue = json_is_number(json);
+  lua_pushinteger(L,returnValue );
+  return 1;
+}
+
+
+static int lua_is_true( lua_State *L )
+{
+  json_t *json;
+  int     returnValue;
+
+  json = (json_t *)lua_topointer(L,1);
+  returnValue = json_is_true(json);
+  lua_pushinteger(L,returnValue );
+  return 1;
+}
+
+
+static int lua_is_false( lua_State *L )
+{
+  json_t *json;
+  int     returnValue;
+
+  json = (json_t *)lua_topointer(L,1);
+  returnValue = json_is_false(json);
+  lua_pushinteger(L,returnValue );
+  return 1;
+}
+
+static int lua_is_boolean( lua_State *L )
+{
+  json_t *json;
+  int     returnValue;
+
+  json = (json_t *)lua_topointer(L,1);
+  returnValue = json_is_boolean(json);
+  lua_pushinteger(L,returnValue );
+  return 1;
+}
+
+static int lua_is_null( lua_State *L )
+{
+  json_t *json;
+  int     returnValue;
+
+  json = (json_t *)lua_topointer(L,1);
+  returnValue = json_is_null(json);
+  lua_pushinteger(L,returnValue );
+  return 1;
+}
+
+
+
+static int lua_construct_object( lua_State *L )
+{
+  json_t *json;
+  json = json_object();
+  lua_pushlightuserdata(L,json);
+  return 1;
+}
+
+static int lua_construct_array( lua_State *L )
+{
+  json_t *json;
+  json = json_array();
+  lua_pushlightuserdata(L,json);
+  return 1;
+}
+
+static int lua_construct_string( lua_State *L )
+{
+  json_t *json;
+  char   *value;
+
+  value = lua_tostring(L,1);
+  json = json_string(value);
+  lua_pushlightuserdata(L,json);
+  return 1;
+}
+
+static int lua_construct_integer( lua_State *L )
+{
+  json_t *json;
+  int     value;
+
+  value = lua_tointeger(L,1);
+  json = json_integer(value);
+  lua_pushlightuserdata(L,json);
+  return 1;
+}
+
+static int lua_construct_real( lua_State *L )
+{
+  json_t *json;
+  double  value;
+
+  value = lua_tonumber(L,1);
+  json = json_real(value);
+  lua_pushlightuserdata(L,json);
+  return 1;
+}
+static int lua_construct_true( lua_State *L )
+{
+  json_t *json;
+  json = json_true();
+  lua_pushlightuserdata(L,json);
+  return 1;
+}
+
+static int lua_construct_false( lua_State *L )
+{
+  json_t *json;
+  json = json_null();
+  lua_pushlightuserdata(L,json);
+  return 1;
+}}
+
+static int lua_construct_null( lua_State *L )
+{
+  json_t *json;
+  json = json_object();
+  lua_pushlightuserdata(L,json);
+  return 1;
+}
+
+
+
+static int lua_construct_incref( lua_State *L )
+{
+  json_t *json;
+  json = (json_t *)lua_topointer(L,1)
+  json_incref(json);
+  return 0;
+}
+
+static int lua_construct_decref( lua_State *L )
+{
+  json_t *json;
+  json = (json_t *)lua_topointer(L,1)
+  json_decref(json);
+  return 0;
+}
+
+
+static int lua_object_size( lua_State *L )
+{
+  json_t *json;
+  int    size;
+  json = (json_t *)lua_topointer(L,1)
+  size = json_object_size(json);
+  lua_pushinteger(L,size);
+  return 1;
+}
+
+static int lua_object_get( lua_State *L )
+{
+  json_t *object;
+  json_t *returnValue;
+  char   *key;
+
+  object = (json_t *)lua_topointer(L,1);
+  key    = (char *)lua_tostring(L,2);
+  returnValue = json_object_get( object, key );
+  lua_pushlightuserdata(L,returnValue);
+  return 1;
+}
+
+static int lua_object_set_new( lua_State *L )
+{
+  json_t *object;
+  int    returnValue;
+  char   *key;
+  json_t *value;
+
+  object = (json_t *)lua_topointer(L,1);
+  key    = (char *)lua_tostring(L,2);
+  value  = (json_t *)lua_topointer(L,3);
+  returnValue = json_object_set_new( object, key,value );
+  lua_integer(L,returnValue);
+  return 1;
+}
+
+
+static int lua_object_del( lua_State *L )
+{
+  json_t *object;
+  int    returnValue;
+  char   *key;
+
+  object = (json_t *)lua_topointer(L,1);
+  key    = (char *)lua_tostring(L,2);
+  returnValue = json_object_del( object, key );
+  lua_pushinteger(L,returnValue);
+  return 1;
+}
+
+
+static int lua_object_clear( lua_State *L )
+{
+  json_t *object;
+  int    returnValue;
+
+  object = (json_t *)lua_topointer(L,1);
+  returnValue = json_object_clear( object )
+  lua_pushinteger(L,returnValue);
+  return 1;
+}
+
+
+static int lua_object_update( lua_State *L )
+{
+  json_t *object;
+  json_t *other;
+  int    returnValue;
+
+  object = (json_t *)lua_topointer(L,1);
+  other  = (json_t *)lua_topointer(L,2);
+  returnValue = json_object_update( object,other );
+  lua_pushinteger(L,returnValue);
+  return 1;
+}
+
+
+static int lua_object_iter( lua_State *L )
+{
+  json_t *object;
+  void   *returnValue;
+
+  object = (json_t *)lua_topointer(L,1);
+  returnValue = json_object_iter( object );
+  lua_pushlightuserdata(L,returnValue);
+  return 1;
+}
+
+
+
+static int lua_object_iter_next( lua_State *L )
+{
+  json_t *object;
+  void   *iter; 
+  void   *returnValue;
+  
+
+  object = (json_t *)lua_topointer(L,1);
+  iter    = (char *)lua_tostring(L,2);
+ 
+  returnValue = json_object_iter_next( object, iter);
+  lua_pushlightuserdata(L,returnValue);
+  return 1;
+}
+
+static int lua_object_iter_key( lua_State *L )
+{
+  json_t *object;
+  int    returnValue;
+  char   *key;
+  json_t *value;
+
+  object = (json_t *)lua_topointer(L,1);
+  key    = (char *)lua_tostring(L,2);
+  value  = (json_t *)lua_topointer(L,3);
+  returnValue = json_object_set_new( object, key,value );
+  lua_push_integer(L,returnValue);
+  return 1;
+}
+
+
+static int lua_object_iter_value( lua_State *L )
+{
+  void   *iter;
+  json_t *returnValue;
+  
+  iter = (void *)lua_topointer(L,1);
+  returnValue = json_object_iter_value(iter);
+  lua_pushlightuserdata(L,returnValue);
+  return 1;
+}
+
+static int lua_object_set( lua_State *L )
+{
+  json_t *object;
+  char   *key;
+  json_t *value;
+  int     returnValue;
+
+  object = (json_t *)lua_topointer(L,1);
+  key    = (char *)lua_tostring(L,2);
+  value  = (json_t *)lua_topointer(L,3);
+  returnValue = json_object_set( object, key, value);
+  lua_pushinteger(L,returnValue );
+  return 1;
+}
+
+static int lua_array_size( lua_State *L )
+{
+  json_t *object;
+  int     returnValue;
+  
+  object = (json_t *)lua_topointer(L,1);
+  returnValue = json_array_size(object);
+  lua_pushinteger(L,returnValue );
+  return 1;
+}
+
+static int lua_array_get( lua_State *L )
+{
+  json_t *array;
+  int    index;
+  json_t *returnValue;
+  
+  array = (json_t *)lua_topointer(L,1);
+  index = lua_tointeger(L,2);
+  returnValue = json_array_get( array, index);
+  json lua_pushlightuserdata(L,returnValue);
+  return 1;  
+}
+
+
+
+
+static int lua_array_set_new( lua_State *L )
+{
+  int     returnValue;
+  json_t  *array;
+  int     index;
+  json_t  *value;
+   
+  array = (json_t *)lua_topointer(L,1);
+  index = lua_tointeger(L,2);
+  value = (json_t *)lua_topointer(L,3);
+                             
+  returnValue = json_array_set_new( array, index, value);
+  lua_pushinteger(L,returnValue );
+  return 1;
+}
+
+
+
+
+
+
+static int lua_array_append_new( lua_State *L )
+{
+  json_t *array;
+  json_t *value;
+  int    returnValue;
+
+  array = (json_t *)lua_topointer(L,1);
+  value = (json_t *)lua_topointer(L,2);
+  returnValue = json_array_append_new(array,value)
+  lua_pushinteger(L,returnValue );
+  return 1;
+}
+
+static int lua_array_insert_new( lua_State *L )
+{
+  json_t *array;
+  int    index;
+  json_t *value;
+
+  array = (json_t *)lua_topointer(L,1);
+  index = lua_tointeger(L,2);
+  value = (json_t *)lua_topointer(L,3);
+  returnValue = json_array_insert_new( array, index, value);
+  lua_pushinteger(L,returnValue );
+  return 1;
+}
+
+static int lua_array_remove( lua_State *L )
+{
+  json_t *array;
+  char   *index;
+  int    returnValue;
+
+  array = (json_t *)lua_topointer(L,1);
+  index = lua_tointeger(L,2);
+  returnValue = json_array_remove( array, index);
+  lua_pushinteger(L,returnValue);
+  return 1;
+}
+
+static int lua_array_clear( lua_State *L )
+{
+  json_t *array;
+  int    returnValue;
+ 
+  array = (json_t *)lua_topointer(L,1);
+  returnValue = json_array_clear(array);
+  lua_pushinteger(L,returnValue );
+  return 1;
+}
+
+static int lua_array_extend( lua_State *L )
+{
+  json_t *array;
+  json_t *other;
+  int    returnValue;
+  
+  array = (json_t *)lua_topointer(L,1);
+  other = (json_t *)lua_topointer(L,2);
+  returnValue = json_array_extend( array, other);
+  lua_pushinteger(L,returnValue );
+  return 1;
+}
+
+static int lua_array_set( lua_State *L )
+{
+  json_t *array;
+  int    index;
+  json_t *value;
+  int    returnValue;
+
+  array = (json_t *)lua_topointer(L,1);
+  index = lua_tointeger(L,2);
+  returnValue = json_array_set(json_t *array, unsigned int index, json_t *value);
+  lua_pushinteger(L,returnValue );  
+  return 1;
+}
+
+static int lua_array_append( lua_State *L )
+{ 
+  int     returnValue;
+  json_t *array;
+  json_t *value;
+  array = (json_t *)lua_topointer(L,1);
+  value = (json_t *)lua_topointer(L,2);
+  returnValue = json_array_append( array, value);
+  lua_pushinteger(L,returnValue);
+  return 1;
+}
+
+
+static int lua_array_insert( lua_State *L )
+{
+  int     returnValue;
+  json_t  *array;
+  json_t  *value;
+  int     index;
+
+  array = (json_t *)lua_topointer(L,1);
+  index =  lua_tointeger(L,2);
+  value = (json_t *)lua_topointer(L,3);
+  returnValue = json_array_insert( array, index, value );
+  lua_pushinteger(L,returnValue);
+  return 1;
+}
+
+
+
+static int lua_string_value( lua_State *L )
+{
+  json_t *json_string;
+  char   *returnValue;
+
+  json_string = (json_t *)lua_topointer(L,1);
+  returnValue = (char *)json_string_value(json_string);
+  lua_pushstring(L, returnValue; );
+  return 1;
+}
+
+
+static int lua_integer_value( lua_State *L )
+{
+  int returnValue;
+  json_t *json_integer;
+  
+  json_integer = (json_t *)lua_topointer(L,1);
+  returnValue = json_integer_value(json_integer);
+  lua_pushinteger(L,returnValue);
+  return 1;
+}
+
+
+
+
+
+static int lua_real_value( lua_State *L )
+{
+  double returnValue;
+  json_t *json_real;
+
+  json_real = (json_t *)lua_topointer(L,1);
+  returnValue =  json_real_value(json_real);
+  lua_push_number(L,returnValue );
+  return 1;
+}
+
+
+static int lua_number_value( lua_State *L )
+{
+  double returnValue;
+  json_t *json_number;
+
+  returnValue = json_number_value(json_number);
+  return 0;
+}
+
+static int lua_string_set( lua_State *L )
+{ 
+  json_t *string;
+  char   *value;
+  int    returnValue;
+   
+  string = (json_t *)lua_topointer(L,1);
+  value  = (char *)lua_tostring(L,2);
+  returnValue =  json_string_set(string,value);
+  lua_pushinteger(L,returnValue );
+  return 1;
+}
+
+static int lua_integer_set( lua_State *L )
+{
+  json_t *integer;
+  int     value;
+  int     returnValue;
+
+  value = lua_tointeger(L,1
+  returnValue = json_integer_set(integer,value);
+  lua_pushinteger(L,returnValue );
+  return 1;
+
+}
+
+static int lua_json_real_set( lua_State *L )
+{
+  json_t *real;
+  double value;
+
+  real = (json_t *)lua_to_pointer(L,1);
+  value = lua_tonumber(L,2);
+  returnValue = json_real_set(real, value);
+  lua_pushinteger(L,returnValue );
+  return 1;
+
+}
+
+
+
+
+static int lua_json_dumps( lua_State *L )
+{
+json_t *json_loads(const char *input, json_error_t *error);
+  return 0;
+}
+
+static int lua_json_dump_file( lua_State *L )
+{
+json_t *json_load_file(const char *path, json_error_t *error);
+  return 0;
+}
+
+
+
+static int lua_help( lua_State *L )
+{
+   printf(".json_typeof() ---   \n");
+   printf( ".is_object() ---   \n");
+   printf( ".is_array() ---   \n");
+   printf( ".is_string() ---   \n");
+   printf( ".is_integer() ---   \n");
+   printf( ".is_real() ---   \n");
+   printf( ".is_number() ---   \n");
+   printf( ".is_true() ---   \n");
+   printf( ".is_false() ---   \n");
+   printf( ".is_boolean() ---   \n");
+   printf( ".is_null() ---   \n");
+   printf( ".construct_object() ---   \n");
+   printf( ".construct_array() ---   \n");
+   printf( ".construct_string() ---   \n");
+   printf(".construct_integer() ---   \n");
+   printf( ".construct_real() ---   \n");
+   printf( ".construct_true() ---   \n");
+   printf( ".construct_false() ---   \n");
+   printf(".construct_null() ---   \n");
+   printf(".construct_incref() ---   \n");
+   printf(".construct_decref() ---   \n");
+   printf(".object_size() ---   \n");
+   printf(".object_get() ---   \n");
+   printf(".object_set_new() ---   \n");
+   printf(".object_del() ---   \n");
+   printf(".object_clear() ---   \n");
+   printf(".object_update() ---   \n");
+   printf(".object_iter() ---   \n");
+   printf(".object_iter_next() ---   \n");
+   printf(".object_iter_key() ---   \n");
+   printf(".object_iter_value() ---   \n");
+   printf(".object_set() ---   \n");
+   printf(".array_size() ---   \n");
+   printf(".array_get() ---   \n");
+   printf(".array_set_new() ---   \n");
+   printf(".array_append_new() ---   \n");
+   printf(".array_insert_new() ---   \n");
+   printf(".array_remove() ---   \n");
+   printf(".array_clear() ---   \n");
+   printf(".array_extend() ---  \n");
+   printf(".array_set() ---   \n");
+   printf(".array_append() ---   \n");
+   printf(".array_insert() ---   \n");
+   printf(".string_value() ---   \n");
+   printf(".integer_value() ---   \n");
+   printf(".real_value() ---   \n");
+   printf(".number_value() ---   \n");
+   printf(".string_set() ---   \n");
+   printf(".integer_set() ---   \n");
+   printf(".real_set() ---   \n");
+   printf(".dump_string() ---   \n");
+   printf(".dump_file() ---   \n");
+   printf(".help() --- dumps out help commands   \n");
+   return 0;
+}
+     
+  
+static int lua_description( lua_State *L )
+{
+  lua_pushstring(L,"provide lua interface to jannson");
+  return 1;
+}
+
+static const struct luaL_reg  lua_jansson[] = 
+{
+   { "json_typeof",   lua_json_typeof },
+   { "is_object",     lua_is_object   },
+   { "is_array",      lua_is_array    },
+   { "is_string",     lua_is_string   },
+   { "is_integer",    lua_is_integer  },
+   { "is_real",       lua_is_real     },
+   { "is_number",     lua_is_number   },
+   { "is_true",       lua_is_true     },
+   { "is_false",      lua_is_false    },
+   { "is_boolean",    lua_is_boolean  },
+   { "is_null",       lua_is_null     },
+   { "construct_object", lua_construct_object },
+   { "construct_array",  lua_construct_array },
+   { "construct_string", lua_construct_string },
+   { "construct_integer", lua_construct_integer },
+   { "construct_real",    lua_construct_real  },
+   { "construct_true",    lua_construct_true },
+   { "construct_false",   lua_construct_false },
+   { "construct_null",    lua_construct_null },
+   { "construct_incref",  lua_construct_incref },
+   { "construct_decref",  lua_construct_decref },
+   { "object_size",       lua_object_size   },
+   { "object_get",        lua_object_get    },
+   { "object_set_new",    lua_object_set_new  },
+   { "object_del",        lua_object_del    },
+   { "object_clear",      lua_object_clear  },
+   { "object_update",     lua_object_update },
+   { "object_iter",       lua_object_iter   },
+   { "object_iter_next",  lua_object_iter_next },
+   { "object_iter_key",   lua_object_iter_key  },
+   { "object_iter_value", lua_object_iter_value },
+   { "object_set",        lua_object_set        },
+   { "array_size",        lua_array_size        },
+   {"array_get",          lua_array_get        },
+   {"array_set_new",    lua_array_set_new    },
+   {"array_append_new", lua_array_append_new },
+   {"array_insert_new", lua_array_insert_new },
+   {"array_remove",     lua_array_remove     },
+   {"array_clear",      lua_array_clear      },
+   {"array_extend",     lua_array_extend     },
+   {"array_set",        lua_array_set        },
+   {"array_append",     lua_array_append     },
+   {"array_insert",     lua_array_insert     },
+   {"string_value",     lua_string_value     },
+   {"integer_value",    lua_integer_value    },
+   {"real_value",       lua_real_value       },
+   {"number_value",     lua_number_value     },
+   {"string_set",       lua_string_set       },
+   {"integer_set",      lua_integer_set      },
+   {"real_set",         lua_json_real_set    },
+   {"dump_string",      lua_json_dumps       },
+   {"dump_file",        lua_json_dump_file   },
+   {"description",      lua_description      },
+   {"help",             lua_help             },  
+   { NULL, NULL },      
+   
+};
+
+
+
+int lua_pat_string_load( lua_State *L )
+{
+   
+   luaL_openlib(L,"jansson",lua_jansson,0 );
+   return 1;
+}
+
+
+
+

@@ -1,0 +1,123 @@
+/*
+** 
+**  Copyright 2008 Indyme Corporation
+**  All rights reserved
+**  This file setups the TGS dynamic library
+**
+**
+**
+**
+**
+*/
+
+
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <assert.h>
+#include <string.h>
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+#if USER_MEMORY_INCLUDE
+#else
+char pathBuffer[256];
+
+#endif
+char path[256];
+
+static int description( lua_State *L )
+{
+  lua_pushstring(L,"dynamic library test -- demonstration");
+  return 1;
+}
+
+static int lua_path( lua_State *L )
+{
+  lua_pushstring(L,path);
+  return 1;
+
+
+}
+
+
+#if USER_MEMORY_INCLUDE
+void lua_dobuffer( lua_State * L, const char *buffer, int size, char *chunkName );
+int ficlLzUncompress(const unsigned char *compressed, unsigned char **uncompressed_p, size_t *uncompressedSize_p);
+#endif
+
+
+static int lua_loadScript(lua_State *L)
+{
+  
+#if USER_MEMORY_INCLUDE
+  unsigned char *unCompressed;
+  unsigned unCompressedSize;
+#else
+  char *pathPtr;
+  int  error;
+#endif
+
+#if  USER_MEMORY_INCLUDE     
+    #include "init.h"
+
+#else
+   // get path for the scripts
+   pathPtr = (char *)lua_tostring(L, 1 );
+   assert( strlen( pathPtr ) < sizeof(pathBuffer) - 20 );
+   memset( path,0,sizeof(path));
+   memset( pathBuffer,0, sizeof(pathBuffer) );
+   strcpy( path, pathPtr );
+   strcpy( pathBuffer, pathPtr );
+   strcat( pathBuffer,"/init.lua");
+   error = luaL_loadfile(L, pathBuffer );
+    if( error == 0 )
+    {
+      error = lua_pcall(L, 0, LUA_MULTRET, 0);
+    }
+    if( error != 0 )
+    {
+       printf("Error --> %s \r\n",lua_tostring(L,-1));
+       lua_pop(L,1);
+    }
+   
+#endif
+
+  return 1;
+}
+
+static int lua_help( lua_State *L )
+{
+ 
+  printf("tgs shared  shared library \r\n");
+  printf(".path()            -- returns path of scripts \r\n");
+  printf(".loadScript(path)  -- dynamically loads scripts \r\n");
+  printf(".help()            -- dumps out commands \r\n\r\n");
+  return 0;
+}   
+
+
+static const struct luaL_reg  lua_testLib[] = 
+{
+   
+   {"description",           description   },
+   {"loadScript" ,           lua_loadScript  },
+   {"path",                  lua_path        },
+   {"help",                  lua_help   }, 
+   { NULL, NULL },      
+   
+};
+
+
+
+int lua_registerLibrary( lua_State *L  )
+{
+
+   luaL_openlib(L,"tgsLib",lua_testLib,0 );
+
+   return 1;
+}
+

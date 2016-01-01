@@ -1,0 +1,37 @@
+/*
+**  File:  c_objects.h
+**
+**  This file defines the public in c_objects.c
+**
+*/ 
+
+
+#ifndef _C_STATIC_OBJECTS_H_
+#define _C_STATIC_OBJECTS_H_
+
+#include "lua.h"
+
+
+
+#ifdef __cplusplus 
+
+extern "C"
+{
+#endif
+
+#include "lua_c_dynamicIntf.h"
+
+
+STATIC_OBJECTS * 
+findStaticObjectName( STATIC_OBJECTS *stObs, const char *name );
+
+int lua_c_staticObjMkPointer( lua_State *L );
+
+
+#ifdef __cplusplus 
+
+}
+
+#endif
+
+#endif

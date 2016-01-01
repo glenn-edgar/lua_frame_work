@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"/>
+		<title>System Setup</title>
+		<link type="text/css" href="/themes/base/ui.all.css" rel="stylesheet"/>	
+		<link type="text/css" href="/css/indyme.css" rel="stylesheet"/>
+		<script type="text/javascript" src="/jquery-1.3.2.min.js"></script>
+		<script type="text/javascript" src="/jquery-ui-1.7.custom.min.js"></script>
+		<script type="text/javascript" src="/javaScript/indyme_utils.js"></script>
+		<script type="text/javascript" src="/javaScript/json2.js"></script>
+		<script type="text/javascript" src="/javaScript/table_handlers.js"></script>
+		<script type="text/javascript" src="/javaScript/select_support.js"></script>
+		<script type="text/javascript" src="/javaScript/inputHandlers.js"></script>
+		<script type="text/javascript" src="/javaScript/system_setup.js"></script>
+		<!style type="text/css">
+			<!body{ font: 62.5% Verdana, sans-serif; margin: 50px;}
+			#dialog_link {padding: .7em 1em;text-decoration: none;}
+                       
+		</style>	
+	</head>
+	
+	<body class="main">
+		
+		<form action="editScriptStore.lua" method="post">
+			
+			<div>
+				<!--#include virtual="/advanced/banner.html"-->
+										<label>System Setup</label>
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+			</div>
+			
+			<div id="tabs" class="tab">
+				<ul>
+					<li><a href="#tabs-1" class="tabBold">Store ID</a></li>
+					<li><a href="#tabs-2" class="tabBold">Time Zone</a><li>
+					<li><a href="#tabs-3" class="tabBold">System Alarms</a><li>
+				</ul>
+				
+				<div id="tabs-1">
+					<br>
+					<table>
+						<tr>
+							<td width=20></td>
+							<td><label for="chainName"><b>Chain Name:</b></label></td>
+							<td width=20></td>
+							<td><label for="storeName"><b>Store Number:</b></label></td>
+						</tr>
+						
+						<tr>
+							<td width=20></td>
+							<td><input  size = 19  maxlength = 19 type=text name="chainName" id="chainName"></td>
+							<td width=20></td>
+                            				<td><input  size = 19  maxlength = 19 type=text name="storeName" id="storeName"></td>
+						</tr>
+					</table>
+					<br>
+				</div>
+				
+				<div id="tabs-2">
+					<br>
+					<table>
+						<tr>
+							<td width=20></td>
+							<td><label for="timeZone"><b>Time Zone:</b></label></td>
+							<td width=20></td>
+							<td><label><b>Time Zone String:</b></label></td>
+						</tr>
+						
+						<tr>
+							<td width=20></td>
+							<td><select name="timeZone" id="timeZone"></select></td>
+							<td width=20></td>
+							<td><label id="timeZoneString"></label></td>
+						</tr>
+					</table>
+					<br>
+				</div>
+				
+				<div id="tabs-3">
+					<br>
+					<table>
+						<tr>
+							<td width=20></td>
+							<td><label for="LowBattery"><b>Low Battery Alarm:</b></label></td>
+							<td width=20></td>
+							<td><label for="LowBatteryThreshold"><b>Threshold:</b></label></td>
+						</tr>
+						
+						<tr>
+							<td width=20></td>
+							<td><select name="LowBattery" id="LowBattery"></select></td>
+							<td width=20>
+							<td><select id="LowBatteryThreshold"></select></td>
+						</tr>
+					</table>
+					
+					<br>
+					
+					<table>
+						<tr>
+							<td width=20></td>
+							<td><label><b>Inactive CallBox Alarm:<b></label>
+							<td width=20></td>
+							<td></td>
+						</tr>
+						
+						<tr>
+							<td width=20></td>
+							<td><select name="InactiveCallBox" id="InactiveCallBox"></select></td>
+							<td width=20></td>
+							<td></td>
+ 						</tr>
+					</table>
+					<br>
+				</div>
+			</div>
+		</form>
+	</body>
+</html>

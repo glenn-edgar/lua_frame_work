@@ -1,0 +1,466 @@
+/*
+   
+   Copyright 2008 Onyx Engineering
+   This file is licensed MIT
+   File: lua_pat_string.c
+   Sets up the lua Interface between
+
+
+*/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+#include "pat_string.h"
+#include "lua_pat_string.h"
+
+
+static int lua_ps_create( lua_State *L )
+{
+   PAT_STRING *data;
+
+   data  =PT_create();
+   lua_pushlightuserdata( L, data );
+   return 1;
+}
+
+
+
+
+
+static int lua_createObject( lua_State *L )
+{
+  char *string;
+  PAT_STRING *data;
+  string = (char *)lua_tostring(L,1);
+  data = PT_createObject(string);
+  lua_pushlightuserdata(L,data);
+  return 1;
+}
+
+static int lua_ps_terminate( lua_State *L )
+{
+  PAT_STRING *data;
+
+  data = (PAT_STRING *)lua_topointer(L,1);
+  PT_deleteObject( data );
+  return 0;
+}
+   
+static int lua_resetObject( lua_State *L )
+{
+   PAT_STRING *data;
+
+   data = (PAT_STRING *)lua_topointer(L,1);
+   PT_resetObject(data );
+   return 0;
+}
+
+static int lua_putLink( lua_State *L )
+{
+   PAT_STRING *data;
+   int         position;
+   PAT_STRING  *insertPat;
+   int          returnValue;
+
+   data = (PAT_STRING *)lua_topointer(L,1);
+   position = lua_tointeger(L,2);
+   insertPat = (PAT_STRING *)lua_topointer(L,3);
+   returnValue = PT_put( data, position, insertPat );
+   lua_pushinteger(L,returnValue );
+   return 1;
+}
+
+static int lua_linkNumber( lua_State *L )
+{
+   PAT_STRING *data;
+   int        returnValue;
+
+   data = (PAT_STRING *)lua_topointer(L,1);
+   returnValue = PT_number( data );
+   lua_pushinteger(L,returnValue );
+   return 1;
+}
+
+static int  lua_getLink( lua_State *L )
+{
+  PAT_STRING *data;
+  int        position;
+  PAT_STRING *returnValue;
+
+  data = (PAT_STRING *)lua_topointer(L,1);
+  position = lua_tointeger(L,2);
+  returnValue = PT_get(data,position );
+  lua_pushlightuserdata(L,returnValue);
+  return 1;
+}
+
+static int lua_extractLink( lua_State *L )
+{
+  PAT_STRING *data;
+  int        position;
+  PAT_STRING *returnValue;
+
+  data = (PAT_STRING *)lua_topointer(L,1);
+  position = lua_tointeger(L,2);
+  returnValue = PT_extract( data,position );
+  lua_pushlightuserdata(L,returnValue);
+  return 1;
+}
+
+
+static int lua_ps_clear( lua_State *L )
+{
+  PAT_STRING *data;
+
+  data = (PAT_STRING *)lua_topointer(L,1);
+  assert( data->magic == PAT_STRING_MAGIC );
+
+  data->length = 0;
+  data->string = NULL;
+
+  return 0;
+}
+
+static int lua_ps_toPat( lua_State *L )
+{
+   PAT_STRING *patString;
+  
+   patString = (PAT_STRING *)lua_topointer(L,1);
+   assert( patString->magic == PAT_STRING_MAGIC );
+   patString->string = (char *)lua_topointer(L,2);
+   patString->length = lua_tointeger(L, 3);
+
+   return 0;
+}
+  
+
+
+static int lua_ps_extractString( lua_State *L )
+{
+   PAT_STRING *patString;
+   int        start;
+   int        length;
+
+   patString = (PAT_STRING *)lua_topointer(L,1);
+   start     = lua_tointeger(L,2);
+   length    = lua_tointeger(L,3); 
+
+   if( length == -1 )
+   {
+      length = patString->length;
+   }
+   if( start <= patString->length-1 )
+   {
+    
+     if( length > patString->length - start )
+     {
+       length = patString->length -start;
+     }
+     lua_pushlstring(L, patString->string+start, length ); 
+   }
+   else
+   {
+     lua_pushstring(L,"");
+   } 
+   return 1;
+}
+
+static int lua_ps_toInteger( lua_State *L )
+{
+   PAT_STRING *patString;
+   int         base;
+  
+   patString = (PAT_STRING *)lua_topointer(L,1);
+   base = lua_tointeger(L,2);
+   lua_pushinteger(L, PT_toInteger( patString ,base ));
+   return 1;
+}
+
+static int lua_ps_copyPat( lua_State *L )
+{
+   PAT_STRING *newPat;
+   PAT_STRING *oldPat;
+   int        positionStart;
+   int        positionEnd;
+
+   newPat = (PAT_STRING *)lua_topointer(L,1);
+   oldPat = (PAT_STRING *)lua_topointer(L,2);
+   positionStart = lua_tointeger(L,3);
+   positionEnd = lua_tointeger(L,4);
+   PT_copyPat( newPat,oldPat,positionStart, positionEnd );
+   return 0;
+}
+
+
+static int lua_ps_adjustBase( lua_State *L )
+{
+   PAT_STRING *patString;
+   int        baseChange;
+   
+   patString = (PAT_STRING *)lua_topointer(L,1);
+   baseChange = lua_tointeger(L,2);
+ 
+  PT_adjustBase( patString, baseChange );
+  return 0;
+}
+                   
+
+
+static int lua_ps_adjustLength( lua_State *L )
+{
+   PAT_STRING *patString;
+   int        lengthChange;
+   
+   patString = (PAT_STRING *)lua_topointer(L,1);
+   lengthChange = lua_tointeger(L,2);
+ 
+   PT_adjustBase( patString, lengthChange );
+   return 0;
+}
+
+static int lua_ps_trim( lua_State *L )
+{
+   PAT_STRING *patString;
+   
+   patString = (PAT_STRING *)lua_topointer(L,1);
+ 
+   PT_trim( patString );
+   return 0;
+}
+
+static int lua_ps_replace( lua_State *L )
+{
+   PAT_STRING *patString;
+   char       *searchChar;
+   char       *replaceChar;
+   
+   patString = (PAT_STRING *)lua_topointer(L,1);
+   searchChar = (char *)lua_tostring(L,2);
+   replaceChar = (char *)lua_tointeger(L,3);
+ 
+   PT_replace( patString, *searchChar,*replaceChar );
+   return 0;
+}
+
+
+         
+static int lua_ps_match( lua_State *L )
+{
+
+
+   PAT_STRING *patString;
+   char       *matchString;
+   unsigned    position;
+   int         result;
+
+   patString = (PAT_STRING *)lua_topointer(L,1);
+   matchString = (char *)lua_tostring(L,2);
+   position = lua_tointeger(L,3);
+ 
+   result = PT_match( patString, matchString, position );
+   lua_pushinteger(L,result);
+   return 1;
+}
+
+static int lua_ps_find( lua_State *L )
+{
+
+
+   PAT_STRING *patString;
+   char       *matchString;
+   unsigned    position;
+   int         result;
+
+   patString = (PAT_STRING *)lua_topointer(L,1);
+   matchString = (char *)lua_tostring(L,2);
+   position = lua_tointeger(L,3);
+ 
+   result = PT_find( patString, matchString, position );
+   lua_pushinteger(L,result);
+   return 1;
+}
+
+
+static int lua_ps_findAndAdvance( lua_State *L )
+{
+
+
+   PAT_STRING *patString;
+   char       *matchString;
+   unsigned    position;
+   int         result;
+
+   patString = (PAT_STRING *)lua_topointer(L,1);
+   matchString = (char *)lua_tostring(L,2);
+   position = lua_tointeger(L,3);
+ 
+   result = PT_findAndAdvance( patString, matchString, position );
+   lua_pushinteger(L,result);
+   return 1;
+}
+
+static int lua_ps_macthBetween( lua_State *L )
+{
+
+
+   PAT_STRING *patString;
+   char       *startString;
+   char       *endString;
+   unsigned   startingPosition;
+   int        result;
+  
+   patString         = (PAT_STRING *)lua_topointer(L,1);
+   startString       = (char *)lua_tostring(L,2);
+   endString         = (char *)lua_tostring(L,3);
+   startingPosition  = lua_tointeger(L,4);
+ 
+   result = PT_matchBetween( patString, startString, endString, startingPosition );
+   lua_pushinteger(L,result);
+   return 1;
+}
+
+static int lua_balancedFind( lua_State *L )
+{
+   int        returnValue;
+   PAT_STRING *refPat;
+   PAT_STRING *matchPat;
+   int        startPosition;
+   char       *openDelm;
+   char       *closeDelm;
+   int        balanceMatch;
+   int        matchStart;
+   int        matchEnd;
+   
+   refPat = (PAT_STRING *)lua_topointer(L,1);
+   matchPat = (PAT_STRING *)lua_topointer(L,2);
+   startPosition = lua_tointeger(L, 3); 
+   openDelm     = (char *)lua_tostring(L,4);
+   closeDelm     = (char *)lua_tostring(L,5);
+  
+   returnValue = PAT_balancedFind( refPat, 
+                                   matchPat, 
+                                   startPosition, 
+                                   *openDelm, 
+                                   *closeDelm, 
+                                   &balanceMatch,
+                                   &matchStart,
+                                   &matchEnd );
+   lua_pushinteger(L,  returnValue);
+   lua_pushinteger(L,  balanceMatch);
+   lua_pushinteger(L , matchStart );
+   lua_pushinteger(L,  matchEnd   );
+   return 4;
+
+}
+
+
+
+
+
+static int lua_patStringHelp( lua_State *L )
+{
+  printf(".create() -- create patString object \n");
+  printf("                   --- patString is a malloc object \n");
+  printf("                   --- with the following fields    \n");
+  printf("        --     int  magic; // magic is used internally \n");
+  printf("        --     int  length;                            \n");
+  printf("        --     char *string;                           \n");
+  printf(".createObject(string )  -- creates composite object \n");
+  printf(".terminate(pat_string)  -- free pat string object \n");
+  printf(".resetObject( pat_string ) -- reset composite object \n");
+  printf(".putLink( pat_string, position,pat_string )     -- put sub Pat   \n");
+  printf(".linkNumber( pat_string ) -- returns link number \n");
+  printf(".getLink(pat_string, number ) -- returns pat_string \n");
+  printf(".extractLink( pat_string,number) -- returns pat_string \n");
+  printf(".clear(pat_string)                    \n");
+  printf("     --- sets length to zero                   \n");
+  printf("     --- sets string to NULL                   \n");
+  printf(".toPat(pat_string,buffer,length)      \n");
+  printf("      -- loads pat_string object to match      \n");
+  printf("      -- buffer and length                     \n");
+  printf(".extract(pat_string,index,length)     \n");
+  printf("      --       length = -1 whole buffer          \n");
+  printf(".integer(pat_string,base)             \n");
+  printf(".copy(newPat,oldPat,startPosition, endPositions )  \n");
+  printf("   -- loads newPat from oldPat subject to position offsets      \n");
+  printf(".adjustBase(pat,baseAdjust)           \n");
+  printf(".adjustLength(pat,lengthAdjust)       \n");
+  printf(".trim(pat)                            \n");
+  printf(".replace(pat,searchChar,replaceChar)  \n");
+  printf(" -- note search and replace char are strings   \n");
+  printf(" -- only first character is used                   \n");
+  printf(".match(patString, matchString, position) \n");
+  printf(" ---returns -1 if no match   \n");
+  printf(" ---returns position if match  \n");
+  printf(" ---not there is no string search in this function \n");
+  printf(".find(patString, matchString, position)  \n");
+  printf("  -- will search pat buffer for a possible string match \n");
+  printf("  -- will returns -1 if no match  \n");
+  printf("  -- returns position of match if match \n");
+  printf(".findAndAdvance(patString, matchString, position )   \n");
+  printf("  -- finds match string and advances pat buffer past match string \n");
+  printf("  -- if successful adjusts patstring after match   \n");
+  printf("  -- returns position of match or -1 if no match found \n");
+  printf(".matchBetween(patString, startString, endString, startingPosition) \n");
+  printf("  -- used to set the patString between the region of startString and endString \n");
+  printf("  -- return 0 if successfull and -1 if not successful \n");
+  printf(".balancedFind( refPat, matchPat, startPos, openDel,closeDelm ) \n");
+  printf("  --places matchPat in an area of start of balance parameters             \n");
+  printf("  --returns zero if balance match found                                   \n");
+  printf("  --openDel is a string only first character matters                      \n");
+  printf("  --closeDel is a string only the first character matters                 \n");
+  printf("  --return values are returnValue, nested level and start and stop positions \n");
+  printf(".help()    -- dumps out commands \r\n\r\n");
+  return 0;
+}   
+
+static int description( lua_State *L )
+{
+  lua_pushstring(L,"provide lua interface to patter string interface");
+  return 1;
+}
+
+static const struct luaL_reg  lua_patString[] = 
+{
+   {"create",            lua_ps_create  },
+   {"createObject",      lua_createObject },
+   {"terminate",         lua_ps_terminate  },
+   {"resetObject",       lua_resetObject   },
+   {"putLink",           lua_putLink       },
+   {"linkNumber",        lua_linkNumber    },
+   {"getLink",           lua_getLink       },
+   {"extractLink",       lua_extractLink   },
+   {"clear",             lua_ps_clear   },
+   {"toPat",             lua_ps_toPat  },
+   {"extract",           lua_ps_extractString  },
+   {"integer",           lua_ps_toInteger  },
+   {"copy",              lua_ps_copyPat  },
+   {"adjustBase",        lua_ps_adjustBase  },
+   {"adjustLength",      lua_ps_adjustLength  },
+   {"trim",              lua_ps_trim  },
+   {"replace",           lua_ps_replace  },
+   {"match",             lua_ps_match },
+   {"find",              lua_ps_find },
+   {"findAndAdvance",    lua_ps_findAndAdvance },
+   {"matchBetween",      lua_ps_macthBetween   },
+   {"balancedFind",      lua_balancedFind     },
+   {"help",              lua_patStringHelp   },
+   {"description",       description         },
+   { NULL, NULL },      
+   
+};
+
+
+
+int lua_pat_string_load( lua_State *L )
+{
+   
+   luaL_openlib(L,"patStr",lua_patString,0 );
+   return 1;
+}
+
+
+
+

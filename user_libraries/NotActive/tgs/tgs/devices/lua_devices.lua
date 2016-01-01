@@ -1,0 +1,147 @@
+---
+--- File: lua_devices.lua
+--- This file is the container which holds devices
+---
+---
+---
+
+devices = {}
+devices.deviceList = {}
+
+
+function devices.description()
+  return "tgs device manager"
+end
+
+
+function devices.help()
+ print(".listDevices() --- list devices")
+ print(".addDevices( name, deviceTable ) " )
+ print(".execute( actionList, chainTable, unitTable  ) ")
+end
+
+
+
+function devices.listDevices()
+  local temp
+  print("currently registered devices")
+  temp = ts.sort( devices.deviceList )
+  for i,k in ipairs( temp ) do
+    print(k)
+  end
+end
+
+
+function devices.addDevice( name, deviceTable )
+  devices.deviceList[ name] = deviceTable
+end
+
+function devices.findDevice( unitEntry )
+  local returnValue
+  returnValue =  devices.deviceList[ unitEntry.device ]
+  return returnValue
+end
+
+
+--
+--
+-- execute actions for a single unit
+--
+--
+function devices.execute( resultList, actionList, chain, unitEntry )
+  local temp
+  local actionResult
+  local device
+
+  status = false
+ 
+  device = devices.findDevice( unitEntry)
+
+  if device ~= nil then
+   -- we have found device
+   device["INIT"]() -- initialize data structures
+   temp = {} -- entry 
+   for i,action in ipairs( actionList ) do
+     print("unit--->",unitEntry[ chain.key ],action.name )
+     lgc.collect()
+     actionResult = logging.getNewContact()
+     actionResult.id    = unitEntry[ chain.key]
+     actionResult.action = action.name
+     actionResult.status = true
+     if device[ action.name ] ~= nil then
+        status = device[ action.name ]( action.parameters, actionResult, chain, unitEntry )
+     else
+       actionResult.result.status = "Unsupported Command"
+       status = true
+     end
+     if actionResult.status == 1 then actionResult.status = true end
+     if actionResult.status == 0 then actionResult.status = false end
+     table.insert( temp,actionResult )
+     if ( status == false) or (status == 0) then
+                                   actionResult = logging.getNewContact()
+                                   actionResult.id    = unitEntry[ chain.key]
+                                   actionResult.action = "DISCONNECT"
+                                   
+                                   device["DISCONNECT"]( action.parameters, actionResult, chain, unitEntry )
+                                   actionResult.result.status = actionResult.result.status .."  DISCONNECT for Error condition"
+                                   table.insert( temp,actionResult )
+                              break end
+   end
+  else
+     temp = {}
+     actionResult = logging.getNewContact()
+     actionResult.id  = unitEntry[ chain.key]
+     actionResult.time = os.time()
+     actionResult.device = unitEntry.device
+     actionResult.action = "CONNECT"
+     actionResult.status = false
+     actionResult.result.status = "bad device"
+     table.insert( temp,actionResult )
+  end 
+  table.insert( resultList,temp)
+end
+
+
+---
+---
+--- execute actions for a list of units
+---
+---
+function devices.listExecute( resultList, actionList, chain , unitList )
+
+ 
+  for i,unit in ipairs(unitList) do
+
+   devices.execute( resultList, actionList, tgs.units.chains[ chain ], unit )
+  end
+  return resultList
+end
+
+
+
+
+
+
+
+
+
+
+
+tgs.devices = devices
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

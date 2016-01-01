@@ -1,0 +1,56 @@
+/*
+**
+** Copyright 2008 Onyx Engineering
+** This file is licensed MIT
+**
+** File: stringBuffer
+** Creates and manages a stringBuffer 
+** 
+**
+*/
+
+
+
+#ifndef __STRING_BUFFER_H__
+#define __STRING_BUFFER_H__
+
+#if defined __cplusplus
+extern "C" {
+#endif 
+
+#define SB_HANDLE void *
+
+
+SB_HANDLE SB_create( unsigned size );
+
+// -1 failure 0 == pass
+int SB_resize( SB_HANDLE handle, int newSize );
+
+void SB_terminate( SB_HANDLE handle );
+
+
+void SB_freeBuffer( SB_HANDLE handle );
+
+int SB_appendString( SB_HANDLE handle, char *appendString );
+
+int SB_appendFile( SB_HANDLE handle, FILE *fileHandle );
+
+int SB_appendBytes( SB_HANDLE handle, char *start, int number );
+
+int  SB_bufferSize( SB_HANDLE handle );
+
+int SB_currentSize( SB_HANDLE handle );
+
+int SB_freeSize( SB_HANDLE handle );
+
+
+// end being -1 means end of the buffer
+char *SB_extract( SB_HANDLE handle, int start, int length );
+
+char *SB_getBuffer( SB_HANDLE handle );
+
+#if defined __cplusplus
+}
+#endif
+
+#endif

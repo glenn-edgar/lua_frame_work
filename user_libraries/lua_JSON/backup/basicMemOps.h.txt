@@ -1,0 +1,51 @@
+/*
+**  File:  basicMemOps.h
+**
+**  This file defines the public in c_supportCtrl.c
+**
+*/ 
+
+
+#ifndef _BASIC_MEM_OPS_H_
+#define _BASIC_MEM_OPS_H_
+
+#include "lua.h"
+
+
+
+#ifdef __cplusplus 
+
+extern "C"
+{
+#endif
+
+#include "lua_c_dynamicIntf.h"
+
+char *getTypeString( int format );
+
+unsigned getScalarSize( int  format, 
+                        void *address );                      
+
+void readCommonScalar( lua_State *L, 
+                       int   format, 
+                       void *address );
+
+
+
+
+void writeCommonScalar( lua_State *L, 
+                        int  format, 
+                        void *address );
+
+unsigned determineStructure( int format );
+
+
+void initializeBasicMemOperations( lua_State *L );
+
+#ifdef __cplusplus 
+
+}
+
+#endif
+
+#endif

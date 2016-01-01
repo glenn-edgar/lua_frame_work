@@ -1,0 +1,336 @@
+/*
+**
+**
+**
+** Copyright 2008 Onyx Engineering
+** This file is licensed MIT
+** File: lua_parameter_pack.c
+** Lua interface to assert stack
+**
+**
+**
+**
+**
+*/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
+
+#include "lauxlib.h"
+#include "lua_parameter_pack.h"
+
+#define NUMBER_TYPE  double
+
+
+void callLuaFunction( lua_State *L, 
+                      char *luaFunction, 
+                      char *inputFormat,
+                      char *resultsFormat,
+                      ... )
+{
+   va_list v1;
+   int     narg; // number of arguments
+   int     nres; // number of results
+   int     i;
+   int     j;
+
+   narg = strlen( inputFormat );
+   nres = strlen( resultsFormat );
+
+   va_start( v1,resultsFormat );
+   lua_getglobal(L, luaFunction);
+
+   lua_checkstack(L,narg );
+
+   for( i = 0; i < narg; i++ ) 
+   {
+     switch( *inputFormat++ )
+     {
+        case 'b':
+          lua_pushboolean(L,va_arg(v1,int));
+          break;        
+
+        case 'd':
+	  lua_pushnumber(L,va_arg(v1,NUMBER_TYPE ));
+          break;
+
+	case 'i':
+            lua_pushinteger(L,va_arg(v1,int));
+	    break;
+
+	case 's':
+	    lua_pushstring(L,va_arg(v1, char*));
+	    break;
+
+	case 'l':
+            lua_pushlightuserdata(L,va_arg(v1, void *));
+	    break;
+
+	default:
+	    luaL_error(L,"Bad option in extract parameters l case \r\n" );
+	}	  
+    }
+ 
+    // call the function
+
+   if( lua_pcall( L, narg, nres, 0 ) != 0 )
+   {
+      luaL_error(L, 
+                 "error calling '%s' : '%s'",
+                  luaFunction, 
+                  lua_tostring(L,-1));
+   }
+ 
+
+   // extract parameters from the call
+   j = -nres-1;
+   for( i = 0; i <nres; i++ ) 
+   {
+      j +=1;
+      switch( *resultsFormat++ )
+      {
+	case 'b':
+          *va_arg(v1, int *) = lua_toboolean(L,j);
+          break;
+       
+        case 'd':
+          *va_arg(v1, NUMBER_TYPE *) = lua_tonumber(L,j);
+          break;
+
+       case 'i':
+
+	 *va_arg( v1, int *) = lua_tointeger(L,j);
+	 break;
+
+       case 's':
+	  *va_arg(v1, const char **) = lua_tostring( L,j);
+	  break;
+
+       case 'l':
+         if( lua_islightuserdata(L,j) == 0 )
+	 {
+           luaL_error(L,"Bad option in extract parameters s case\r\n" );
+	 }
+	 *va_arg(v1, const void **) = lua_topointer(L,j);
+	 break;
+
+	default:
+          luaL_error(L,"Bad option in extract parameters \r\n" );
+		  
+     }
+     
+   }
+ 
+   va_end(v1);
+}
+
+void callPackageFunction( lua_State *L, 
+                          char *package,
+                          char *luaFunction, 
+                          char *inputFormat,
+                          char *resultsFormat,
+                          ... )
+{
+   va_list v1;
+   int     narg; // number of arguments
+   int     nres; // number of results
+   int     i;
+   int     j;
+
+
+   narg = strlen( inputFormat );
+   nres = strlen( resultsFormat );
+
+   va_start( v1,resultsFormat );
+   lua_getglobal(L, package);
+   lua_getfield(L, -1, luaFunction );
+   // remove package table
+   lua_remove(L,-2);
+   lua_checkstack(L,narg );
+
+   for( i = 0; i < narg; i++ ) 
+   {
+     switch( *inputFormat++ )
+     {
+        case 'b':
+          lua_pushboolean(L,va_arg(v1,int));
+          break;        
+
+        case 'd':
+	  lua_pushnumber(L,va_arg(v1,NUMBER_TYPE ));
+          break;
+
+	case 'i':
+            lua_pushinteger(L,va_arg(v1,int));
+	    break;
+
+	case 's':
+	    lua_pushstring(L,va_arg(v1, char*));
+	    break;
+
+	case 'l':
+            lua_pushlightuserdata(L,va_arg(v1, void *));
+	    break;
+
+	default:
+	    luaL_error(L,"Bad option in extract parameters l case \r\n" );
+	}	  
+    }
+ 
+    // call the function
+
+   if( lua_pcall( L, narg, nres, 0 ) != 0 )
+   {
+      luaL_error(L, 
+                 "error calling '%s' : '%s'",
+                  luaFunction, 
+                  lua_tostring(L,-1));
+   }
+ 
+
+   // extract parameters from the call
+   j = -nres-1;
+   for( i = 0; i <nres; i++ ) 
+   {
+      j +=1;
+      switch( *resultsFormat++ )
+      {
+	case 'b':
+          *va_arg(v1, int *) = lua_toboolean(L,j);
+          break;
+       
+        case 'd':
+          *va_arg(v1, NUMBER_TYPE *) = lua_tonumber(L,j);
+          break;
+
+       case 'i':
+
+	 *va_arg( v1, int *) = lua_tointeger(L,j);
+	 break;
+
+       case 's':
+	  *va_arg(v1, const char **) = lua_tostring( L,j);
+	  break;
+
+       case 'l':
+         if( lua_islightuserdata(L,j) == 0 )
+	 {
+           luaL_error(L,"Bad option in extract parameters s case\r\n" );
+	 }
+	 *va_arg(v1, const void **) = lua_topointer(L,j);
+	 break;
+
+	default:
+          luaL_error(L,"Bad option in extract parameters \r\n" );
+		  
+     }
+     
+   }
+ 
+   va_end(v1);
+ 
+}
+
+void extractParameters( lua_State *L, char *format, ... )
+{
+   int     j;
+   int     i;
+   va_list v1;
+   int     argNumber;
+
+   va_start( v1, format );
+
+   argNumber = strlen( format );
+
+    j = -argNumber-1;
+   for( i = 0; i < argNumber; i++ ) 
+   {
+      j += 1;
+      switch( *format++ )
+      {
+	case 'b':
+           *va_arg(v1, int *) = lua_toboolean(L,j);
+          break;
+       
+        case 'd':
+
+          *va_arg(v1, NUMBER_TYPE *) = lua_tonumber(L,j);
+          break;
+
+       case 'i':
+	 *va_arg( v1, int *) = lua_tointeger(L,j);
+	 break;
+
+       case 's':
+	  *va_arg(v1, const char **) = lua_tostring( L,j);
+	  break;
+      
+        case 't': // table is a place holder in extraction process
+           break;
+
+       case 'l':
+         if( lua_islightuserdata(L,j) == 0 )
+	 {
+           luaL_error(L,"Bad option in extract parameters s case\r\n" );
+	 }
+	 *va_arg(v1, const void **) = lua_topointer(L,j);
+	 break;
+
+	default:
+          luaL_error(L,"Bad option in extract parameters \r\n" );
+		  
+     }
+   
+   }
+   va_end(v1);   
+}
+
+void pushParameters( lua_State *L, char *format, ... )
+{
+   int     i;
+   va_list v1;
+   int     argNumber;
+
+   va_start( v1, format );
+
+   argNumber = strlen( format );
+
+   luaL_checkstack(L,argNumber,
+        "pushParameters .. on to stack space \r\n");
+   for( i = 0; i < argNumber; i++ ) 
+   {
+     switch( *format++ )
+     {
+        case 'b':
+          lua_pushboolean(L,va_arg(v1,int));
+          break;        
+
+        case 'd':
+	  lua_pushnumber(L,va_arg(v1,NUMBER_TYPE ));
+          break;
+
+	case 'i':
+            lua_pushinteger(L,va_arg(v1,int));
+	    break;
+
+	case 's':
+	    lua_pushstring(L,va_arg(v1, char*));
+	    break;
+
+	case 'l':
+            lua_pushlightuserdata(L,va_arg(v1, void *));
+	    break;
+
+	default:
+	    luaL_error(L,"Bad option in extract parameters l case \r\n" );
+		  
+    }
+   
+   }
+   va_end(v1);
+      
+}
+
+

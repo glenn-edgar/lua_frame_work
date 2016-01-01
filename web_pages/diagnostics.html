@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"/>
+		<title>Diagnostic Tools</title>
+		<link type="text/css" href="themes/base/ui.all.css" rel="stylesheet"/>
+		<link type="text/css" href="css/indyme.css" rel="stylesheet"/>
+		<script type="text/javascript" src="jquery-1.3.2.min.js"></script>	
+		<script type="text/javascript" src="jquery-ui-1.7.custom.min.js"></script>
+		<script type="text/javascript" src="javaScript/diagnostics.js"></script>
+		<script type="text/javascript" src="javaScript/indyme_utils.js"></script>
+		<script type="text/javascript" src="javaScript/json2.js"></script>
+		<script type="text/javascript" src="javaScript/select_support.js"></script>
+		<script type="text/javascript" src="javaScript/table_handlers.js"></script>
+                <script type="text/javascript" src="/javaScript/maskinput.js"></script>
+                <script type="text/javascript" src="/javaScript/inputHandlers.js"></script>
+	</head>
+	
+	<body class="main">
+		
+		<div id="row-0">
+			<table width=100% cellspacing=0 cellpadding=20 class="banner">
+				<tr>
+					<td>
+						<table id="table-header" width=100% cellspacing=0 cellpadding=2>
+							<tr>
+								<td width=5></td>
+								<td width=5></td>
+								<td><label>Diagnostic Tools</label></td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+		</div>
+		
+		<div id="tabs" class="tab">
+			<ul>
+				<li><a href="#tabs-3" class="tabBold">Set/Clear Input</a></li>
+				<li><a href="#tabs-4" class="tabBold">Set/Clear Alarm</a></li>	
+				<li><a href="#tabs-2" class="tabBold">Generate Audio Page</a></li>
+                                <li><a href="#tabs-1" class="tabBold">Generate Text Page</a></li>
+				<li><a href="#tabs-6" class="tabBold">Pager Coverage Test</a></li>
+				<li><a href="#tabs-7" class="tabBold">QuickLink Test</a></li>
+			</ul>
+			
+			<div id="tabs-1">
+				<br>
+				<table cellspacing=0>
+					<tr>
+						<td width=20> </td>
+						<td><b>Text Pager:</b></td>
+						<td width=20></td>
+						<td><b>Text Message:</b></td>
+						<td width=2> </td>
+						<td></td>
+					</tr>
+					
+					<tr>
+						<td height=30 width=20> </td>
+						<td><select id="textPage1"></select></td>
+						<td width=20> </td>
+						<td><input type=text id="textPageInput1" size=40></td>
+						<td width=2> </td>
+						<td valign=top><button id="button1">Send</button></td>
+					</tr>
+				</table>
+				<br>
+			</div>
+			
+			<div id="tabs-2">
+				<br>
+				<table cellspacing=0>
+					<tr>
+						<td width=20></td>
+						<td><label><b>Audio Pager:</b></label></td>
+						<td width=20></td>
+						<td><label><b>Audio Message:</b></label></td>
+						<td width=2></td>
+						<td></td>
+					</tr>
+					
+					<tr>
+						<td height=30 width=20></td>
+						<td><select id="audioPage1"></select></td>
+						<td width=20></td>
+						<td><select id="waveSelect1" style="width:160px"></select></td>
+						<td width=2></td>
+						<td valign=top><button id="button2">Send</button></td>
+					</tr>
+				</table>
+				<br>
+			</div>
+			
+			<div id="tabs-3">
+				<br>
+				<table cellspacing=0>
+					<tr>
+						<td width=20></td>
+						<td><label><b>Input:</b></label></td>
+						<td width=20></td>
+						<td width=130><label><b>Status:</b></label></td>
+						<td></td>
+						<td width=2></td>
+						<td></td>
+					</tr>
+					
+					<tr>
+						<td height=30 width=20></td>
+						<td><select id="input1"></select></td>
+						<td width=20></td>
+						<td width=130><label id="inputStatus1"></label></td>
+						<td valign=top><button id="button3">Set Input</button></td>
+						<td width=2></td>
+						<td valign=top><button id="button4">Clear Input</button></td>
+					</tr>
+				</table>
+				<br>
+			</div>
+			
+			<div id="tabs-4">
+				<br>
+				<table cellspacing=0>
+					<tr>
+						<td width=20></td>
+						<td><label><b>Alarm:</b></label></td>
+						<td width=20></td>
+						<td width="130"><label><b>Status:</b></label></td>
+						<td></td>
+						<td width=2></td>
+						<td></td>
+					</tr>
+					
+					<tr>
+						<td height=30 width=20></td>
+						<td><select id="alarm1"></select></td>
+						<td width=20></td>
+						<td width=130><label id="alarmStatus1"></label></td>
+						<td valign=top><button id="button5">Set Alarm</button></td>
+						<td width=2></td>
+						<td valign=top><button id="button6">Clear Alarm</button></td>
+					</tr>
+				</table>
+				<br>
+			</div>
+		
+			<div id="tabs-6">
+				<br>
+				<table cellspacing=0>
+					<tr>
+						<td width=20></td>
+						<td><label><b>Text Pager:</b></label></td>
+						<td width=20></td>
+						<td><label for="RepeatTime"><b>Repeat Time:</b></label></td>
+					</tr>
+					
+					<tr>
+						<td height=30 width=20></td>
+						<td><select id="textPage2"></select></td>
+						<td width=20></td>
+						<td>
+							<select id="Repeat_Time">
+								<option value=5>5 seconds</option>
+								<option value=10>10 seconds</option>
+								<option value=15>15 seconds</option>
+								<option value=20>20 seconds</option>
+								<option value=25>25 seconds</option>
+								<option value=30>30 seconds</option>
+							</select>
+						</td>
+					</tr>
+				</table>
+				
+				<br>
+				
+				<table cellspacing=0>
+					<tr>
+						<td width=20></td>
+						<td><label><b>Test Message:</b></label><td>
+						<td width=20></td>
+						<td width=140><label><b>Status:</b></td>
+						<td width=20></td>
+						<td></td>
+						<td width=2></td>
+						<td></td>
+					</tr>
+					
+					<tr>
+						<td height=30 width=20></td>
+						<td><input type=text id="textPageInput2" size=40></td>
+						<td width=20></td>
+						<td width = 140><label  id="coverageStatus1"></label></td>
+						<td width=20></td>
+						<td valign=top><button id="button7" style="width:80px">Start Test</button></td>
+						<td width=2></td>
+						<td valign=top><button id="button8" style="width:80px">Stop Test</button></td>
+					</tr>
+				</table>
+				
+				<br>
+			</div>
+			<div id="tabs-7">
+				<br>
+				<table cellspacing=0>
+					
+					<tr>
+						<td height=30 width=20></td>
+                                                <td><label>Enter Terminal Id </label></td>
+						<td width=20></td>
+						<td><input type=text id="termId" size=15></td>
+						<td width=20></td>
+						<td width=60><label >Enter Key</label></td>
+						<td><input type=text id="keyId" size=15></td>
+						<td width=20></td>
+						<td valign=top><button id="button9">Send</button></td>
+					</tr>
+				</table>
+				<br>
+			</div>	
+		</div>
+	</body>
+</html>

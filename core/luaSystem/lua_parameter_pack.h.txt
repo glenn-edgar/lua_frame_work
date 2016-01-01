@@ -1,0 +1,61 @@
+/*
+**
+**
+** Copyright 2008 Onyx Engineering
+** This file is licensed MIT
+** File: cf_assert.h
+**
+**
+**
+**
+**
+**
+*/
+
+
+#ifndef _LUA_PARAMETER_PACK_H_
+#define _LUA_PARAMETER_PACK_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "lua.h"
+
+/* 
+**
+Recognized format parameters
+'b'  --> boolean
+'d'  --> NUMBER_TYPE  -- could be int or double default double
+'i'  --> integer
+'s'  --> string
+'l'  --> light user data -- pointers 
+
+**
+**
+*/
+
+     
+void extractParameters( lua_State *L, char *format, ... );
+
+void pushParameters( lua_State *L, char *format,  ... );
+
+void callLuaFunction( lua_State *L, 
+                      char *luaFunction, 
+                      char *inputFormat,
+                      char *resultsFormat,
+                      ... );
+
+void callPackageFunction( lua_State *L, 
+                          char *package,
+                          char *luaFunction, 
+                          char *inputFormat,
+                          char *resultsFormat,
+                          ... );
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif
+

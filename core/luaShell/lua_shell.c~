@@ -1,0 +1,434 @@
+/*
+**
+**
+** Copyright 2008 Onyx Engineering
+** This file is licensed MIT
+**
+**
+**
+**  File: lua_shell.c
+**  The purpose of this file is handle the command line
+**  processing and pass results to lua the lua shell interfaces
+**  in lua_setup.c
+**
+**
+**
+*/ 
+
+#include <unistd.h>
+#include <stdlib.h>
+#include <curses.h>
+#include <string.h>
+
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
+
+#include "ledit_vt100.h"
+#include "termHandler.h"
+
+
+
+
+#define LUA_HEAP_SIZE		  10000000
+
+// script buffer size of 30 X 80 
+#define SCRIPT_BUFFER_SIZE        32000
+
+
+
+#define ACCUMULATE_START    "<ACCUM>"
+#define ACCUMULATE_END      "<\\ACCUM>"
+#define SHELL_START        "<SHELL>"
+#define SHELL_END          "<\\SHELL>"
+
+
+#define LINE_BUFFER_SIZE 10000
+
+typedef enum
+{
+  NORMAL_MODE          = 0,
+  SHELL_MODE           = 1, 
+  ACCUMULATE_MODE      = 2, 
+  SKIP_LINE_MODE       = 3,
+  END_ACCUMULATE_MODE  = 4, 
+}LINE_COMMAND;
+
+
+
+
+static unsigned normalMode;
+static unsigned shellMode;
+static unsigned accumulateMode;
+
+static const char *lineFeed = "\r\n";
+static int       accumulateLevel;
+static char	 accumulateBuffer[SCRIPT_BUFFER_SIZE];
+
+static int batchMode = 0;
+static int shellFlag = 0;
+static   char lineBuffer[ LINE_BUFFER_SIZE ];
+
+extern int lua_lock( lua_State *L);
+extern int lua_unlock( lua_State *L);
+
+
+static LINE_COMMAND scanForLineCommands(unsigned length, char *data);
+
+static unsigned compareString(const char *data1, const char *data2);
+
+
+static void processShellLine(lua_State *L ,unsigned length, char *data);
+
+void callPackageFunction( lua_State *L, 
+                          char *package,
+                          char *luaFunction, 
+                          char *inputFormat,
+                          char *resultsFormat,
+                          ... );
+
+
+static void     processLines( lua_State *L, char *buffer );
+
+static void generatePrompt( void );
+static void executeLuaString( lua_State *L, char *commandString );
+static void initializeShell(void);
+
+
+static int to_lua( lua_State *L )
+{
+   shellFlag = 0;
+   return 0;
+}
+
+static int to_shell( lua_State *L )
+{
+   shellFlag = 1;
+   return 0;
+}
+
+static int lua_batch( lua_State *L )
+{
+      batchMode = 1;
+      return 0;
+}
+
+
+/*
+**
+**  Global Entry to key board text
+**
+**
+**
+**
+**
+*/
+
+int processCommandMode( lua_State *L )
+{	
+
+ 
+  
+     initializeShell();
+     while(1)
+     {
+        if( batchMode != 0 )
+        {
+           printf("batch mode is enabled --- terminating \n");
+           exit(0);
+        }
+        memset(lineBuffer,0,sizeof(lineBuffer));
+        generatePrompt();
+        initializeTerminal();
+        line_edit(lineBuffer);
+        restoreTerminal();
+        if( lineBuffer[0] != 0 )
+        {
+           processShellLine( L,
+               strlen(lineBuffer) + 1,lineBuffer);
+        }
+     }
+
+     return 0;
+}
+
+
+
+static void initializeShell(void)
+{
+     normalMode = 1;
+     shellMode = 0;	
+     accumulateMode = 0;
+     accumulateBuffer[0] = 0;
+     accumulateLevel = 0;
+     historyinit();
+  
+ 
+}
+
+static void processShellLine( lua_State *L, unsigned length, char *data)
+{    
+     LINE_COMMAND lineCommand;
+     lineCommand = scanForLineCommands(length, data);
+     switch(lineCommand)
+     {
+       case NORMAL_MODE:
+       // insure null terminated string
+	  data[length - 1] = 0;
+	  processLines(L,data);
+
+	  break;
+
+       case END_ACCUMULATE_MODE:
+	    processLines(L,accumulateBuffer); // process accumulated buffer
+	  break;
+   
+       case ACCUMULATE_MODE:
+	  data[length - 1] = 0;
+	  strcat(accumulateBuffer, data);
+	  strcat(accumulateBuffer, lineFeed);
+	  break;				      // do nothing right now
+
+       case SKIP_LINE_MODE:
+	  break;
+
+
+
+       default:
+         ; // do nothing right now
+     }
+}
+
+static LINE_COMMAND scanForLineCommands(unsigned length, char *data)
+{	
+     LINE_COMMAND returnValue;
+     
+    
+     returnValue = NORMAL_MODE;
+
+     // accumulate mode
+     if( accumulateLevel > 0)
+     {
+       returnValue = ACCUMULATE_MODE;
+       if( length > strlen(ACCUMULATE_START) )
+       {
+          if( compareString(data,ACCUMULATE_START ) != 0 )
+          {
+            accumulateLevel +=1;
+            returnValue = SKIP_LINE_MODE;
+          }
+       }    
+       if( length > strlen(ACCUMULATE_END) )
+       {
+          if( compareString(data,ACCUMULATE_END ) != 0 )
+          {
+            accumulateLevel -=1;
+            if( accumulateLevel == 0 ) 
+            {
+              returnValue = END_ACCUMULATE_MODE;
+              accumulateMode = 0;
+            }
+            else
+            {
+              returnValue = SKIP_LINE_MODE;
+            }
+          }
+       }    
+       goto done;
+      }
+      
+
+        // normal mode
+       if( length > strlen(ACCUMULATE_START) )
+       {
+          if( compareString(data,ACCUMULATE_START ) != 0 )
+          {
+            accumulateLevel +=1;
+            returnValue = SKIP_LINE_MODE;
+            shellMode = 1;
+            normalMode = 0;
+            accumulateMode = 1;
+            goto done;
+          }
+       }    
+
+ 
+        
+
+
+
+done:
+      
+      return returnValue;
+}
+
+static unsigned compareString(const char *data1, const char *data2)
+{	
+     unsigned     length;
+     unsigned	     index;
+     unsigned	     returnValue;
+     returnValue = 1;
+     length = strlen(data2);
+     for(index = 0; index < length; index++)
+     {
+      if(*data1++ != *data2++)
+      {   returnValue = 0;
+	       break;
+      }
+     }
+     return returnValue;
+}
+
+
+
+static void processLines( lua_State *L, char *buffer )
+{	
+     lua_lock(L);
+
+
+     if( shellFlag == 0 )
+     {
+        executeLuaString(L, buffer );
+     }
+     else
+     {
+         callPackageFunction( L , "command_shell","exec","s","",buffer);
+                     
+     }
+      // command executed -->reset input buffer
+      buffer[0] = 0;
+      lua_unlock(L); 
+}
+ 
+
+static void     generatePrompt( void )
+{
+  if( accumulateMode != 0 )
+  {
+    ; // no command
+  }
+  else
+  {
+     if( shellFlag == 0 )
+     {
+        printf("ENTER LUA COMMAND: \r\n");
+     }
+     else
+     {
+        printf("ENTER SHELL COMMAND: \r\n");
+     }
+  }
+}
+
+
+static void executeLuaString( lua_State *L, char *commandString )
+{
+   int error;
+
+   error = luaL_loadbuffer(L,commandString,strlen(commandString),"line" );
+ 
+   if( error == 0 )
+   {
+ 
+     error = lua_pcall( L, 0,0,0 );
+ 
+   }
+   if( error )
+   {
+
+       printf("Error --> %s \r\n",lua_tostring(L,-1));
+       lua_pop(L,1);
+   }
+}
+
+/*
+**
+**
+**  this is the shell handler package
+**
+**
+**
+*/
+
+static  int shell_executeFile( lua_State *L )
+{
+  FILE *stream;
+  char *buffer;
+  char *returnValue;
+  char *fileName;
+
+  fileName = (char *)lua_tostring(L,1);
+  stream = fopen( fileName, "r");
+  if( stream != NULL )
+  {
+    lua_pushboolean(L,1);
+    buffer = malloc( 1024 );
+    returnValue = buffer;
+    while( returnValue != NULL )
+    {
+      returnValue = fgets( buffer, 1024, stream );
+      if( returnValue != NULL )
+      {
+        callPackageFunction( L , "command_shell","exec","s","",buffer); 
+      }
+    }
+    if( buffer != NULL )
+    {
+        free( buffer );
+    }
+  }
+  else
+  {
+    lua_pushboolean(L,0);
+  }
+  return 1;
+}
+  
+        /* Create a new SID for the child process */
+        //setsid();
+
+
+static int shell_help( lua_State *L )
+{
+  printf("commands for shell package \n");
+  printf(".batch()                --- sets batch mode which terminates command mode \n");
+  printf(".to_lua()                -- moves shell processing to lua mode \n");
+  printf(".to_shell()              -- moves shell processing to shell mode \n");
+  printf(".executeFile( fileName ) -- processes a script file in shell mode \n");
+  printf(".help()                  -- prints out defined commands \n");
+  return 0;
+}
+
+
+static int description( lua_State *L )
+{
+  batchMode = 0;
+  lua_pushstring(L,"C level shell commands");
+  return 1;
+}
+
+
+
+static const struct luaL_reg  lua_terminal[] = 
+{
+   {"batch",              lua_batch },
+   {"to_lua",             to_lua   },
+   {"to_shell",           to_shell  },
+   {"executeFile",        shell_executeFile },
+   {"description",        description },
+   {"help",               shell_help },
+   { NULL, NULL },      
+   
+};
+
+
+
+int shell_load( lua_State * L )
+{
+   
+
+
+   luaL_openlib(L,"shell",lua_terminal,0 );
+   return 1;
+}
+           

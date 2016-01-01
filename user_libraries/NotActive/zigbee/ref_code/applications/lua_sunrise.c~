@@ -1,0 +1,98 @@
+/*
+**
+** File: luaSunsetSunRise.c
+** Lua interface to the file sunsetSunRise.c
+**
+**
+**
+**
+**
+**
+**
+*/
+
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
+#include <time.h>
+#include <sys/time.h>
+#include <dlfcn.h>
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+
+#include "sunrise.h"
+#include "sunPosition.h"
+#include "lua_sunrise.h"
+
+static int lua_sunposition ( lua_State *L )
+{
+  double latitude;         
+  double longitude;       
+  double tzone;
+  double elevation;
+  double elevation_max;
+  double azmiuth;
+     
+
+  latitude  =  lua_tonumber(L, 1 );
+  longitude =  lua_tonumber(L, 2 );
+  calculateSunPosition( latitude, longitude, &elevation, &elevation_max, &azmiuth );
+  lua_pushnumber(L,elevation );
+  lua_pushnumber(L,elevation_max );
+  lua_pushnumber(L,azmiuth );
+  return 3;
+}
+
+
+static int lua_sunrise( lua_State *L )
+{
+  double latitude;         
+  double longitude;       
+  double sunrise;
+  double sunset;
+     
+
+  latitude  =  lua_tonumber(L, 1 );
+  longitude =  lua_tonumber(L, 2 );
+ 
+   calculate_sunrise_sunset( latitude, longitude, &sunrise, &sunset );
+  lua_pushnumber(L,sunrise );
+  lua_pushnumber(L,sunset );
+  return 2;
+}
+
+
+static int lua_sunHelp( lua_State *L )
+{
+  printf("list of sunFunctions commands \r\n\r\n");
+  printf(".sunrise( latitude, longitude ) -- returns \r\n");
+  printf("       sunrise, sunset in hours \r\n");   
+  printf(".sunposition(latitude, longitude ) -- returns \n");
+  printf("          elevation, elevation_max, azimuth ");
+  printf(".help()    -- dumps out commands \r\n\r\n");
+  return 0;
+}   
+
+
+
+static const struct luaL_reg  lua_sunBuffer[] = 
+{
+   {"sunrise",       lua_sunrise          },
+   {"sunposition",    lua_sunposition      },
+   {"help",          lua_sunHelp          },
+   { NULL, NULL },      
+   
+};
+
+
+int lua_loadSunrise( lua_State *L )
+{
+   
+   luaL_openlib(L,"sunFunctions",lua_sunBuffer,0 );
+   return 1;
+}

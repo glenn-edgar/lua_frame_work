@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"/>
+		<title>Canned Message Setup</title>
+		<link type="text/css" href="/themes/base/ui.all.css" rel="stylesheet"/>
+		<link type="text/css" href="/css/indyme.css" rel="stylesheet"/>
+		<script type="text/javascript" src="/jquery-1.3.2.min.js"></script>	
+		<script type="text/javascript" src="/jquery-ui-1.7.custom.min.js"></script>
+		<script type="text/javascript" src="/javaScript/can_messages.js"></script>
+		<script type="text/javascript" src="/javaScript/inputHandlers.js"></script>
+		<script type="text/javascript" src="/javaScript/json2.js"></script>
+		<script type="text/javascript" src="/javaScript/select_support.js"></script>
+		<script type="text/javascript" src="/javaScript/table_handlers.js"></script>
+	</head>
+	
+	<body class="main">
+		
+		<form action="editScriptStore.lua" method="post">
+			
+			<div id="row-0">
+				<!--#include virtual="/advanced/banner.html"-->
+										<label>Canned Message Setup</label>
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+				
+				<!--#include virtual="/advanced/function.html"-->
+				
+				<div id="tabs" class="tab">
+					<ul>
+						<li><a href="#tabs-blank">1-100</a></li>
+						<li><a href="#tabs-blank">101-200</a></li>
+						<li><a href="#tabs-blank">201-300</a></li>
+					</ul>
+				</div>
+
+				<div id="tabs-blank">
+					<table id="table-0" width=100% cellspacing=0 cellpadding=5 border=0 class="tbl">
+						<tr align=center>
+							<td width=30><input type=checkbox id="TOP_CH-0"></td>
+							<td width=1></td>
+							<td width=100></td>
+							<td width=150><b>MESSAGE NUMBER</b></td>
+							<td width=300><b>MESSAGE TEXT</b></td>
+							<td></td>
+						</tr>
+					</table>
+				</div>
+			</div>	
+
+	        <!--#include virtual="/advanced/ebanner.html"-->
+										<label id="editTitle"></label>
+					               	</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+				
+				<br><br>
+				
+				<table>
+					<tr>
+						<td width=20></td>
+						<td><label><b>Message Number:</b></label></td>
+						<td width=20></td>
+						<td><label><b>Message Text:</b></label>
+					</tr>
+					
+					<tr>
+						<td width=20></td>
+						<td><input type=text id="CAN_NUMBER">
+						<td width=20></td>
+						<td><input type=text id="CAN_MESSAGE">
+					</tr>
+				</table>
+			</div>
+		</form>
+		<!--#include virtual="/advanced/table_handler.html"-->
+	</body>
+</html>

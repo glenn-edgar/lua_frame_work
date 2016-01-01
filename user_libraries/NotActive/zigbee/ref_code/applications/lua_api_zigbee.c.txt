@@ -1,0 +1,990 @@
+/*
+**
+** File: lua_api_zigbee.c
+** Adds low level linux serial support to lua
+**
+**
+**
+**
+*/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <termios.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include "lua_api_zigbee.h"
+
+/*
+      Format strings for parsing AT Data
+      n -- no parameters
+      b -- byte parameter
+      s -- short parameter
+      i -- integer 32 bit parameter
+      l -- long 64 bit parameter
+      k -- 128 bit DES key
+      t  -- node identifier ( up to 20 bytes)
+      d  -- node discovery reply
+            network address              2 bytes
+            destination address          8 byte
+            network identifier string    0 terminated
+             parent network address       2 bytes
+             device type                  2 bytes
+             status                       1 byte
+             profile Id                   2 bytes
+             manufacture id               2 bytes
+     h -- DN Message
+             network address     2 bytes
+             destination address 8 bytes
+ 
+
+*/
+
+
+unsigned char frameId = 1;
+void sendMessage( int handle, int length , char *message );
+ 
+
+static int grab_short( unsigned char *message );
+static int grab_integer( unsigned char *message );
+static int parse_ND_data( lua_State *L, unsigned char *message, size_t messageLength );
+static int  parse_DN_data( lua_State *L, unsigned char *message, size_t messageLength );
+
+
+static void  packInteger( char *messagePtr, int value);
+static void  packShort(   char *messagePtr, int value);
+
+
+
+
+
+
+
+static int  parseModemStatus( lua_State *L )
+{
+   unsigned   length;
+   char       *string;
+   int        valid;
+
+   valid  = 1;
+   string = (char *)lua_tolstring( L, 1, &length );
+   if( length != 2 )
+   {
+     valid = 0;
+   }
+   if( (unsigned char )string[0 ] != 0x8a )
+   {
+     valid = 0;
+   }
+   lua_pushboolean(L,valid);
+   lua_pushinteger(L,(int)string[1] );   
+   return 2;
+}
+
+static int   parseATResponse( lua_State *L )
+{
+   size_t  messageLength;
+   char *message;
+   unsigned char rxFrame;
+   char AT_command[3];
+   int  status;
+   int  returnValue;
+
+   memset( AT_command,0,sizeof(AT_command));
+
+  
+   message = (char *)lua_tolstring ( L, 1, &messageLength);
+   
+   message++;  // skip 0x88
+
+   rxFrame = (unsigned char) (*message++);
+   lua_pushinteger(L, rxFrame);
+
+   AT_command[0 ] = *message++;
+   AT_command[1] = *message++;
+   lua_pushstring(L,AT_command);
+
+   status = *message++;
+   lua_pushinteger(L,status);
+   lua_pushlstring( L, message, messageLength-5);
+   returnValue = 4;
+
+     return returnValue;
+}
+
+static int   parseATRemoteResponse( lua_State *L )
+{
+   size_t  messageLength;
+   char *message;
+   unsigned char rxFrame;
+   int  da_h; // destination address high
+   int  da_l; // destination address low
+   int  na;   // network address
+   char AT_command[3];
+   int  status;
+   int  returnValue;
+
+   memset( AT_command,0,sizeof(AT_command));
+
+  
+   message = (char *)lua_tolstring ( L, 1, &messageLength);
+   
+   message++;  // skip 0x97
+  
+   rxFrame = (unsigned char) (*message++);
+   lua_pushinteger(L, rxFrame);
+
+
+   da_h  = ( *message++ & 0xff );
+   da_h = ( da_h << 8 ) | (*message++ & 0xff );
+   da_h = ( da_h << 8 ) | (*message++ & 0xff );
+   da_h = ( da_h << 8 ) | (*message++ & 0xff );
+   lua_pushinteger(L, da_h);
+
+   da_l  = ( *message++ & 0xff );
+   da_l = ( da_l << 8 ) | (*message++ & 0xff );
+   da_l = ( da_l << 8 ) | (*message++ & 0xff );
+   da_l = ( da_l << 8 ) | (*message++ & 0xff );
+   lua_pushinteger(L, da_l);
+ 
+
+    na = ( *message++ & 0xff);
+    na = ( na << 8 ) | (*message++ & 0xff );
+    lua_pushinteger(L, na);
+ 
+
+    AT_command[0 ] = *message++;
+   AT_command[1] = *message++;
+   lua_pushstring(L,AT_command);
+
+   status = *message++;
+   lua_pushinteger(L,status);
+   lua_pushlstring( L, message, messageLength-15);
+   returnValue = 7;
+
+   return returnValue;
+}
+
+static int parseATData( lua_State *L )
+{
+  int returnValue;
+  char *format;
+  unsigned char *message;
+  int value;
+  size_t  messageLength;
+  
+  format = (char *)lua_tostring(L,1);
+  message = (unsigned char *)lua_tolstring ( L, 2, &messageLength);
+  value = 0;
+  returnValue = 0;
+   switch( *format )
+   {
+      case 'b':
+       
+        value = ( *message++ & 0xff);
+        lua_pushinteger(L, value);
+       returnValue = 1;
+        break;
+
+      case 's':
+        value = ( *message++ & 0xff);
+         value = ( value << 8 ) | (*message++ & 0xff );
+        lua_pushinteger(L, value);
+         returnValue = 1;
+         break;
+ 
+      case 'i':
+        value  = ( *message++ & 0xff );
+         value = ( value << 8 ) | (*message++ & 0xff );
+         value = ( value << 8 ) | (*message++ & 0xff );
+         value = ( value << 8 ) | (*message++ & 0xff );
+         lua_pushinteger(L, value);
+         returnValue = 1;
+         break;
+
+       case 'l':
+       value  = ( *message++ & 0xff );
+        value = ( value << 8 ) | (*message++ & 0xff );
+        value = ( value << 8 ) | (*message++ & 0xff );
+        value = ( value << 8 ) | (*message++ & 0xff );
+
+        lua_pushinteger(L, value);
+       
+        value  = ( *message++ & 0xff );
+        value = ( value << 8 ) | (*message++ & 0xff );
+        value = ( value << 8 ) | (*message++ & 0xff );
+        value = ( value << 8 ) | (*message++ & 0xff );
+
+        lua_pushinteger(L, value);
+ 
+        returnValue = 2;
+        break;
+
+
+
+       case 't':
+         lua_pushlstring(L,(char *)message, messageLength );
+         returnValue = 1;
+          break;
+
+       case 'd':
+          returnValue = parse_ND_data( L, message, messageLength );
+          break;
+
+       case 'h':
+          returnValue = parse_DN_data( L, message, messageLength );
+          break;
+          
+   }
+   return returnValue;
+
+
+}
+
+
+
+static int   parseReceivePacket( lua_State *L )
+{
+   size_t  messageLength;
+   char *message;
+   int  da_h; // destination address high
+   int  da_l; // destination address low
+   int  na;   // network address
+   int  options;
+   int  returnValue;
+
+    
+   message = (char *)lua_tolstring ( L, 1, &messageLength);
+   
+   message++;  // skip 0x90
+
+   da_h  = ( *message++ & 0xff );
+   da_h = ( da_h << 8 ) | (*message++ & 0xff );
+   da_h = ( da_h << 8 ) | (*message++ & 0xff );
+   da_h = ( da_h << 8 ) | (*message++ & 0xff );
+   lua_pushinteger(L, da_h);
+
+   da_l  = ( *message++ & 0xff );
+   da_l = ( da_l << 8 ) | (*message++ & 0xff );
+   da_l = ( da_l << 8 ) | (*message++ & 0xff );
+   da_l = ( da_l << 8 ) | (*message++ & 0xff );
+   lua_pushinteger(L, da_l);
+ 
+
+    na = ( *message++ & 0xff);
+    na = ( na << 8 ) | (*message++ & 0xff );
+    lua_pushinteger(L, na);
+ 
+
+    options = *message++;
+    lua_pushinteger(L, options);
+
+    lua_pushlstring( L, message, messageLength-12);
+    returnValue = 5;
+
+     return returnValue;
+}
+
+
+static int   parseExplicitRx( lua_State *L )
+{
+   unsigned char     *message;
+   unsigned messageLength;
+   int      temp;
+
+   message = (unsigned char *)lua_tolstring ( L, 1, &messageLength);
+   message++; // skip 0x91
+   
+   temp = grab_integer( message);
+   lua_pushinteger(L, temp);  // destinatin high
+   message += 4;
+
+   temp = grab_integer( message);
+   lua_pushinteger(L, temp);  // destination low
+   message += 4;
+
+   temp = grab_short( message);  // network address
+   lua_pushinteger(L,temp );
+   message += 2;
+
+   temp = (*message++ & 0xff);  // source end point
+   lua_pushinteger(L,temp );  
+ 
+
+   temp = (*message++ & 0xff);  // destination end point
+   lua_pushinteger(L,temp );  
+
+   temp = grab_short( message);  // cluster id  
+   lua_pushinteger(L,temp);
+   message += 2;
+
+   temp = grab_short( message);  // profile id
+   lua_pushinteger(L,temp );  
+   message += 2;
+ 
+   temp = (*message++ & 0xff);  // options
+   lua_pushinteger(L,temp );
+
+
+  lua_pushlstring( L,( char*) message, messageLength-18);
+
+
+   return 9;
+}
+
+static int   parseRxIndicator( lua_State *L )
+{
+
+   return 0;
+}
+
+static int   parseSensorRead( lua_State *L )
+{
+
+   return 0;
+}
+
+static int   parseNodeId( lua_State *L )
+{
+   unsigned char     *message;
+   unsigned messageLength;
+   int      temp;
+
+   message = (unsigned char *)lua_tolstring ( L, 1, &messageLength);
+
+   message++; // skip 0x95
+
+   temp = grab_integer( message);
+   lua_pushinteger(L, temp);  // remote high
+   message += 4;
+
+   temp = grab_integer( message);
+   lua_pushinteger(L, temp);  // remote low
+   message += 4;
+
+   temp = grab_short( message);  // network address
+   lua_pushinteger(L,temp );  
+   message += 2;
+
+
+   temp = ( *message++ & 0xff); // rx option
+   lua_pushinteger(L,temp);
+
+
+   temp = grab_short( message);  // network address
+   lua_pushinteger(L,temp );  
+   message += 2;
+
+
+
+   temp = grab_integer( message);
+   lua_pushinteger(L, temp);  // destination high
+   message += 4;
+
+   temp = grab_integer( message);
+   lua_pushinteger(L, temp);  // destination low
+   message += 4;
+
+
+    
+
+   lua_pushstring(L, (char *)message );  // network identifier
+   message += strlen((char *) message )+1;
+   
+   temp = grab_short( message );
+   lua_pushinteger( L, temp );  // parent network address
+   message += 2;
+   
+   temp = grab_short( message );
+   lua_pushinteger( L, temp );  // device type
+   message += 2;
+   
+   temp = (*message++ & 0xff ); // source action
+   lua_pushinteger( L, temp );
+  
+   temp = grab_short( message );
+   lua_pushinteger( L, temp );  // profile ID
+   message += 2;
+    
+   temp = grab_short( message );
+   lua_pushinteger( L, temp );  // manufacture_id
+   message += 2;
+  
+
+
+   return 13;
+}
+
+static int parseTxStatus( lua_State *L)
+{
+  int frameId;
+  int networkAddress;
+  int txRetry;
+  int delivery;
+  int discovery;
+  char *message;
+
+  message = ( char *) lua_tostring(L,1 );
+
+  message++; // skip 8b
+  frameId = *message++;
+  networkAddress = ( *message++ & 0xff);
+  networkAddress = ( networkAddress << 8 ) | (*message++ & 0xff );
+
+  txRetry = *message++;
+  delivery = *message++;
+  discovery = *message++;
+
+  lua_pushinteger(L, frameId);
+  lua_pushinteger(L, networkAddress );
+  lua_pushinteger(L, txRetry );
+  lua_pushinteger(L, delivery );
+  lua_pushinteger(L, discovery );
+  printf("frameid %d na %d txRetry %d delivery %d discovery %d \n",
+   frameId, networkAddress, txRetry, delivery,discovery );
+  return 5;
+} 
+
+static int parseHelp( lua_State *L )
+{
+  printf("list of api message parsing commands commands \n");
+  printf("zigbee_api_parse.modemStatus( message ) \n");
+  printf("zigbee_api_parse.ATResponse( message ) \n");
+  printf("zigbee_api_parse.ATRemoteResponse( message ) \n"); 
+  printf("zigbee_api_parse.ATData( message ) \n"); 
+  printf("zigbee_api_parse.receivePacket( message ) \n");
+  printf("zigbee_api_parse.explicitRx( message ) \n");
+  printf("zigbee_api_parse.rxIndicator( message ) \n");
+  printf("zigbee_api_parse.sensorRead( message ) \n");
+  printf("zigbee_api_parse.nodeId( message ) \n" );
+  printf("zigbee_api_parse.txStatus( message) \n");
+  printf("zigbee_api_parse.help()  -- dumps out commands \n");
+  return 0;
+}   
+
+
+static const struct luaL_reg  lua_api_parse_zigbee[] = 
+{
+   {"modemStatus",      parseModemStatus      },
+   {"ATResponse",       parseATResponse       },
+   {"ATRemoteResponse", parseATRemoteResponse },
+   {"ATData",           parseATData           },
+   {"receivePacket",    parseReceivePacket },
+   {"explicitRx",       parseExplicitRx  },
+   {"rxIndicator",      parseRxIndicator },
+   {"sensorRead",       parseSensorRead  },
+   {"nodeId",           parseNodeId      },
+   {"txStatus",         parseTxStatus    },
+   {"help",             parseHelp        }, 
+   { NULL, NULL },      
+   
+};
+
+static int  txATCommand( lua_State *L )
+{
+   int   handle;
+   char *reg;
+   char *format;
+   char *string;
+   int  integer;
+   char message[256];
+   int  length;
+   unsigned  stringLength;
+ 
+
+   memset(message,0,sizeof(message) );
+   string = NULL;
+   integer = 0;
+   format = NULL;
+   handle = lua_tointeger(L,1);
+   reg    = (char *)lua_tostring(L,2);
+   if( lua_gettop (L) >= 4 )
+   {
+     format = (char *)lua_tostring(L,3);
+   }
+   message[0] = 0x8;
+   lua_pushinteger(L,frameId);
+   message[1] = frameId++;
+   if( frameId == 0 ) { frameId = 1; }
+   message[2] = reg[0];
+   message[3] = reg[1];
+
+   length = 4;
+   if( format == NULL )
+   {
+     sendMessage(handle, length ,message );
+   }
+   else
+   {
+     switch( *format )
+     {
+
+        case 'b':  // byte
+           integer =  lua_tointeger(L,4);
+           message[4] = integer & 0xff;
+           length +=1;
+           break;
+       
+       case 's': // short
+          integer = lua_tointeger(L,4);
+          message[4] = ( integer >> 8 ) &0xff;
+          message[5] = integer & 0xff;
+          length +=2;
+          break;
+
+       case 'i':  // integer
+          integer = lua_tointeger(L,4);
+          message[4] = ( integer >> 24 ) &0xff;
+          message[5] = ( integer >> 16 ) &0xff;
+          message[6] = ( integer >> 8 ) &0xff;
+          message[7] = integer & 0xff;
+          length +=4;
+          break;
+
+       case 'l': // long 64 bytes
+          integer = lua_tointeger(L,4);
+          message[4] = ( integer >> 24 ) &0xff;
+          message[5] = ( integer >> 16 ) &0xff;
+          message[6] = ( integer >> 8 ) &0xff;
+          message[7] = integer & 0xff;
+          length +=4;
+          integer = lua_tointeger(L,5);
+          message[8] = ( integer >> 24 ) &0xff;
+          message[9] = ( integer >> 16 ) &0xff;
+          message[10] = ( integer >> 8 ) &0xff;
+          message[11] = integer & 0xff;
+          length +=4;
+          break;
+
+       case 'k': // 128 bit des key
+          string = (char *)lua_tolstring(L,4,&stringLength);
+          if( stringLength > 16 )
+          {
+             stringLength = 16;
+          }
+          memcpy( &message[4],string, stringLength );
+          length += 16;
+          break;
+
+        case 'h': // destination node
+        case 't': // node id
+           string = (char *)lua_tolstring(L,4,&stringLength);
+           if( stringLength > 20 )
+           {
+               stringLength = 20;
+           }
+           strncpy(&message[4],string,20 );
+           length += stringLength;
+           break;        
+      }
+      sendMessage(handle, length ,message );
+
+  }
+
+
+   return 1;
+}
+         
+static int  txRemoteAt( lua_State *L )
+{
+   int   handle;
+   int   da_high; // destination address high
+   int   da_low;  // destination address low
+   int   na;      // network address
+   int   options;
+
+   char *reg;
+   char *format;
+   char *string;
+   int  integer;
+   char message[256];
+   int  length;
+   unsigned  stringLength;
+   char  *messagePtr;
+
+   messagePtr = message;
+   memset(message,0,sizeof(message) );
+   string = NULL;
+   integer = 0;
+   format = NULL;
+   handle = lua_tointeger(L,1);
+   da_high = lua_tointeger(L,2);
+   da_low  = lua_tointeger(L,3);
+   na      = lua_tointeger(L,4);
+   options = lua_tointeger(L,5);
+   reg    = (char *)lua_tostring(L,6);
+   if( lua_gettop (L) >= 7 )
+   {
+     format = (char *)lua_tostring(L,7);
+   }
+   lua_pushinteger(L,frameId);
+   *messagePtr++ = 0x17;
+   *messagePtr++ = frameId++;
+   if( frameId == 0 ) { frameId = 1; }
+   packInteger(messagePtr, da_high);
+   messagePtr += 4;
+   packInteger(messagePtr, da_low );
+   messagePtr += 4;
+   packShort( messagePtr, na );
+   messagePtr += 2;
+   *messagePtr++ = (options & 0x2);
+
+   *messagePtr++ = reg[0];
+   *messagePtr++ = reg[1];
+
+   length = messagePtr - message;
+   if( format == NULL )
+   {
+     sendMessage(handle, length ,message );
+   }
+   else
+   {
+     switch( *format )
+     {
+
+        case 'b':  // byte
+           integer =  lua_tointeger(L,8);
+          *messagePtr++ = integer & 0xff;
+           length +=1;
+           break;
+       
+       case 's': // short
+          integer = lua_tointeger(L,8);
+          *messagePtr++ = ( integer >> 8 ) &0xff;
+          *messagePtr++ = integer & 0xff;
+          length +=2;
+          break;
+
+       case 'i':  // integer
+          integer = lua_tointeger(L,8);
+          *messagePtr++ = ( integer >> 24 ) &0xff;
+          *messagePtr++ = ( integer >> 16 ) &0xff;
+          *messagePtr++ = ( integer >> 8 ) &0xff;
+          *messagePtr++ = integer & 0xff;
+          length +=4;
+          break;
+
+       case 'l': // long 64 bytes
+          integer = lua_tointeger(L,8);
+          *messagePtr++ = ( integer >> 24 ) &0xff;
+          *messagePtr++ = ( integer >> 16 ) &0xff;
+          *messagePtr++ = ( integer >> 8 ) &0xff;
+          *messagePtr++ = integer & 0xff;
+          length +=4;
+          integer = lua_tointeger(L,9);
+          *messagePtr++ = ( integer >> 24 ) &0xff;
+          *messagePtr++ = ( integer >> 16 ) &0xff;
+          *messagePtr++ = ( integer >> 8 ) &0xff;
+          *messagePtr++ = integer & 0xff;
+          length +=4;
+          break;
+
+       case 'k': // 128 bit des key
+          string = (char *)lua_tolstring(L,8,&stringLength);
+          if( stringLength > 16 )
+          {
+             stringLength = 16;
+          }
+          memcpy( messagePtr,string, stringLength );
+          length += 16;
+          break;
+
+        case 'h': // destination node
+        case 't': // node id
+           string = (char *)lua_tolstring(L,8,&stringLength);
+           if( stringLength > 20 )
+           {
+               stringLength = 20;
+           }
+           strncpy(messagePtr,string,20 );
+           length += stringLength;
+           break;        
+      }
+      sendMessage(handle, length ,message );
+
+  }
+
+
+   return 1;
+}
+
+static int  txPacket( lua_State *L )
+{
+   int  handle;
+   int  destinationAddress_hi;
+   int  destinationAddress_low;
+   int  networkAddress;
+   int  radius; 
+   int  options;
+   char *data;
+   unsigned  dataLength;
+
+   char *messagePtr;
+   char message[256];
+   int  length;
+  
+
+   memset(message,0,sizeof(message) );
+   handle                      = lua_tointeger(L,1);
+   destinationAddress_hi       = lua_tointeger(L,2); 
+   destinationAddress_low      = lua_tointeger(L,3);
+   networkAddress              = lua_tointeger(L,4);
+   radius                      = lua_tointeger(L,5);
+   options                     = lua_tointeger(L,6);
+   data                        = (char *)lua_tolstring(L,7,&dataLength);
+
+   // pack message
+   messagePtr = message;
+   *messagePtr++ = 0x10;
+   lua_pushinteger(L,frameId);
+   *messagePtr++ = frameId++;
+   if( frameId == 0 ) { frameId = 1; }
+   packInteger(messagePtr, destinationAddress_hi);
+   messagePtr += 4;
+   packInteger(messagePtr, destinationAddress_low );
+   messagePtr += 4;
+   packShort( messagePtr, networkAddress );
+   messagePtr += 2;
+   *messagePtr++ = ( radius & 0xff );
+   *messagePtr++ = ( options & 0x08 );
+   memcpy( messagePtr,data, dataLength);
+   messagePtr += dataLength;
+   length = messagePtr - message;
+   sendMessage(handle, length ,message ); 
+  return 1;
+}
+
+static int  txCommandFrame( lua_State *L )
+{
+   int  handle;
+   int  destinationAddress_hi;
+   int  destinationAddress_low;
+   int  networkAddress;
+   int  sourceEndPoint;
+   int  destinationEndPoint;
+   int  clusterId;
+   int  profileId;
+   int  radius;
+   char *data;
+   unsigned  dataLength;
+
+   char *messagePtr;
+   char message[256];
+   int  length;
+  
+   memset(message,0,sizeof(message) );
+   handle                      = lua_tointeger(L,1);
+   destinationAddress_hi       = lua_tointeger(L,2); 
+   destinationAddress_low      = lua_tointeger(L,3);
+   networkAddress              = lua_tointeger(L,4);
+   sourceEndPoint              = lua_tointeger(L,5);
+   destinationEndPoint         = lua_tointeger(L,6);
+   clusterId                   = lua_tointeger(L,7);
+   profileId                   = lua_tointeger(L,8);
+   radius                      = lua_tointeger(L,9);
+   data                        = (char *)lua_tolstring(L,10,&dataLength);
+
+
+   // pack message
+   messagePtr = message;
+   *messagePtr++ = 0x11;
+   lua_pushinteger(L,frameId);
+   *messagePtr++ = frameId++;
+   if( frameId == 0 ) { frameId = 1; }
+   packInteger(messagePtr, destinationAddress_hi);
+   messagePtr += 4;
+   packInteger(messagePtr, destinationAddress_low );
+   messagePtr += 4;
+   packShort( messagePtr, networkAddress );
+   messagePtr += 2;
+   *messagePtr++ = ( sourceEndPoint & 0xff );
+   *messagePtr++ = ( destinationEndPoint & 0xff );
+   packShort( messagePtr, clusterId );
+   messagePtr += 2;
+   packShort( messagePtr, profileId );
+   messagePtr += 2;
+   *messagePtr++ = ( radius & 0xff );
+   *messagePtr++ = 0;
+   memcpy( messagePtr,data, dataLength);
+   messagePtr += dataLength;
+   length = messagePtr - message;
+   sendMessage(handle, length ,message );
+  
+   return 1;
+}
+ 
+
+static int txHelp( lua_State *L )
+{
+
+  printf("zigbee_api_tx.txAT(message) \n");
+  printf("zigbee_api_tx.txremoteAt( message ) \n");    
+  printf("zigbee_api_tx.txPacket(message) \n" );
+  printf("zigbee_api_tx.txCommandFrame(message) \n");
+  printf("zigbee_api_tx.help()  -- dumps out commands \n");
+  return 0;
+}  
+
+static const struct luaL_reg  lua_api_tx_zigbee[] = 
+{
+   {"txAT",                 txATCommand           },
+   {"txremoteAt",           txRemoteAt            },
+   {"txPacket",             txPacket              },
+   {"txCommandFrame",       txCommandFrame        },
+   {"txHelp",               txHelp                }, 
+   { NULL, NULL                                 },      
+   
+};
+
+
+int lua_api_zigbee_load( lua_State *L )
+{
+   frameId = 1;
+
+   luaL_openlib(L,"zigbee_api_parse",lua_api_parse_zigbee,0 );
+   luaL_openlib(L,"zigbee_api_tx",lua_api_tx_zigbee,0 );
+   return 1;
+}
+
+/*
+**
+**
+** Static Support Modules
+**
+**
+*/
+
+void sendMessage( int handle, int length , char *message )
+{
+   char buffer[256];
+   int  index;
+   int  checkSum;
+
+   if( length <= 0 ) { return; }
+
+   memset( buffer, 0, sizeof( buffer) );
+   buffer[0] = 0x7e;
+   buffer[1] = ( length >> 8)& 0xff;
+   buffer[2] = ( length ) & 0xff;
+   checkSum = 0;
+   for( index = 3; index < length+3; index++ )
+   {
+     buffer[index] = *message;
+     checkSum += *message++;
+      
+   }
+   checkSum = checkSum & 0xff;
+   buffer[ length+3 ] =  (0xff - checkSum )&0xff;
+   write( handle, buffer, length +4 ); 
+
+}
+   
+
+
+static int parse_ND_data( lua_State *L,  unsigned char *message, size_t messageLength )
+{
+   
+   int temp;
+
+   temp = grab_short( message);  // network address
+   lua_pushinteger(L,temp );  
+   message += 2;
+
+   temp = grab_integer( message);
+   lua_pushinteger(L, temp);  // destination high
+   message += 4;
+
+   temp = grab_integer( message);
+   lua_pushinteger(L, temp);  // destination low
+   message += 4;
+
+   lua_pushstring(L, (char *)message );  // network identifier
+   message += strlen((char *) message )+1;
+   
+   temp = grab_short( message );
+   lua_pushinteger( L, temp );  // parent network address
+   message += 2;
+   
+   temp = grab_short( message );
+   lua_pushinteger( L, temp );  // device type
+   message += 2;
+   
+   temp = (*message++ & 0xff ); // status
+   lua_pushinteger( L, temp );
+  
+   temp = grab_short( message );
+   lua_pushinteger( L, temp );  // profile ID
+   message += 2;
+    
+   temp = grab_short( message );
+   lua_pushinteger( L, temp );  // manufacture_id
+   message += 2;
+  
+
+
+   return 9;
+}
+
+
+static int  parse_DN_data( lua_State *L, unsigned char *message, size_t messageLength )
+{
+  int temp;
+  
+  temp = grab_short( message);  // network address
+   lua_pushinteger(L,temp );  
+   message += 2;
+
+   temp = grab_integer( message);
+   lua_pushinteger(L, temp);  // destination high
+   message += 4;
+
+   temp = grab_integer( message);
+   lua_pushinteger(L, temp);  // destination low
+   message += 4;
+
+   return 3;
+
+
+}
+
+
+
+static int grab_short( unsigned char *message )
+{
+   int value = 0;
+
+   value = ( *message++ & 0xff);
+   value = ( value << 8 ) | (*message++ & 0xff );
+   return value;
+}
+
+
+static int grab_integer( unsigned char *message )
+{
+   int value;
+
+   value  = ( *message++ & 0xff );
+   value = ( value << 8 ) | (*message++ & 0xff );
+   value = ( value << 8 ) | (*message++ & 0xff );
+   value = ( value << 8 ) | (*message++ & 0xff );
+   
+   return value;
+}
+    
+static void  packInteger( char *messagePtr, int value)
+{
+   *messagePtr++ = (value >> 24 ) & 0xff;
+   *messagePtr++ = (value >> 16) & 0xff;
+   *messagePtr++ = (value >> 8) & 0xff;
+   *messagePtr++ = ( value ) & 0xff;
+}
+static void  packShort(   char *messagePtr, int value)
+{
+   *messagePtr++ = (value >> 8) & 0xff;
+   *messagePtr++ = ( value ) & 0xff;
+}
+
+

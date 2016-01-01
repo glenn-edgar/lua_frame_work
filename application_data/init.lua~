@@ -1,0 +1,13 @@
+---
+---
+---
+--- file: init.lua
+--- sequencer for application controller features
+---
+---
+---
+---
+---
+
+do_file("cf_auto_cmds.lua")
+do_file("cf_auto_controller_scripts.lua")

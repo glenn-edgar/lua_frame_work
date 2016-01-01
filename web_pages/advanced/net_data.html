@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"/>
+		<title>Network Setup</title>
+		<link type="text/css" href="/themes/base/ui.all.css" rel="stylesheet"/>	
+		<link type="text/css" href="/css/indyme.css" rel="stylesheet"/>
+		<script type="text/javascript" src="/jquery-1.3.2.min.js"></script>
+		<script type="text/javascript" src="/jquery-ui-1.7.custom.min.js"></script>
+		<script type="text/javascript" src="/javaScript/inputHandlers.js"></script>
+		<script type="text/javascript" src="/javaScript/json2.js"></script>
+		<script type="text/javascript" src="/javaScript/net_setup.js"></script>
+		<script type="text/javascript" src="/javaScript/table_handlers.js"></script>
+	</head>
+	
+	<body class="main">
+		
+		<form action="editScriptStore.lua" method="post">
+			
+			<div>
+				<!--#include virtual="/advanced/banner.html"-->
+										<label>Network Setup</label>
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+			</div>
+			
+			<br>
+			
+			<table>
+				<tr>
+					<td width=20></td>
+					<td><input type=checkbox id="DYNAMIC"></td>
+					<td><label id="DYNAMIC_LABEL"><h3>Dynamic Address</h3></label></td>
+				</tr>
+			</table>
+			
+			<table>
+				<tr>
+					<td width=80></td>
+					<td><label id="IP_LABEL"><b>IP Address:</b></label>
+					<td width=10></td>
+					<td><label id="MASK_LABEL"><b>Subnet Mask:</b></label>
+					<td width=10></td>
+					<td><label id="GATEWAY_LABEL"><b>Gateway:</b></label>
+					<td width=10></td>
+					<td><label id="DNS_LABEL"><b>DNS Address:</b></label>
+				</tr>
+				
+				<tr>
+					<td width=80></td>
+					<td width=120><input  size = 20  maxlength = 20 type=text id="IP" size=20></td>
+					<td width=10></td>
+					<td width=120><input  size = 20  maxlength = 20 type=text id="MASK" size=20></td>
+					<td width=10></td>
+					<td width=120><input  size = 20  maxlength = 20 type=text id="GATEWAY" size=20></td>
+					<td width=10></td>
+					<td width=120><input  size = 20  maxlength = 20 type=text id="DNS" size=25><br></td>
+				</tr>
+			</table>
+			
+			<br>
+			
+			<table>
+				<tr>
+					<td width=20></td>
+					<td><input type=checkbox id="NTP_ENABLE"></td>
+					<td><label><h3>NTP Enable</h3></label></td>
+				</tr>
+			</table>
+			
+			<table>
+				<tr>
+					<td width=80></td>
+					<td><label id="NTP_LABEL_1"><b>NTP Address/DNS Name 1:</b></label></td>
+                                        
+				</tr>
+				
+				<tr>
+					<td width=80></td>
+					<td><input  size = 20  maxlength = 20 type=text id="NTP_1" size=40></td>
+				</tr>
+				<tr>
+					<td width=80></td>
+					<td><label id="NTP_LABEL_2"><b>NTP Address/DNS Name 2:</b></label></td>
+                                        
+				</tr>
+				
+				<tr>
+					<td width=80></td>
+					<td><input  size = 20  maxlength = 20 type=text id="NTP_2" size=40></td>
+				</tr>
+
+			</table>
+		</form>
+	</body>
+</html>

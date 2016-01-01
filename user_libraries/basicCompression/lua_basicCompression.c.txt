@@ -1,0 +1,242 @@
+/*
+**
+**
+** File: lua_basicCompression.c
+** Lua interface to basic compression algorithims
+**
+**
+**
+**
+**
+**
+*/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+#include "lz.h"
+#include "rice.h"
+#include "rle.h"
+#include "shannonfano.h"
+#include "huffman.h"
+
+
+
+static int lua_huff_compr(lua_State *L )
+{
+  const char *buffer1;
+  size_t size1;
+  char *buffer2;
+  size_t  size2;
+  buffer1 = lua_tolstring (L, 1, &size1);
+  buffer2 = malloc( size1);
+  assert( buffer2 != NULL );
+
+
+  size2 = Huffman_Compress( (unsigned char *)buffer1, (unsigned char *)buffer2,size1);
+           
+
+  lua_pushlstring ( L, buffer2, size2);
+  lua_pushinteger(L,size2);
+  free(buffer2);
+  return 2;
+}
+
+static int lua_huff_decompr( lua_State *L )
+{
+
+  const char *buffer1;
+   size_t size1;
+   char *buffer2;
+   size_t  size2;
+   buffer1 = lua_tolstring (L, 1, &size1);
+   size2   = lua_tointeger(L,2);
+   buffer2 = malloc( size2);
+   assert( buffer2 != NULL );
+
+   size2 =  Huffman_Uncompress( (unsigned char *)buffer1, (unsigned char *)buffer2,size1,size2);
+ 
+   lua_pushlstring ( L, buffer2, size2);
+   lua_pushinteger(L,size2);
+   free(buffer2);
+   return 2;
+
+}
+
+static int  lua_lz_compr( lua_State *L )
+{
+
+  const char *buffer1;
+  size_t size1;
+  char *buffer2;
+  size_t  size2;
+  buffer1 = lua_tolstring (L, 1, &size1);
+  buffer2 = malloc( size1);
+  assert( buffer2 != NULL );
+
+
+  size2 = LZ_Compress( (unsigned char *)buffer1, (unsigned char *)buffer2,size1);
+           
+
+  lua_pushlstring ( L, buffer2, size2);
+  lua_pushinteger(L,size2);
+  free(buffer2);
+  return 2;
+}
+
+
+
+static int  lua_lz_decompr( lua_State *L )
+{
+  const char *buffer1;
+   size_t size1;
+   char *buffer2;
+   size_t  size2;
+   buffer1 = lua_tolstring (L, 1, &size1);
+   size2   = lua_tointeger(L,2);
+   buffer2 = malloc( size2);
+   assert( buffer2 != NULL );
+
+   size2 =  LZ_Uncompress( (unsigned char *)buffer1, (unsigned char *)buffer2,size1);
+     
+   lua_pushlstring ( L, buffer2, size2);
+   lua_pushinteger(L,size2);
+   free(buffer2);
+   return 2;
+
+}
+
+static int lua_sf_compr( lua_State *L )
+{
+  const char *buffer1;
+  size_t size1;
+  char *buffer2;
+  size_t  size2;
+  buffer1 = lua_tolstring (L, 1, &size1);
+  buffer2 = malloc( size1);
+  assert( buffer2 != NULL );
+
+  size2 = SF_Compress( (unsigned char *)buffer1, (unsigned char *)buffer2,size1 );
+
+  lua_pushlstring ( L, buffer2, size2);
+  lua_pushinteger(L,size2);
+  free(buffer2);
+  return 2;
+
+}
+
+static int lua_sf_decompr( lua_State *L )
+{
+  const char *buffer1;
+   size_t size1;
+   char *buffer2;
+   size_t  size2;
+   buffer1 = lua_tolstring (L, 1, &size1);
+   size2   = lua_tointeger(L,2);
+   buffer2 = malloc( size2);
+   assert( buffer2 != NULL );
+
+   size2 = SF_Uncompress( (unsigned char *)buffer1, (unsigned char *)buffer2,size1,size2);
+   lua_pushlstring ( L, buffer2, size2);
+   lua_pushinteger(L,size2);
+   free(buffer2);
+   return 2;
+
+}
+
+static int lua_rle_compr( lua_State *L )
+{ 
+  const char *buffer1;
+  size_t size1;
+  char *buffer2;
+  size_t  size2;
+  buffer1 = lua_tolstring (L, 1, &size1);
+  buffer2 = malloc( size1);
+  assert( buffer2 != NULL );
+  size2 = RLE_Compress( (unsigned char *)buffer1, (unsigned char *)buffer2,size1);
+  lua_pushlstring ( L, buffer2, size2);
+  lua_pushinteger(L,size2);
+  free(buffer2);
+  return 2;
+}
+
+static int lua_rle_decompr( lua_State *L )
+{
+   const char *buffer1;
+   size_t size1;
+   char *buffer2;
+   size_t  size2;
+   buffer1 = lua_tolstring (L, 1, &size1);
+   size2   = lua_tointeger(L,2);
+   buffer2 = malloc( size2);
+   assert( buffer2 != NULL );
+   size2 = RLE_Uncompress( (unsigned char*) buffer1, (unsigned char *)buffer2,size1);
+   lua_pushlstring ( L, buffer2, size2);
+   lua_pushinteger(L,size2);
+   free(buffer2);
+   return 2;
+}
+
+
+static int description( lua_State *L )
+{
+  lua_pushstring(L, "basic compression / decompression routines");
+  return 1;
+}
+
+static int lua_help( lua_State *L )
+{
+   printf("Basic Compression Library routines \r\n");
+   printf(".rle_compr(string)      -- run length compression  \r\n");
+   printf("  returns compressed string and length \r\n");
+   printf(".rle_decompr(string,decompress_buf_size)    -- run length decompression \r\n");
+   printf(" returns decompressed string and size of decompressed string \r\n");
+   printf(".sf_compr(string)       -- shannon fano compression   \r\n");
+   printf("  returns compressed string and length \r\n");
+   printf(".sf_decompr(string,buffer_size)     -- shannon fano decompression \r\n");
+   printf(" returns decompressed string and size of decompressed string \r\n");
+   printf(".lz_compr(string)       -- lz compression    \r\n");
+   printf("  returns compressed string and length \r\n");
+   printf(".lz_decompr(string,buffer_size)     -- lz decompression  \r\n");
+   printf(" returns decompressed string and size of decompressed string \r\n");
+   printf(".huff_compr(string)     -- huffman compression   \r\n");
+   printf("  returns compressed string and length \r\n");
+   printf(".huff_decompr(string,buffer_size)   -- huffman decompression     \r\n");
+   printf(" returns decompressed string and size of decompressed string \r\n");
+   printf("help()                    -- dumps out commands \r\n\r\n");
+  return 0;
+}   
+
+
+static const struct luaL_reg  lua_basicCompressionLib[] = 
+{
+   {"rle_compr",      lua_rle_compr   },
+   {"rle_decompr",    lua_rle_decompr },
+   {"sf_compr",       lua_sf_compr   },
+   {"sf_decompr",     lua_sf_decompr },
+   {"lz_compr",       lua_lz_compr   },
+   {"lz_decompr",     lua_lz_decompr   },
+   {"huff_compr",     lua_huff_compr   },
+   {"huff_decompr",   lua_huff_decompr      },
+   {"description",    description },
+   {"help",           lua_help   }, 
+   { NULL, NULL },      
+   
+};
+
+
+
+int lua_basicCompression( lua_State *L )
+{
+   
+
+
+   luaL_openlib(L,"bCompr",lua_basicCompressionLib,0 );
+   return 1;
+}

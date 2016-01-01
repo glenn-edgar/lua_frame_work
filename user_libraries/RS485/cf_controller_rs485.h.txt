@@ -1,0 +1,24 @@
+/*
+** Copyright 2010 Onyx Engineering
+** This file is licensed MIT
+** File: cf_controller_rs485.h
+**
+** Interface file for cf_controller_rs845.c
+**
+**
+**
+**
+*/
+
+#ifndef _CF_CONTROLLER_RS485_H_
+#define _CF_CONTROLLER_RS485_H_
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+#include "cf_controller_rs485.h"
+
+
+int lua_cf_controller_rs485_load( lua_State *L);
+
+#endif

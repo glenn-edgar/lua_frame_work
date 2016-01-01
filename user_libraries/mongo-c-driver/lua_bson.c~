@@ -1,0 +1,45 @@
+static int lua_bson_help( lua_State *L )
+{
+  printf(".help()    -- dumps out commands \r\n\r\n");
+  return 0;
+}   
+
+static int description( lua_State *L )
+{
+  lua_pushstring(L,"provide lua interface to bson ");
+  return 1;
+}
+
+
+static const struct luaL_reg  lua_bson[] = 
+{
+   
+   {"help",                 lua_bson_help   },
+   {"description",           description         },
+   { NULL, NULL },      
+   
+};
+
+
+
+
+
+
+
+extern void lua_dobuffer( lua_State * L, const char *buffer, int size, char *chunkName );
+
+
+
+
+
+
+
+int lua_bson( lua_State *L )
+{
+   
+   luaL_openlib(L,"bson",lua_bson,0 );
+   return 1;
+}
+
+
+

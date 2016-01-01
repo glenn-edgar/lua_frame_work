@@ -1,0 +1,36 @@
+/*
+**  File:  c_supportCtrl.h
+**
+**  This file defines the public in c_supportCtrl.c
+**
+*/ 
+
+
+#ifndef _C_MALLOC_MANAGER_H_
+#define _C_MALLOC_MANAGER_H_
+
+#include "lua.h"
+
+
+
+#ifdef __cplusplus 
+
+extern "C"
+{
+#endif
+
+void *mallocManager_allocate( lua_State *L, int malloc_index, int size );
+
+void mallocManager_free( lua_State *L, int malloc_index, void *address );
+
+void initialize_mallocManager( lua_State *L );
+
+#ifdef __cplusplus 
+
+}
+
+#endif
+
+#endif
+
+

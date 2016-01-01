@@ -1,0 +1,318 @@
+<!DOCTYPE HTML>
+<html><head>
+
+
+    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+    <title>Front Door Alarm Management</title>
+    <link type="text/css" href="/themes/base/ui.all.css" rel="Stylesheet">
+    <script type="text/javascript" src="/jquery-1.3.2.min.js"></script>	
+    <script type="text/javascript" src="/jquery-ui-1.7.custom.min.js"></script>
+    <script type="text/javascript" src="/javaScript/json2.js"></script>
+    <script type="text/javascript" src="/javaScript/maskinput.js"></script>
+    <script type="text/javascript" src="/javaScript/alarm_hr.js"></script>
+</head><body>
+ 
+  <form id="form" action="/editScriptStore.lua">
+
+    <div id="row-0"> <right>
+	
+                  <table id="table-header" bgcolor="orange" border="0" cellpadding="5" cellspacing="0" width="100%"> 
+                     <tbody>
+                 
+                    <tr>
+                    <td width="25"></td>
+                    <td algin="CENTER" width="100">
+                     <button id="save" type="button">Save</button>
+                     
+                    </td>
+                    <td align="center" width="100">
+                     <button id="reset" type="button">Reset</button>
+                    </td>
+                   <td align="left">
+                    <h1>Front Door Alarm Management</h1>
+                   </td>
+                   
+  
+                   
+                 
+                 </tr></tbody></table><br><br>
+ 
+    
+<center><h2>Monday</h2></center>		
+<center><h2>Tuesday</h2></center>
+<center><h2>Wednesday</h2></center>
+<center><h2>Thursday</h2></center>
+<center><h2>Friday</h2></center>
+<center><h2>Saturday</h2></center>
+<center><h2>Sunday</h2></center>
+    
+ 
+     <div id="Sunday">
+
+    <table id="table-header" border="0" cellpadding="5" cellspacing="0" width="100%"> 
+     <tbody><tr>
+     <td align="left" width="150">
+        <h2>
+        Select Number of<br> Disable Intervals<br>
+        <input name="radio_1" value="0" type="radio">No Interval <br>
+        <input name="radio_1" value="1" type="radio">One Interval<br>
+        <input name="radio_1" value="2" type="radio">Two Intervals<br>
+        </h2>
+     </td>
+     <td align="left" width="250">
+         <div id="group_a_1">
+         <h3>Enter Times in<br>Format of<br> 00:00 to 23:59<br><br>First Start Time <br></h3>
+         <input size="6" maxlength="6" id="input_a_1" type="text">
+         <br>
+          <h3><label id="slider_label_b_1">First End Time <br></label></h3>
+         <input size="5" maxlength="5" id="input_b_1" type="text">
+         </div>
+
+         <div id="group_b_1">
+          <h3><label id="slider_label_c_1">Second Start Time <br></label></h3>
+          <input size="5" maxlength="5" id="input_c_1" type="text">
+          <h3><label id="slider_label_d_1">Second End Time <br> </label></h3>
+          <input size="5" maxlength="5" id="input_d_1" type="text">
+       
+
+          </div>
+         
+         </td>
+       
+          
+      
+      </tr>
+    </tbody></table>
+     </div>
+     
+   
+
+
+
+     <div id="Monday">
+    <table id="table-header" border="0" cellpadding="5" cellspacing="0" width="100%"> 
+     <tbody><tr>
+     <td align="left" width="150">
+        <h2>
+        Select Number of<br> Disable Intervals<br>
+        <input name="radio_2" value="0" type="radio">No Interval <br>
+        <input name="radio_2" value="1" type="radio">One Interval<br>
+        <input name="radio_2" value="2" type="radio">Two Intervals<br>
+        </h2>
+     </td>
+     <td align="left" width="250">
+         <div id="group_a_2">
+         <h3>Enter Times in<br>Format of<br> 00:00 to 23:59<br><br>First Start Time <br></h3>
+         <input size="5" maxlength="5" id="input_a_2" type="text">
+         <br>
+          <h3><label id="slider_label_b_2">First End Time <br></label></h3>
+         <input size="5" maxlength="5" id="input_b_2" type="text">
+         </div>
+
+         <div id="group_b_2">
+          <h3><label id="slider_label_c_2">Second Start Time <br></label></h3>
+          <input size="5" maxlength="5" id="input_c_2" type="text">
+          <h3><label id="slider_label_d_2">Second End Time <br> </label></h3>
+          <input size="5" maxlength="5" id="input_d_2" type="text">
+       
+
+          </div>
+         
+         </td>
+       
+          
+      
+      </tr>
+    </tbody></table>
+     </div>
+
+     <div id="Tuesday">
+     <table id="table-header" border="0" cellpadding="5" cellspacing="0" width="100%"> 
+     <tbody><tr>
+     <td align="left" width="150">
+        <h2>
+        Select Number of<br> Disable Intervals<br>
+        <input name="radio_3" value="0" type="radio">No Interval <br>
+        <input name="radio_3" value="1" type="radio">One Interval<br>
+        <input name="radio_3" value="2" type="radio">Two Intervals<br>
+        </h2>
+     </td>
+     <td align="left" width="250">
+         <div id="group_a_3">
+         <h3>Enter Times in<br>Format of<br> 00:00 to 23:59<br><br>First Start Time <br></h3>
+          <input size="5" maxlength="5" id="input_a_3" type="text">
+         <br>
+          <h3><label id="slider_label_b_3">First End Time <br></label></h3>
+         <input size="5" maxlength="5" id="input_b_3" type="text">
+         </div>
+
+         <div id="group_b_3">
+          <h3><label id="slider_label_c_3">Second Start Time <br></label></h3>
+          <input size="5" maxlength="5" id="input_c_3" type="text">
+          <h3><label id="slider_label_d_3">Second End Time <br> </label></h3>
+          <input size="5" maxlength="5" id="input_d_3" type="text">
+       
+
+          </div>
+         
+         </td>
+       
+          
+      
+      </tr>
+    </tbody></table>
+     </div>
+
+
+
+     <div id="Wednesday">
+    <table id="table-header" border="0" cellpadding="5" cellspacing="0" width="100%"> 
+     <tbody><tr>
+     <td align="left" width="150">
+        <h2>
+        Select Number of<br> Disable Intervals<br>
+        <input name="radio_4" value="0" type="radio">No Interval <br>
+        <input name="radio_4" value="1" type="radio">One Interval<br>
+        <input name="radio_4" value="2" type="radio">Two Intervals<br>
+        </h2>
+     </td>
+     <td align="left" width="250">
+         <div id="group_a_4">
+         <h3>Enter Times in<br>Format of<br> 00:00 to 23:59<br><br>First Start Time <br></h3>
+         <input size="5" maxlength="5" id="input_a_4" type="text">
+         <br>
+          <h3><label id="slider_label_b_4">First End Time <br></label></h3>
+         <input size="5" maxlength="5" id="input_b_4" type="text">
+         </div>
+
+         <div id="group_b_4">
+          <h3><label id="slider_label_c_4">Second Start Time <br></label></h3>
+          <input size="5" maxlength="5" id="input_c_4" type="text">
+          <h3><label id="slider_label_d_4">Second End Time <br> </label></h3>
+          <input size="5" maxlength="5" id="input_d_4" type="text">
+       
+
+          </div>
+         
+         </td>
+       
+          
+      
+      </tr>
+    </tbody></table>
+     </div>
+     <div id="Thursday"><h3>
+    <table id="table-header" border="0" cellpadding="5" cellspacing="0" width="100%"> 
+     <tbody><tr>
+     <td align="left" width="150">
+        <h2>
+        Select Number of<br> Disable Intervals<br>
+        <input name="radio_5" value="0" type="radio">No Interval <br>
+        <input name="radio_5" value="1" type="radio">One Interval<br>
+        <input name="radio_5" value="2" type="radio">Two Intervals<br>
+        </h2>
+     </td>
+     <td align="left" width="250">
+         <div id="group_a_5">
+         <h3>Enter Times in<br>Format of<br> 00:00 to 23:59<br><br>First Start Time <br></h3>
+         <input size="5" maxlength="5" id="input_a_5" type="text">
+         <br>
+          <h3><label id="slider_label_b_5">First End Time <br></label></h3>
+         <input size="5" maxlength="5" id="input_b_5" type="text">
+        
+
+         <div id="group_b_5">
+          <h3><label id="slider_label_c_5">Second Start Time <br></label></h3>
+          <input size="5" maxlength="5" id="input_c_5" type="text">
+          <h3><label id="slider_label_d_5">Second End Time <br> </label></h3>
+          <input size="5" maxlength="5" id="input_d_5" type="text">
+       
+
+          </div>
+         </div>
+         </td>
+       
+          
+      
+      </tr>
+    </tbody></table>
+     </h3></div>
+
+
+     <div id="Friday">
+    <table id="table-header" border="0" cellpadding="5" cellspacing="0" width="100%"> 
+     <tbody><tr>
+     <td align="left" width="150">
+        <h2>
+        Select Number of<br> Disable Intervals<br>
+        <input ,="" name="radio_6" value="0" type="radio">No Interval <br>
+        <input name="radio_6" value="1" type="radio">One Interval<br>
+        <input name="radio_6" value="2" type="radio">Two Intervals<br>
+        </h2>
+     </td>
+     <td align="left" width="250">
+         <div id="group_a_6">
+         <h3>Enter Times in<br>Format of<br> 00:00 to 23:59<br><br>First Start Time <br></h3>
+         <input size="5" maxlength="5" id="input_a_6" type="text">
+         <br>
+          <h3><label id="slider_label_b_6">First End Time <br></label></h3>
+         <input size="5" maxlength="5" id="input_b_6" type="text">
+         </div>
+
+         <div id="group_b_6">
+          <h3><label id="slider_label_c_6">Second Start Time <br></label></h3>
+          <input size="5" maxlength="5" id="input_c_6" type="text">
+          <h3><label id="slider_label_d_6">Second End Time <br> </label></h3>
+          <input size="5" maxlength="5" id="input_d_6" type="text">
+       
+
+          </div>
+         
+         </td>
+       
+          
+      
+      </tr>
+    </tbody></table>
+     </div>
+
+     <div id="Saturday">
+    <table id="table-header" border="0" cellpadding="5" cellspacing="0" width="100%"> 
+     <tbody><tr>
+     <td align="left" width="150">
+        <h2>
+        Select Number of<br> Disable Intervals<br>
+        <input id="radio_7" name="radio_7" value="0" type="radio">No Interval <br>
+        <input id="radio_7" name="radio_7" value="1" type="radio">One Interval<br>
+        <input id="radio_7" name="radio_7" value="2" type="radio">Two Intervals<br>
+        </h2>
+     </td>
+     <td align="left" width="250">
+         <div id="group_a_7">
+         <h3>Enter Times in<br>Format of<br> 00:00 to 23:59<br><br>First Start Time <br></h3>
+         <input size="5" maxlength="5" id="input_a_7" type="text">
+         <br>
+          <h3><label id="slider_label_b_7">First End Time <br></label></h3>
+         <input size="5" maxlength="5" id="input_b_7" type="text">
+         </div>
+
+         <div id="group_b_7">
+          <h3><label id="slider_label_c_7">Second Start Time <br></label></h3>
+          <input size="5" maxlength="5" id="input_c_7" type="text">
+          <h3><label id="slider_label_d_7">Second End Time <br> </label></h3>
+          <input size="5" maxlength="5" id="input_d_7" type="text">
+       
+
+          </div>
+         
+         </td>
+       
+          
+      
+      </tr>
+    </tbody></table>
+     </div>
+     
+
+      
+     </right></div></form></body></html>

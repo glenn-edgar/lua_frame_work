@@ -1,0 +1,95 @@
+/*
+**
+**
+** File: lua_bson.c
+**
+**
+**
+*/
+
+
+
+
+static int lua_bson_help( lua_State *L )
+{
+  printf(".help()    -- dumps out commands \r\n\r\n");
+  return 0;
+}   
+
+static int description( lua_State *L )
+{
+  lua_pushstring(L,"provide lua interface to bson ");
+  return 1;
+}
+
+
+static const struct luaL_reg  lua_bson[] = 
+{
+   {"buffer_init",           lua_buffer_init      },
+   {"append_oid",
+   {"append_new_oid",        lua_append_new_oid   },
+   {"append_string",         lua_append_string    },
+   {"append_int",            lua_append_int       },
+   {"append_double",
+   {"append_bool",
+bson_buffer * bson_append_oid( bson_buffer * b , const char * name , const bson_oid_t* oid );
+bson_buffer * bson_append_new_oid( bson_buffer * b , const char * name );
+bson_buffer * bson_append_int( bson_buffer * b , const char * name , const int i );
+bson_buffer * bson_append_long( bson_buffer * b , const char * name , const long long i );
+bson_buffer * bson_append_double( bson_buffer * b , const char * name , const double d );
+bson_buffer * bson_append_string( bson_buffer * b , const char * name , const char * str );
+bson_buffer * bson_append_symbol( bson_buffer * b , const char * name , const char * str );
+bson_buffer * bson_append_code( bson_buffer * b , const char * name , const char * str );
+bson_buffer * bson_append_code_w_scope( bson_buffer * b , const char * name , const char * code , const bson * scope);
+bson_buffer * bson_append_binary( bson_buffer * b, const char * name, char type, const char * str, int len );
+bson_buffer * bson_append_bool( bson_buffer * b , const char * name , const bson_bool_t v );
+bson_buffer * bson_append_null( bson_buffer * b , const char * name );
+bson_buffer * bson_append_undefined( bson_buffer * b , const char * name );
+bson_buffer * bson_append_regex( bson_buffer * b , const char * name , const char * pattern, const char * opts );
+bson_buffer * bson_append_bson( bson_buffer * b , const char * name , const bson* bson);
+bson_buffer * bson_append_element( bson_buffer * b, const char * name_or_null, const bson_iterator* elem);
+
+/* these both append a bson_date */
+bson_buffer * bson_append_date(bson_buffer * b, const char * name, bson_date_t millis);
+bson_buffer * bson_append_time_t(bson_buffer * b, const char * name, time_t secs);
+
+bson_buffer * bson_append_start_object( bson_buffer * b , const char * name );
+bson_buffer * bson_append_start_array( bson_buffer * b , const char * name );
+bson_buffer * bson_append_finish_object( bson_buffer * b );
+
+
+   {"start_object",
+   {"finish_object",
+   {
+   {"bson_from_buffer",      lua_bson_from_buffer },
+   {"bson_destroy_buffer",   lua_bson_destroy_buffer },
+   {"bson_destroy_all",      lua_destroy_all      },
+   {"help",                  lua_bson_help        },
+   {"description",           description          },
+   { NULL, NULL },      
+   
+};
+
+
+
+
+
+
+
+extern void lua_dobuffer( lua_State * L, const char *buffer, int size, char *chunkName );
+
+
+
+
+
+
+
+int lua_bson( lua_State *L )
+{
+   
+   luaL_openlib(L,"bson",lua_bson,0 );
+   return 1;
+}
+
+
+

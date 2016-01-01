@@ -1,0 +1,15 @@
+/*
+** File: lua_curl.h
+** 
+**
+*/
+
+#ifndef LUA_CURL_H_
+#define LUA_CURL_H_
+
+#include "lua.h"
+
+int lua_curl_load( lua_State * L );
+
+
+#endif

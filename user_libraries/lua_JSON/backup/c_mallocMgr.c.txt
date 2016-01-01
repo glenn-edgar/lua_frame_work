@@ -1,0 +1,162 @@
+/*
+**
+File: c_mallocMgr.c
+
+Coordinates c support routines 
+**
+*/
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+
+#include "c_mallocMgr.h"
+#include "cs_private_heap.h"
+#include "FPsystem.h"
+
+extern FILE *lout;
+extern FILE *lin;
+
+typedef void *(*MALLOC_MGR_MALLOC)( unsigned size );
+typedef void (*MALLOC_MGR_FREE ) ( void *address );
+
+typedef struct
+{
+   char *name;
+   char *description;
+   MALLOC_MGR_MALLOC alloc;
+   MALLOC_MGR_FREE   free;
+
+}MALLOC_MGR_STRUCT; 
+
+extern void freeLuaHeap( void *address );
+extern void *allocateLuaHeap( unsigned size);
+
+// -1 in MALLOC_TBL_SIZE to remove salient
+#define MALLOC_TBL_SIZE ( sizeof( mgrTbl) / sizeof(MALLOC_MGR_STRUCT) ) -1
+
+static const MALLOC_MGR_STRUCT mgrTbl[] =
+{
+   { "lua","lua private heap", allocateLuaHeap, freeLuaHeap },
+   { "malloc","default malloc allocator", malloc, free },
+   {  NULL, NULL, NULL ,NULL},
+}; 
+
+static  int findMallocName( const char *name );
+
+void *mallocManager_allocate( lua_State *L, int malloc_index, int size )
+{
+  void *returnValue;
+  if( (malloc_index >= MALLOC_TBL_SIZE ) || ( malloc_index < 0 ))
+  {
+    luaL_error(L,"Bad malloc index allocation \r\n" );
+    returnValue = NULL;
+  }
+  else
+  {
+   returnValue =  mgrTbl[ malloc_index ].alloc( size );
+   if( returnValue == NULL )
+   {
+     luaL_error(L,"out of memory for malloc pool %d ",malloc_index );
+   }
+  }
+  return returnValue;
+  
+}
+
+void mallocManager_free( lua_State *L, int malloc_index, void *address )
+{
+  if( (malloc_index >= MALLOC_TBL_SIZE ) || ( malloc_index < 0 ))
+  {
+    luaL_error(L,"Bad malloc index free \r\n" );
+  }
+  else
+  {
+    mgrTbl[ malloc_index ].free( address );
+  }
+}
+
+
+static int lua_mallocOpsFindMgr( lua_State *L )
+{
+  const char *mgrName;
+  int  returnValue;
+
+  mgrName = lua_tostring(L,-1);
+
+  if( mgrName == NULL )
+  {
+    luaL_error(L,"Bad Mgr Name \r\n" );
+    return 0;
+  } 
+
+  returnValue = findMallocName( mgrName );
+  lua_pushinteger(L, returnValue );
+  return 1;
+}
+
+static int lua_mallocOpsListMgrs( lua_State *L )
+{
+  unsigned loopIndex;
+ 
+  fprintf(lout,"Malloc Memory Managers \r\n\r\n");
+  for( loopIndex = 0; loopIndex < MALLOC_TBL_SIZE ; loopIndex++ )
+  {
+    fprintf(lout,"Malloc Mgr %d   Name %s \r\ndescription %s \r\n\r\n",
+            loopIndex, 
+            mgrTbl[ loopIndex ].name,
+            mgrTbl[ loopIndex ].description );
+  }
+  return 0;
+}
+
+
+static int lua_mallocOpsHelp( lua_State *L )
+{   
+   fprintf(lout,".findMgr  -- obtains memory address of malloc mgr \r\n");
+   fprintf(lout,".listMgrs -- list all malloc managers \r\n");
+   fprintf(lout,".help  -- prints out cmds \r\n");
+   return 0;
+}
+
+static const struct luaL_reg  lua_mallocOpsLib[] = 
+{
+
+   {"findMgr", lua_mallocOpsFindMgr },
+   {"listMgrs", lua_mallocOpsListMgrs },
+   {"help",    lua_mallocOpsHelp  },
+   { NULL, NULL }     
+   
+};
+
+
+void initialize_mallocManager( lua_State *L )
+{
+
+
+  luaL_openlib(L,"mallocOps",lua_mallocOpsLib,0 );
+  
+
+}
+
+static  int findMallocName( const char *name )
+{
+  int loopCount;
+  int returnValue = -1;
+  for( loopCount = 0; loopCount < MALLOC_TBL_SIZE; loopCount++ )
+  {
+    if( strcmp( name, mgrTbl[ loopCount].name) == 0 )
+    {
+      returnValue = loopCount;
+      goto end;
+    }
+  }
+end:
+  return returnValue;
+}
+   
+

@@ -1,0 +1,15 @@
+/* 
+
+// C program calculating the solar position for
+// the current date and a set location (latitude, longitude)
+// Jarmo Lammi 1999
+
+*/
+
+#ifndef SUN_POSITION_H_
+#define SUN_POSITION_H_  
+
+void calculateSunPosition( double latit, double longit, double tzone, double *elevation, double *elevation_max, double *azmiuth );
+
+#endif
+

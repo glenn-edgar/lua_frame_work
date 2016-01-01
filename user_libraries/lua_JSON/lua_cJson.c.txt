@@ -1,0 +1,411 @@
+/*
+**
+** File: luaSunsetSunRise.c
+** Lua interface to the file sunsetSunRise.c
+**
+**
+**
+**
+**
+**
+**
+*/
+
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
+#include <time.h>
+#include <sys/time.h>
+#include <dlfcn.h>
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+#include "cJSON.h"
+
+extern void lua_dobuffer( lua_State * L, const char *buffer, int size, char *chunkName );
+
+static int  lua_toJsonString ( lua_State *L)
+{
+  cJSON *item;
+  char  *string;
+  item = (cJSON *)lua_topointer(L,1);
+  string = cJSON_PrintUnformatted(item);
+  lua_pushstring(L, string );
+  free( string );
+  return 1;
+}
+
+static int  lua_encodeJsonString( lua_State *L)
+{
+  char *string;
+  
+  string = (char *)lua_tostring(L,1);
+  lua_pushlightuserdata(L, cJSON_Parse(string));
+  return 1;
+}
+
+
+static int  lua_printJson( lua_State *L)
+{
+  cJSON *item;
+  char  *string;
+  item = (cJSON *)lua_topointer(L,1);
+  string = cJSON_Print(item);
+  lua_pushstring(L, string );
+  free( string );
+  return 1;
+}
+
+static int  lua_JsonFree( lua_State *L)
+{
+  cJSON *item;
+  item = (cJSON *)lua_topointer(L,1);
+  cJSON_Delete(item);
+  return 0;
+}
+
+static int lua_getSize( lua_State *L)
+{
+  lua_pushnumber( L,cJSON_GetArraySize((struct cJSON *)lua_topointer(L,1)));
+  return 1;
+}
+
+static int lua_createArray( lua_State *L )
+{
+  lua_pushlightuserdata(L,cJSON_CreateArray());
+  return 1;
+}
+
+static int lua_createObject( lua_State *L )
+{
+   lua_pushlightuserdata(L,cJSON_CreateObject());
+   return 1;
+}
+   
+static char *cJsonTranslate( unsigned x )
+{ char *returnValue;
+  switch( x)
+  {
+    case cJSON_False: returnValue = "FALSE"; break;
+    case cJSON_True:  returnValue = "TRUE";  break;
+    case cJSON_NULL:   returnValue = "NULL";  break;
+    case cJSON_Number: returnValue = "NUMBER";break;
+    case cJSON_String: returnValue = "STRING";break;
+    case cJSON_Array:  returnValue = "ARRAY"; break;
+    case cJSON_Object: returnValue = "OBJECT"; break;
+    default: returnValue = "UNKNOWN"; 
+    
+  }
+  return returnValue;
+}
+
+
+
+static int  lua_detachArray( lua_State *L )
+{
+    cJSON *item;
+    cJSON *element;
+    int   index;
+
+    
+    item =  (cJSON *)lua_topointer( L,1);
+    index =  lua_tonumber(L,2);
+    element = cJSON_DetachItemFromArray(item,index);
+    lua_pushlightuserdata(L, element);
+    return 1;
+}
+   
+static int lua_getArray( lua_State *L)
+{
+    cJSON *item;
+    cJSON *element;
+    int   index;
+   
+    
+    item =  (cJSON *)lua_topointer( L,1);
+    index = lua_tonumber(L,2);
+    
+    element = cJSON_GetArrayItem(item,index);
+    lua_pushlightuserdata(L,element);
+    return 1;
+}
+ 
+static int  lua_putArray( lua_State *L)
+{
+  cJSON *item;
+  cJSON *c_item;
+  int   index;
+  int   type;
+  
+  
+  item =      (cJSON *)lua_topointer(L,1);
+  index =     lua_tonumber(L,2);
+  type  =     lua_type(L,3);
+  if( (item->type != cJSON_Array) &&(item->type != cJSON_Object))
+  {
+     lua_pushboolean(L,0);
+     goto end;
+  }
+
+  switch( type )
+  {
+
+    case LUA_TNUMBER:
+         c_item = cJSON_CreateNumber( lua_tonumber(L,3) );
+	
+	 break;
+    case LUA_TBOOLEAN:
+         if( lua_toboolean( L,3) == 0 )
+	 {
+	   c_item = cJSON_CreateFalse();
+	 }
+	 else
+	 {
+	   c_item = cJSON_CreateTrue();
+	 }
+	 break;
+    case LUA_TSTRING:
+          c_item = cJSON_CreateString( lua_tostring(L,3));
+	  break;
+ 
+	  
+    case LUA_TLIGHTUSERDATA:
+          c_item = (cJSON *) lua_topointer(L,3);
+	  break;
+
+    case LUA_TNIL:
+    default:
+         c_item = cJSON_CreateNull();
+	 
+  }
+  if(cJSON_GetArraySize( item) > index)
+  {
+    
+    cJSON_ReplaceItemInArray(item,index,c_item);
+  }
+  else
+  {
+    
+    cJSON_AddItemToArray(item,c_item);
+  }
+  lua_pushboolean( L, 1);
+end:
+  return 1;
+  
+     
+}
+
+static int  lua_detachObject( lua_State *L )
+{
+    cJSON *item;
+    cJSON *element;
+    char  *field;
+    
+    item =  (cJSON *)lua_topointer( L,1);
+    field =  (char *)lua_tostring(L,2);
+    element = cJSON_DetachItemFromObject(item,field);
+    lua_pushlightuserdata( L, element);
+    return 1;
+}
+    
+    
+static int  lua_getObject( lua_State *L)
+
+{
+    cJSON *item;
+    cJSON *element;
+    char  *field;
+    
+    item =  (cJSON *)lua_topointer( L,1);
+    field =  (char *)lua_tostring(L,2);
+    
+    element = cJSON_GetObjectItem(item,field);
+    lua_pushlightuserdata( L,element);
+    return 1;
+}
+   
+    
+
+
+static int  lua_putObject( lua_State *L)
+{
+  cJSON *item;
+  cJSON *c_item;
+  char  *field;
+  int   type;
+  
+  
+  item =      (cJSON *)lua_topointer(L,1);
+  field =     (char *)lua_tostring(L,2);
+  type  =     lua_type(L,3);
+   if( (item->type != cJSON_Array) &&(item->type != cJSON_Object))
+  {
+     lua_pushboolean(L,0);
+     goto end;
+  }
+
+
+  switch( type )
+  {
+
+    case LUA_TNUMBER:
+         c_item = cJSON_CreateNumber( lua_tonumber(L,3) );
+	 break;
+    case LUA_TBOOLEAN:
+         if( lua_toboolean( L,3) == 0 )
+	 {
+	   c_item = cJSON_CreateFalse();
+	 }
+	 else
+	 {
+	   c_item = cJSON_CreateTrue();
+	 }
+	 break;
+    case LUA_TSTRING:
+          c_item = cJSON_CreateString( lua_tostring(L,3));
+	  break;
+	  
+ 
+
+    case LUA_TLIGHTUSERDATA:
+          c_item = (cJSON *)lua_topointer(L,3);
+	  break;
+	  
+    case LUA_TNIL:
+    default:
+         c_item = cJSON_CreateNull();
+	 
+  }
+  if( cJSON_GetObjectItem( item,field)!= NULL)
+  {
+    cJSON_ReplaceItemInObject(item,field,c_item);
+  }
+  else
+  {
+    cJSON_AddItemToObject(item,field,c_item);
+  }
+   lua_pushboolean(L,1);
+end:
+  return 0;
+  
+     
+}
+
+
+static int lua_getChild( lua_State *L )
+{
+  cJSON *item;
+  item = (cJSON *)lua_topointer(L,1);
+  
+  lua_pushlightuserdata(L,item->child);
+  return 1;
+}
+
+static int lua_getType( lua_State *L )
+{
+  cJSON *item;
+  item = (cJSON *)lua_topointer(L,1);
+  
+  lua_pushstring(L,cJsonTranslate(item->type));
+  return 1;
+}
+
+static int lua_getField( lua_State *L )
+{
+  cJSON *item;
+  item = (cJSON *)lua_topointer(L,1);
+  
+  lua_pushstring(L,(char *)item->string);
+  return 1;
+}
+
+static int lua_getString( lua_State *L )
+{
+  cJSON *item;
+  item = (cJSON *)lua_topointer(L,1);
+  
+  lua_pushstring(L,(char *)item->valuestring);
+  return 1;
+}
+
+static int lua_getInteger( lua_State *L )
+{
+  cJSON *item;
+  item = (cJSON *)lua_topointer(L,1);
+  
+  lua_pushnumber(L,item->valueint);
+  return 1;
+}
+
+static int lua_getDouble( lua_State *L )
+{
+  cJSON *item;
+  item = (cJSON *)lua_topointer(L,1);
+  
+  lua_pushnumber(L,item->valuedouble);
+  return 1;
+}
+
+static int lua_description( lua_State *L)
+{
+  lua_pushstring(L,"Lua Interface to cJson -- allows C routines to interact with json and lua");
+  return 1;
+}
+
+static const struct luaL_reg  lua_cJsonBuffer[] = 
+{
+   {"description",  lua_description      },
+   {"to_string",    lua_toJsonString     },
+   {"to_JSON",      lua_encodeJsonString },
+   {"print",        lua_printJson        },
+   {"free",         lua_JsonFree         },
+   {"createArray",  lua_createArray      },
+   {"createObject", lua_createObject     },
+   {"size",         lua_getSize          },
+   {"getArray",     lua_getArray         },
+   {"putArray",     lua_putArray         },
+   {"detachArray",  lua_detachArray      },
+   {"getObject",    lua_getObject        },
+   {"putObject",    lua_putObject        },
+   {"detachObject", lua_detachObject     },
+   {"getChild",     lua_getChild         },
+   {"getType",      lua_getType          },
+   {"getField",     lua_getField         },
+   {"getString",    lua_getString        },
+   {"getInteger",   lua_getInteger       },
+   {"getDouble",    lua_getDouble        },
+   /*
+   **
+   ** Things to do
+   **  1.  add import to lua object
+   **  2.  add lua Object to cJson object
+   **  3.  add xx.xx.xx fetch
+   **  4.  add xx.xx.xx store
+   */
+   
+   { NULL, NULL },      
+   
+};
+
+static int lua_loadScript(lua_State *L)
+{
+  
+
+  #include "init.h"
+
+  return 0;
+}
+
+extern int lua_cJson( lua_State *L );
+int lua_loadcJson( lua_State *L )
+{
+   
+   luaL_openlib(L,"cJSON",lua_cJsonBuffer,0 );
+  
+   lua_loadScript( L );
+   return 1;
+}

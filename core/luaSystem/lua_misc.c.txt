@@ -1,0 +1,251 @@
+/*
+**
+** Copyright 2008 Onyx Engineering
+** This file is licensed MIT
+**
+** File: lua_misc.c
+** loads various lua libraries
+**
+**
+**
+*/
+
+
+
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
+#include "lfs.h"
+
+static int lgc_load( lua_State *L );
+static int lbinary_op_load( lua_State *L );
+extern void extendOsPackage( lua_State *L );
+extern void extendStringPackage( lua_State *L );
+extern int lua_serial_load( lua_State *L );
+extern int luaopen_ascii85( lua_State *L);
+extern int luaopen_base64( lua_State *L );
+extern int lua_process_load( lua_State *L );
+extern int lua_registerSemaphoreSupport( lua_State *L );
+extern int lua_crc32_load( lua_State *L );
+extern int lua_dpipe_load( lua_State *L);
+LUALIB_API int luaopen_commandLine(lua_State *L);
+extern int luaopen_lpty(lua_State *L);
+
+
+void loadLuaUtilties( lua_State *L )
+{
+
+
+     lua_gc(L, LUA_GCSTOP, 0);  /* stop collector during initialization */
+
+     lua_registerSemaphoreSupport( L );
+     lgc_load( L );
+     lbinary_op_load( L );
+     extendStringPackage( L );
+     extendOsPackage( L );
+     lua_serial_load(L);
+     lua_crc32_load(L);
+     luaopen_ascii85(L);
+     luaopen_base64(L);
+     lua_process_load( L );
+     lua_dpipe_load( L );
+     luaopen_commandLine(L);
+     luaopen_lfs (L);
+     luaopen_lpty(L);
+     lua_gc(L, LUA_GCRESTART, 0);
+
+}
+
+
+
+
+
+
+
+
+static int lua_gcStop( lua_State *L )
+{
+   lua_gc (L, LUA_GCSTOP, 0 );
+   return 0;
+
+}
+
+static int lua_gcRestart( lua_State *L )
+{
+   lua_gc (L, LUA_GCRESTART, 0 );
+   return 0;
+
+}
+
+static int lua_gcCollect( lua_State *L )
+{
+   lua_gc (L, LUA_GCCOLLECT, 0 );
+   return 0;
+
+}
+
+
+
+static int lua_gcCount( lua_State *L )
+{
+    int count;
+    
+    count = lua_gc (L, LUA_GCCOUNT, 0 );
+    count = count * 1024;
+    lua_pushnumber(L,count);
+    return 1;    
+}
+
+
+static int lua_gcHelp( lua_State *L )
+{
+  printf("list of lgc  commands \r\n\r\n");
+  printf(".stop     lgc.stop() \r\n"
+         "  stop garbage collector \r\n\r\n");
+  printf(".restart  lgc.restart() \r\n"
+         " .restart garbage collector  \r\n\r\n");
+  printf(".collect  lgc.collect()  \r\n"
+         "   initiate full garbage collection \r\n\r\n");
+  printf(".count    lgc.count()  \r\n"
+         " return number of bytes used \r\n\r\n");
+  printf(".help     lgc.help  -- dumps out commands \r\n\r\n");
+  return 0; // number of parameters
+}   
+
+
+static int gc_description( lua_State *L )
+{
+  lua_pushstring(L,"lua interface to garbage collection functions");
+  return 1;
+}
+
+static const struct luaL_reg  lua_gcLib[] = 
+{
+   {"stop",    lua_gcStop },
+   {"restart", lua_gcRestart },
+   {"collect", lua_gcCollect },
+   {"count",   lua_gcCount },
+   {"help",    lua_gcHelp  },
+   {"description", gc_description },
+   { NULL, NULL },      
+   
+};
+
+static int lgc_load( lua_State *L )
+{
+   luaL_openlib(L,"lgc",lua_gcLib,0 );
+   return 1;
+}             
+
+
+static int lua_band( lua_State *L )
+{
+   int operand_1;
+   int operand_2;
+
+   operand_1 = lua_tointeger(L,-1);
+   operand_2 = lua_tointeger(L,-2);
+
+
+   lua_pushinteger(L, operand_1 & operand_2 );
+   return 1;
+}
+
+static int lua_bor( lua_State *L )
+{
+   int operand_1;
+   int operand_2;
+
+   operand_1 = lua_tointeger(L,-1);
+   operand_2 = lua_tointeger(L,-2);
+
+   lua_pushinteger(L, operand_1 | operand_2 );
+   return 1;
+
+}
+
+static int lua_bxor( lua_State *L )
+{
+   int operand_1;
+   int operand_2;
+
+   operand_1 = lua_tointeger(L,-1);
+   operand_2 = lua_tointeger(L,-2);
+
+   lua_pushinteger(L, operand_1 ^ operand_2 );
+   return 1;
+}
+
+static int lua_bnot( lua_State *L )
+{
+   int operand_1;
+  
+   operand_1 = lua_tointeger(L,-1);
+ 
+   lua_pushinteger(L, ~operand_1 );
+   return 1;
+}
+
+static int lua_lshift( lua_State *L )
+{
+   int operand;
+   int shift;
+
+   operand = lua_tointeger(L,-2);
+   shift   = lua_tointeger(L,-1);
+
+   lua_pushinteger(L, operand >> shift );
+   return 1;
+}
+
+static int lua_rshift( lua_State *L )
+{
+   int operand;
+   int shift;
+
+   operand = lua_tointeger(L,-2);
+   shift   = lua_tointeger(L,-1);
+
+   lua_pushinteger(L, operand << shift );
+   return 1;
+}
+
+static int lua_binOpHelp( lua_State *L )
+{
+  printf("list of lua binary operation  commands \n");
+  printf(".and(op1,op2) -- returns binary and \n");
+  printf(".or(op1,op2)  -- returns binary or \n");
+  printf(".not(op1)     -- returns binary not \n");
+  printf(".xor(op1,op2) -- returns xor of two operands \n");
+  printf(".lshift(op,shift) -- performs lift shift \n");
+  printf(".rshift(op,shift) -- performs right shift \n");
+ 
+  printf(".help     lgc.help  -- dumps out commands \n\n");
+  return 0; // number of parameters
+}   
+
+static int l_description( lua_State *L )
+{ 
+  lua_pushstring(L,"provides lua interface to binary ops ");
+  return 1;
+}
+
+static const struct luaL_reg  lua_binary_op[] = 
+{
+   {"and",    lua_band },
+   {"or",     lua_bor },
+   {"not",    lua_bnot },
+   {"xor",    lua_bxor },
+   {"lshift", lua_lshift },
+   {"rshift", lua_rshift },
+   {"help",   lua_binOpHelp  },
+   {"description", l_description },
+   { NULL, NULL },      
+   
+};
+
+static int lbinary_op_load( lua_State *L )
+{
+   luaL_openlib(L,"bop",lua_binary_op,0 );
+   return 1;
+}             

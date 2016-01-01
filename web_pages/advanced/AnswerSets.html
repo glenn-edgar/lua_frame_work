@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"/>
+		<title>Answer Set Setup</title>
+		<link type="text/css" href="/themes/base/ui.all.css" rel="stylesheet"/>
+		<link type="text/css" href="/css/indyme.css" rel="stylesheet"/>
+		<script type="text/javascript" src="/jquery-1.3.2.min.js"></script>	
+		<script type="text/javascript" src="/jquery-ui-1.7.custom.min.js"></script>
+		<script type="text/javascript" src="/javaScript/answerSets.js"></script>
+		<script type="text/javascript" src="/javaScript/inputHandlers.js"></script>
+		<script type="text/javascript" src="/javaScript/json2.js"></script>
+		<script type="text/javascript" src="/javaScript/table_handlers.js"></script>
+		<script type="text/javascript" src="/javaScript/select_support.js"></script>
+	</head>
+	
+	<body class="main">
+		
+		<form action="editScriptStore.lua" method="post">
+			
+			<div id="row-0">
+				<!--#include virtual="/advanced/banner.html"-->
+										<label>Answer Set Setup</label>
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+				
+				<!--#include virtual="/advanced/function.html"-->
+				
+				<table id="table-0" width=100% cellspacing=0 cellpadding=5 border=0 class="tbl">
+					<tr align=center>
+						<td width=30><input type=checkbox id="TOP_CH-0"></td>
+						<td width=1"></td>
+						<td width=100></td>
+						<td width=75"><b>NUMBER</b></td>
+						<td width=300><b>NAME</b></td>
+						<td width=125><b>STARTING DATE</b></td>
+						<td></td>
+					</tr>
+				</table>
+			</div>
+			
+	        <!--#include virtual="/advanced/ebanner.html"-->
+										<label id="editTitle"></label>
+					               	</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+				
+				<table width=100% class="function">
+					<tr>
+						<td height=10></td>
+					</tr>
+					
+					<tr>
+						<td>
+							<table>
+								<tr>
+									<td width=20></td>
+									<td><label><b>Answer Set Number:</b></label></td>
+									<td width=20></td>
+									<td><label><b>Answer Set Name:</b></label></td>
+								</tr>
+								
+								<tr>
+									<td width=20></td>
+									<td><input type=text id="ANSWER_NUMBER" style="width:150px"></td>
+									<td width=20></td>
+									<td><input size = 29  maxlength = 29 type=text id="ANSWER_NAME"></td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+					
+					<tr>
+						<td height=15></td>
+					</tr>
+				</table>
+				
+				<div id="tabs-work" class="tab">
+					<ul>
+						<li><a href="#tab-1" class="tabBold">Start Date</a></li>
+						<li><a href="#tab-2" class="tabBold">Open Answer Set</a></li>
+						<li><a href="#tab-3" class="tabBold">Day Answer Set</a></li>
+						<li><a href="#tab-4" class="tabBold">Day Message Offset</a><li>
+						<li><a href="#tab-5" class="tabBold">Closed Answer Set</a></li>
+					</ul>
+					
+					<div id="tab-1">
+ 						<br>
+						<table>
+							<tr>
+								<td width=20></td>
+								<td><b>Month</b></td>
+								<td width=10></td>
+								<td><b>Day</b></td>
+								<td width=10></td>
+								<td><b>Year</b></td>
+								<td width=10></td>
+								<td></td>
+								<td></td>
+							</tr>
+               				
+							<tr>
+								<td width=20></td>
+								
+								<td>
+									<select id="START_MONTH">
+										<option value=1>JANUARY</option>
+										<option value=2>FEBRUARY</option>
+										<option value=3>MARCH</option>
+										<option value=4>APRIL</option>
+										<option value=5>MAY</option>
+										<option value=6>JUNE</option>
+										<option value=7>JULY</option>
+										<option value=8>AUGUST</option>
+										<option value=9>SEPTEMBER</option>
+										<option value=10>OCTOBER</option>
+										<option value=11>NOVEMBER</option>
+										<option value=12>DECEMBER</option>
+									</select>
+								</td>
+								
+								<td width=10></td>
+								
+               					<td>
+									<select id="START_DAY">
+										<option value=1>1</option>
+										<option value=2>2</option>
+										<option value=3>3</option>
+										<option value=4>4</option>
+										<option value=5>5</option>
+										<option value=6>6</option>
+										<option value=7>7</option>
+										<option value=8>8</option>
+										<option value=9>9</option>
+										<option value=10>10</option>
+										<option value=11>11</option>
+										<option value=12>12</option>
+										<option value=13>13</option>
+										<option value=14>14</option>
+										<option value=15>15</option>
+										<option value=16>16</option>
+										<option value=17>17</option>
+										<option value=18>18</option>
+										<option value=19>19</option>
+										<option value=20>20</option>
+										<option value=21>21</option>
+										<option value=22>22</option>
+										<option value=23>23</option>
+										<option value=24>24</option>
+										<option value=25>25</option>
+										<option value=26>26</option>
+										<option value=27>27</option>
+										<option value=28>28</option>
+										<option value=29>29</option>
+										<option value=30>30</option>
+										<option value=31>31</option>
+                    				</select>
+								</td>
+								
+								<td></td>
+								
+								<td>
+									<select id="START_YEAR">
+										<option value=2009>2009</option>
+										<option value=2010>2010</option>
+										<option value=2011>2011</option>
+										<option value=2012>2012</option>
+										<option value=2013>2013</option>
+										<option value=2014>2014</option>
+										<option value=2015>2015</option>
+										<option value=2016>2016</option>
+										<option value=2017>2017</option>
+										<option value=2018>2018</option>
+										<option value=2019>2019</option>
+										<option value=2020>2020</option>
+										<option value=2021>2021</option>
+										<option value=2022>2022</option>
+										<option value=2023>2023</option>
+										<option value=2024>2024</option>
+										<option value=2025>2025</option>
+                                                                                <option value=2026>2026</option>
+                                                                                <option value=2027>2027</option>
+                                                                                <option value=2028>2028</option>
+                                                                                <option value=2029>2029</option>
+                                                                                <option value=2030>2030</option>
+                                                                                <option value=2031>2031</option>
+                                                                                <option value=2032>2032</option>
+                                                                                
+
+									</select>
+								</td>
+								
+								<td width=10></td>
+								
+								<td>
+									<input type=checkbox id="EVERY_YEAR">
+								</td>
+								
+								<td><b>Every Year</b></td>
+							</tr>
+						</table>
+						<br>
+					</div>
+					
+					<div id="tab-2">
+						<br>
+						<table>
+							<tr align=center>
+								<td width=20></td>
+								<td><label for="textPage"><b>Answer Set Options</b></label></td>
+								<td><label><b>Open Answer Set</b></label></td>
+								<td><label for="textPage"><b>Answer Set Sequence</b></label></td>
+								<td></td>
+							</tr>
+							
+							<tr align=center>
+								<td width=20></td>
+								
+								<td>
+                					<select name="textPage" id="available1" multiple="multiple" size=10>
+										<option value="G1">G1  gtrg_1.wav</option>
+										<option value="G2">G2 gtrg_2.wav</option>
+										<option value="G3">G3 gtrg_3.wav</option>
+										<option value="G4">G4 gtrg_4.wav</option>
+										<option value="G5">G5 gtrg_5.wav</option>
+										<option value="G6">G6 gtrg_6.wav</option>
+										<option value="G7">G7 gtrg_7.wav</option>
+										<option value="G8">G8 gtrg_8.wav</option>
+										<option value="G9">G9 gtrg_9.wav</option>
+										<option value="GA">GA gtrg_10.wav</option>
+										<option value="GB">GB gtrg_11.wav</option>
+										<option value="GC">GC gtrg_12.wav</option>
+										<option value="GD">GD gtrg_13.wav</option>
+										<option value="GE">GE gtrg_14.wav</option>
+										<option value="GF">GF gtrg_15.wav</option>
+										<option value="GG">GG gtrg_16.wav</option>
+										<option value="O1">O1 Open Message</option>
+										<option value="O2">O2 Closing Macro</option>
+										<option value="O3">O3 Today's Store Hours</option>
+										<option value="O4">O4 Weekly Store Hours</option>
+										<option value="O5">O5 Full Store Hours</option>
+										<option value="O6">O6 Same as O3 in Spanish</option>
+										<option value="O7">O7 Same as O4 in Spanish</option>
+										<option value="O8">O8 Same as O5 in Spanish</option>
+										<option value="C1">C1 Closing Macro</option>
+ 									</select>
+								</td>
+								
+								<td width=200>
+									<button type=button id="OPEN_SELECT" style="width:150px">Select ---&gt;</button><br><br>
+									<button type=button id="OPEN_REMOVE" style="width:150px">&lt;--- Remove</button>
+								</td>
+								
+								<td>
+									<select name="textPage" id="storeOpenSelect" multiple="multiple" size=10 style="width:180px"></select>
+								</td>
+								
+								<td width=150>
+									<button type=button id="OPEN_UP" style="width:100px">Move Up</button><br><br>
+									<button type=button id="OPEN_DOWN" style="width:100px">Move Down</button>
+								</td>
+							</tr>
+						</table>
+						<br>
+					</div>
+					
+					<div id="tab-3">
+						<br>
+						<table>
+							<tr align=center>
+								<td width=20></td>
+								<td><label for="textPage"><b>Answer Set Options</b></label></td>
+								<td><label><b>Day Answer Set</b></label></td>
+								<td><label for="textPage"><b>Answer Set Sequence</b></label></td>
+								<td></td>
+							</tr>
+							
+							<tr align=center>
+								<td width=20></td>
+								
+								<td>
+                					<select name="textPage" id="available2" multiple="multiple" size=10>
+										<option value="G1">G1  gtrg_1.wav</option>
+										<option value="G2">G2 gtrg_2.wav</option>
+										<option value="G3">G3 gtrg_3.wav</option>
+										<option value="G4">G4 gtrg_4.wav</option>
+										<option value="G5">G5 gtrg_5.wav</option>
+										<option value="G6">G6 gtrg_6.wav</option>
+										<option value="G7">G7 gtrg_7.wav</option>
+										<option value="G8">G8 gtrg_8.wav</option>
+										<option value="G9">G9 gtrg_9.wav</option>
+										<option value="GA">GA gtrg_10.wav</option>
+										<option value="GB">GB gtrg_11.wav</option>
+										<option value="GC">GC gtrg_12.wav</option>
+										<option value="GD">GD gtrg_13.wav</option>
+										<option value="GE">GE gtrg_14.wav</option>
+										<option value="GF">GF gtrg_15.wav</option>
+										<option value="GG">GG gtrg_16.wav</option>
+										<option value="O1">O1 Open Message</option>
+										<option value="O2">O2 Closing Macro</option>
+										<option value="O3">O3 Today's Store Hours</option>
+										<option value="O4">O4 Weekly Store Hours</option>
+										<option value="O5">O5 Full Store Hours</option>
+										<option value="O6">O6 Same as O3 in Spanish</option>
+										<option value="O7">O7 Same as O4 in Spanish</option>
+										<option value="O8">O8 Same as O5 in Spanish</option>
+										<option value="C1">C1 Closing Macro</option>
+ 									</select>
+								</td>
+								
+								<td width=200>
+									<button type=button id="DAY_SELECT" style="width:150px">Select ---&gt;</button><br><br>
+									<button type=button id="DAY_REMOVE" style="width:150px">&lt;--- Remove</button>
+								</td>
+								
+								<td>
+									<select name="textPage" id="storeDaySelect" multiple="multiple" size=10 style="width:180px"></select>
+								</td>
+								
+								<td width=150>
+									<button type=button id="DAY_UP" style="width:100px">Move Up</button><br><br>
+									<button type=button id="DAY_DOWN" style="width:100px">Move Down</button>
+								</td>
+							</tr>
+						</table>
+						<br>
+					</div>
+					
+					<div id="tab-4">
+						<br>
+						<table>
+	          				<tr>
+								<td width=20></td>
+								<td><b>Hour</b></td>
+								<td width=15></td>
+								<td><b>Minute</b></td>
+								<td width=15></td>
+								<td><label id="REFER_LABEL"><b>Reference</b></label></td>
+								<td width=15></td>
+								<td><label id="FROM_LABEL"><b>From</b></label></td>
+							</tr>
+							
+							<tr>
+								<td width=20></td>
+								
+								<td>  
+									<select id="DAY_HOUR">
+										<option value=0>0</option>
+										<option value=1>1</option>
+										<option value=2>2</option>
+										<option value=3>3</option>
+										<option value=4>4</option>
+										<option value=5>5</option>
+										<option value=6>6</option>
+										<option value=7>7</option>
+										<option value=8>8</option>
+										<option value=9>9</option>
+										<option value=10>10</option>
+										<option value=11>11</option>
+										<option value=12>12</option>
+										<option value=13>13</option>
+										<option value=14>14</option> 
+										<option value=15>15</option>
+										<option value=16>16</option>
+										<option value=17>17</option>
+										<option value=18>18</option>
+										<option value=19>19</option>
+										<option value=20>20</option>
+										<option value=21>21</option>
+										<option value=22>22</option>
+										<option value=23>23</option> 
+										<option value=24>24</option>
+									</select> 
+								</td>
+								
+								<td width=15></td>
+								
+								<td>  
+									<select id="DAY_MINUTE" >
+										<option value=0>0</option>
+										<option value=1>1</option>
+										<option value=2>2</option>
+										<option value=3>3</option> 
+										<option value=4>4</option>
+										<option value=5>5</option>
+										<option value=6>6</option>
+										<option value=7>7</option>
+										<option value=8>8</option>
+										<option value=9>9</option>
+										<option value=10>10</option>
+										<option value=11>11</option>
+										<option value=12>12</option>
+										<option value=13>13</option>
+										<option value=14>14</option>
+										<option value=15>15</option>
+										<option value=16>16</option>
+										<option value=17>17</option>
+										<option value=18>18</option> 
+										<option value=19>19</option>
+										<option value=20>20</option>
+										<option value=21>21</option>
+										<option value=22>22</option>
+										<option value=23>23</option>
+										<option value=24>24</option>
+										<option value=25>25</option>
+										<option value=26>26</option>
+										<option value=27>27</option>
+										<option value=28>28</option>
+										<option value=29>29</option>
+										<option value=30>30</option>
+										<option value=31>31</option>
+										<option value=32>32</option>
+										<option value=33>33</option>
+										<option value=34>34</option>
+										<option value=35>35</option>
+										<option value=36>36</option>
+										<option value=37>37</option>
+										<option value=38>38</option>
+										<option value=39>39</option>
+										<option value=40>40</option>
+										<option value=41>41</option>
+										<option value=42>42</option>
+										<option value=43>43</option>
+										<option value=44>44</option>
+										<option value=45>45</option>
+										<option value=46>46</option> 
+										<option value=47>47</option>
+										<option value=48>48</option>
+										<option value=49>49</option>
+										<option value=50>50</option>
+										<option value=51>51</option>
+										<option value=52>52</option> 
+										<option value=53>53</option>
+										<option value=54>54</option>
+										<option value=55>55</option>
+										<option value=56>56</option>
+										<option value=57>57</option>
+										<option value=58>58</option>
+										<option value=59>59</option>
+										<option value=60>60</option>
+									</select> 
+								</td>
+								
+								<td width=15></td>
+								
+								<td> 
+									<select id="REFER">
+										<option value=0>Before</option>
+										<option value=1>After</option>
+									</select>
+								</td>
+								
+								<td width=15></td>
+								
+								<td>
+									<select id="FROM">
+										<option value=0>Open</option>
+										<option value=1>Close</option>
+									</select>
+								</td>
+							</tr>
+						</table>
+						<br>
+					</div>
+					
+					<div id="tab-5">
+						<br>
+						<table>
+							<tr align=center>
+								<td width=20></td>
+								<td><label for="textPage"><b>Answer Set Options</b></label></td>
+								<td><label><b>Closed Answer Set</b></label></td>
+								<td><label for="textPage"><b>Answer Set Sequence</b></label></td>
+								<td></td>
+							</tr>
+							
+							<tr align=center>
+								<td width=20></td>
+								
+								<td>
+	                				<select name="textPage" id="available3" multiple="multiple" size=10>
+										<option value="G1">G1  gtrg_1.wav</option>
+										<option value="G2">G2 gtrg_2.wav</option>
+										<option value="G3">G3 gtrg_3.wav</option>
+										<option value="G4">G4 gtrg_4.wav</option>
+										<option value="G5">G5 gtrg_5.wav</option>
+										<option value="G6">G6 gtrg_6.wav</option>
+										<option value="G7">G7 gtrg_7.wav</option>
+										<option value="G8">G8 gtrg_8.wav</option>
+										<option value="G9">G9 gtrg_9.wav</option>
+										<option value="GA">GA gtrg_10.wav</option>
+										<option value="GB">GB gtrg_11.wav</option>
+										<option value="GC">GC gtrg_12.wav</option>
+										<option value="GD">GD gtrg_13.wav</option>
+										<option value="GE">GE gtrg_14.wav</option>
+										<option value="GF">GF gtrg_15.wav</option>
+										<option value="GG">GG gtrg_16.wav</option>
+										<option value="O1">O1 Open Message</option>
+										<option value="O2">O2 Closing Macro</option>
+										<option value="O3">O3 Today's Store Hours</option>
+										<option value="O4">O4 Weekly Store Hours</option>
+										<option value="O5">O5 Full Store Hours</option>
+										<option value="O6">O6 Same as O3 in Spanish</option>
+										<option value="O7">O7 Same as O4 in Spanish</option>
+										<option value="O8">O8 Same as O5 in Spanish</option>
+										<option value="C1">C1 Closing Macro</option>
+	 								</select>
+								</td>
+								
+								<td width=200>
+									<button type=button id="CLOSE_SELECT" style="width:150px">Select ---&gt;</button><br><br>
+									<button type=button id="CLOSE_REMOVE" style="width:150px">&lt;--- Remove</button>
+								</td>
+								
+								<td>
+									<select name="textPage" id="storeCloseSelect" multiple="multiple" size=10 style="width:180px"></select>
+								</td>
+								
+								<td width=150>
+									<button type=button id="CLOSE_UP" style="width:100px">Move Up</button><br><br>
+									<button type=button id="CLOSE_DOWN" style="width:100px">Move Down</button>
+								</td>
+							</tr>
+						</table>
+						<br>
+					</div>
+				</div>
+			</div>
+		</form>
+		<!--#include virtual="/advanced/table_handler.html"-->
+	</body>
+</html>

@@ -1,0 +1,25 @@
+/*
+**
+** Copyright 2008 Onyx Engineering
+** This file is licensed MIT
+** File: lua_client.h
+**
+** Interface file for lua_client.h
+**
+**
+**
+**
+*/
+
+#ifndef _LUA_CLIENT_H_
+#define _LUA_CLIENT_H_
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+
+
+int lua_tcpClient( lua_State *L );
+
+#endif

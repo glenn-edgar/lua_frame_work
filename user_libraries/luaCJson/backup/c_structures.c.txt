@@ -1,0 +1,91 @@
+/*
+**
+File: c_structures.c
+This file implements a dictionary of C structure definitions
+**
+*/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+
+#include "c_structures.h"
+#include "FPsystem.h"
+
+extern FILE *lout;
+extern FILE *lin;
+
+
+const STRUCTURE_DEFINITION *
+findStructureDefinition( const STRUCTURE_DEFINITION *strDef,
+                         const char *structureName )
+{
+  return NULL;
+}
+
+
+const FIELD_DEFINITION*
+findStructureField( const FIELD_DEFINITION *fieldDefinition,
+                    const char *fieldName )
+{
+  return NULL;
+}
+
+
+unsigned 
+getStructureSize( const STRUCTURE_DEFINITION *strDef,
+                  const char *structureName )
+{
+  return 0;
+}
+
+
+
+/*
+**
+** takes a lua table and 
+** writes to corresponding C structure
+** tableIndex is location of lua table
+*/
+
+
+void 
+writeStructure( lua_State                  *L, 
+                const STRUCTURE_DEFINITION *strDef,
+                int                        tableIndex,
+                const char                 *structureName, 
+                void                       *address )
+{
+  ;
+}
+
+/*
+**
+** Constructs lua table and places on the stack
+** places nil if table could not be found
+**
+**
+**
+*/
+
+void 
+readStructure( lua_State *L, 
+               const STRUCTURE_DEFINITION *strDef, 
+               const char                 *structureName, 
+               void                       *address )
+{
+  // place nil on stack
+  lua_pushnil(L);
+
+}
+
+
+
+
+
+

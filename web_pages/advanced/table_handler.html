@@ -1,0 +1,58 @@
+<!--
+	File: table_handler.html
+	This file has html dialog forms for handling duplicate, 
+	group delete and group move functions
+-->
+
+<form id="duplicateDialog" action="#" action="post" style.visiblity="hidden">
+	
+	<h1 class="demoHeaders">Choose Duplicate Parameters</h1><br>
+	<label>Starting Number:</label><br>
+	<input id="duplicateInput" type="text"><br><br>
+	
+	<button id="dupSave" type='button'>Execute</button>
+	<button id="dupReset" type='button'>Abort</button>
+	
+</form>
+
+<form id="groupMove" action="#" action="post" style.visiblity="hidden">
+
+	<h1>Choose Move Parameters</h1><br>
+	<label>Starting Number:</label><br>
+	<input id="groupMoveInput1" type="text"><br><br>
+	<label>Ending Number:</label><br>
+	<input id="groupMoveInput2" type="text"><br><br>
+	<label>New Starting Number:</label><br>
+	<input id="groupMoveInput3" type="text"><br><br>
+	
+	<button id="moveSave" type='button'>Execute</button>
+	<button id="moveReset" type='button'>Abort</button>
+	
+</form>
+
+<form id="groupDelete" action="/editScriptStore.lua" action="post" style.visiblity="hidden">
+	
+	<h1>Choose Delete Parameters</h1><br>
+	<label>Starting Number:</label><br>
+	<input id="groupDeleteInput1" type="text"><br><br>
+	<label>Ending Number:</label><br>
+	<input id="groupDeleteInput2" type="text"><br><br>
+	
+	<button id="deleteSave" type='button'>Execute</button>
+	<button id="deleteReset" type='button'>Abort</button>
+	
+</form>
+
+<form id="copyDialog" action="/editScriptStore.lua" action="post" style.visiblity="hidden">
+	
+	<h1 class="demoHeaders">Choose Copy Parameters</h1><br>
+	<label>Copy Number:</label><br>
+	<input id="copyInput1" type="text"><br><br>
+	<label>Copy Start:</label><br>
+	<input id="copyInput2" type="text"><br><br>
+	<label>Copy End:</label><br>
+	<input id="copyInput3" type="text"><br><br>
+	<button id="copySave" type='button'>Execute</button>
+	<button id="copyReset" type='button'>Abort</button>
+	
+</form>

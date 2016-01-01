@@ -1,0 +1,122 @@
+/*
+** File luaInterface.c
+** Copyright Onyx Engineering, Inc.
+** This file is licensed MIT
+**
+**
+**
+**
+*/
+
+#include <ctype.h>
+#include <errno.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <pthread.h>
+#include <assert.h>
+#include <unistd.h>
+
+
+
+
+
+
+#include "lua.h"
+
+#include "lauxlib.h"
+#include "mongoose.h"
+#include "luaInterface.h"
+
+
+
+extern struct mg_connection *arg;
+extern struct mg_request_info *info;
+
+extern void lua_lock( lua_State *L );
+extern void lua_unlock( lua_State *L );
+
+
+static lua_State *interfaceState;
+
+
+
+static void lua_callbackHandler(struct mg_connection *,
+		const struct mg_request_info *info, void *user_data);
+
+int luaInterface( lua_State *L )
+{
+  // copy lua State
+  interfaceState = L;
+  return 0;
+  
+}
+
+int lua_registerUri( lua_State *L )
+{
+   char *uri;
+   char *luaFunctionName;
+   char *name;
+   struct mg_context *ctx;
+
+   ctx = (struct mg_context *)lua_topointer(L,1);
+   uri = (char *)lua_tostring(L,2);
+   luaFunctionName = (char *)lua_tostring(L,3);
+   name = malloc( strlen(luaFunctionName)+4);
+   assert( name != NULL);
+   strcpy( name, luaFunctionName);   
+   mg_bind_to_uri( ctx, uri, lua_callbackHandler, name );
+   lua_pushstring(L,name);
+
+  return 1;
+}
+
+int lua_registerErrorCB( lua_State *L )
+{
+  int error;    
+  char *lua_functionName;
+  char *temp;
+  struct mg_context *ctx;
+
+  ctx = (struct mg_context *)lua_topointer(L,1);
+  error = lua_tointeger(L, 2 );
+  lua_functionName = (char *)lua_tostring( L, 3 );
+  temp = (char *)malloc( strlen( lua_functionName +4));
+  strcpy( temp, lua_functionName );
+  mg_bind_to_error_code(  ctx, error,lua_callbackHandler, temp );
+  lua_pushstring(L,temp);
+  return 1;
+}
+
+
+static void lua_callbackHandler(struct mg_connection *my_connection,
+		const struct mg_request_info *my_info, void *user_data)
+{
+
+  char  *name;
+
+
+
+
+
+  lua_lock( interfaceState );
+  arg = my_connection;
+  info = (struct mg_request_info*) my_info;
+  name = (char *)user_data;
+  //  find string
+  //  find lua function
+  //  execute lua func lua_lock( interfaceState ); 
+
+  lua_getglobal( interfaceState, name );
+  if( lua_pcall(interfaceState,0,0,0 ) != 0 )
+  {
+    printf("Lua Web Error --> %s \r\n",lua_tostring(interfaceState,-1));
+  }
+  
+  lua_gc (interfaceState,LUA_GCCOLLECT, 0);
+  lua_unlock( interfaceState );
+ 
+  
+}
+

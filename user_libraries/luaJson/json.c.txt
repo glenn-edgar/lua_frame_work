@@ -1,0 +1,48 @@
+/*
+** File luaInterface.c
+** Copyright Onyx Engineering, Inc.
+** This file is licensed MIT
+**
+**
+**
+**
+*/
+
+#include <ctype.h>
+#include <errno.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <pthread.h>
+#include <assert.h>
+#include <unistd.h>
+
+
+
+
+
+
+#include "lua.h"
+
+#include "lauxlib.h"
+
+static int lua_loadScript(lua_State *L)
+{
+  
+
+  #include "init.h"
+
+  return 0;
+}
+
+int lua_registercontroler( lua_State *L  )
+{
+   
+   // load lua Start up script
+   lua_loadScript( L );
+
+   return 1;
+}
+
+

@@ -1,0 +1,67 @@
+/*
+**
+** File cJSON_freeForm.h
+** This file is to handle mapping of c structures to cJSON data structure
+**
+**
+**
+*/
+
+#ifndef cJSON_c_h
+#define cJSON_c_h
+
+#ifdef __cplusplus
+extern "C"
+{
+
+#endif
+
+#include "cJSON.h"
+
+typedef enum
+{
+  cJSON_TYPE_char   = 0,
+  cJSON_TYPE_short  = 1,
+  cJSON_TYPE_int    = 2,
+  cJSON_TYPE_float  = 3,
+  cJSON_TYPE_double = 4,
+  cJSON_TYPE_string = 5,
+  cJSON_TYPE_array  = 6,
+  cJSON_TYPE_object = 7,
+}cJSON_TYPE;
+
+
+typedef struct
+{
+   cJSON_TYPE  type;
+   void        *c_data_structure;
+   int          structure_offset;
+   int          size;
+   void         *link_json_object;
+}cJSON_PARSE;
+
+
+/*
+**
+** Return 0 if successful
+** Return -step number that failed
+**
+**
+*/
+int cJSON_move_value( int          *step,
+                      cJSON        *json_object, 
+                      cJSON_PARSE  *json_parse );
+                       
+int cJSON_get_value( int         *step,
+                     cJSON       *json_object,
+                     cJSON_PARSE *json_parse );                  
+
+
+
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

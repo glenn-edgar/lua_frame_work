@@ -1,0 +1,106 @@
+/*
+**  File:  lua_csupportDefs.h
+**
+**  This file defines the basic types for
+**  interfacing c structures with lua
+**
+*/ 
+
+
+#ifndef _C_SUPPORT_DEFS_H_
+#define _C_SUPPORT_DEFS_H_
+
+
+
+
+
+#ifdef __cplusplus 
+
+extern "C"
+{
+#endif
+
+typedef enum
+{
+  STATIC_MAGIC   = 0xffaa0055,
+  STRUCT_MAGIC   = 0x5500aaff,
+  FIELD_MAGIC    = 0x00aaff55,
+  FUNCTION_MAGIC = 0xaaff5500, 
+}MAGIC_TYPES;
+
+
+typedef enum
+{
+  CFM_INT        = 0,
+  CFM_STR        = 1,
+  CFM_LONG       = 2,   	
+  CFM_DOUBLE     = 3,
+  CFM_SHORT      = 4,
+  CFM_CHAR       = 5,
+  CFM_PTR        = 6,
+  CFM_STRUCT     = 7,
+  CFM_STRUCT_PTR = 8, 
+}CFM_TYPE;
+
+
+
+
+typedef struct
+{
+  int          magic;
+  const char   *name;
+  unsigned     format;
+  unsigned     arrayNumber;
+  unsigned     offset;
+  const char   *structureName;
+}FIELD_DEFINITION;
+
+typedef struct
+{
+  int                      magic;
+  const char               *name;
+  unsigned                 structureSize;
+  const FIELD_DEFINITION   *fieldDefinitions;
+
+}STRUCTURE_DEFINITION;
+
+
+
+typedef struct
+{
+   int  magic;
+   char *name;
+   char *format; // only long parameters are supported
+   void *address;
+}C_FUNCTION_INTERFACE;
+
+typedef struct
+{
+  int                  magic;
+  char                 *name;
+  const unsigned       format;
+  int                  arraySize;
+  int                  elementSize;
+  void                 *address;
+  STRUCTURE_DEFINITION *structureDefinition;
+  char                 *structureName;
+ 
+}STATIC_OBJECTS;
+
+typedef struct
+{
+  STATIC_OBJECTS       *staticObjects;
+  STRUCTURE_DEFINITION *structDefinitions;
+  C_FUNCTION_INTERFACE *c_functionInterface;
+}PACKAGE_INTERFACE;
+
+
+typedef PACKAGE_INTERFACE *(*PACKAGE_FUNCTION)(void);
+
+#ifdef __cplusplus 
+
+}
+
+#endif
+
+#endif

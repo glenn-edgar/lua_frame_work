@@ -1,0 +1,1292 @@
+/*
+**
+** File: alarm_hr.js
+**
+**
+**
+**
+**
+**
+*/
+
+
+/*
+**
+** Top level control
+**
+**
+**
+**
+**
+**
+*/
+
+var currentIndex;
+var Jsondata
+var masterObject = {}
+var nullTime = "00:00"
+
+var backUpObject;
+
+masterObject.number = 1
+masterObject.creationTime = getGmt()
+masterObject.name = "walgreens"
+masterObject.alarm = 1
+
+masterObject.Sunday = {}
+masterObject.Sunday.times = new Array()
+masterObject.Sunday.amFlag = new Array()
+masterObject.Sunday.number = 0
+masterObject.Sunday.times[0] = [ nullTime, nullTime]
+masterObject.Sunday.times[1] = [ nullTime, nullTime]
+masterObject.Sunday.amFlag[0] = 0
+masterObject.Sunday.amFlag[1] = 0
+masterObject.Sunday.amFlag[2] = 0
+masterObject.Sunday.amFlag[3] = 0
+masterObject.Sunday.img= "#SundayImg"
+masterObject.Sunday.imag1 ="#Sunday_1"
+masterObject.Sunday.imag2 ="#Sunday_2"
+masterObject.Sunday.radio ="input[name='radio_1']"
+masterObject.Sunday.input_1="#input_a_1"
+masterObject.Sunday.input_2="#input_b_1"
+masterObject.Sunday.input_3="#input_c_1"
+masterObject.Sunday.input_4="#input_d_1"
+masterObject.Sunday.select_1="#select_a_1"
+masterObject.Sunday.select_2="#select_b_1"
+masterObject.Sunday.select_3="#select_c_1"
+masterObject.Sunday.select_4="#select_d_1"
+
+masterObject.Monday = {}
+masterObject.Monday.number = 0
+masterObject.Monday.times = new Array()
+masterObject.Monday.amFlag = new Array()
+masterObject.Monday.times[0] = [ nullTime, nullTime]
+masterObject.Monday.times[1] = [ nullTime, nullTime]
+masterObject.Monday.amFlag[0] = 0
+masterObject.Monday.amFlag[1] = 0
+masterObject.Monday.amFlag[2] = 0
+masterObject.Monday.amFlag[3] = 0
+masterObject.Monday.img= "#MondayImg"
+masterObject.Monday.imag1 ="#Monday_1"
+masterObject.Monday.imag2 ="#Monday_2"
+masterObject.Monday.radio ="input[name='radio_2']"
+masterObject.Monday.input_1="#input_a_2"
+masterObject.Monday.input_2="#input_b_2"
+masterObject.Monday.input_3="#input_c_2"
+masterObject.Monday.input_4="#input_d_2"
+masterObject.Monday.select_1="#select_a_2"
+masterObject.Monday.select_2="#select_b_2"
+masterObject.Monday.select_3="#select_c_2"
+masterObject.Monday.select_4="#select_d_2"
+
+
+masterObject.Tuesday = {}
+masterObject.Tuesday.number = 0
+masterObject.Tuesday.times = new Array()
+masterObject.Tuesday.amFlag = new Array()
+masterObject.Tuesday.times[0] = [nullTime, nullTime]
+masterObject.Tuesday.times[1] = [nullTime, nullTime]
+masterObject.Tuesday.amFlag[0] = 0
+masterObject.Tuesday.amFlag[1] = 0
+masterObject.Tuesday.amFlag[2] = 0
+masterObject.Tuesday.amFlag[3] = 0
+masterObject.Tuesday.img= "#TuesdayImg"
+masterObject.Tuesday.imag1 ="#Tuesday_1"
+masterObject.Tuesday.imag2 ="#Tuesday_2"
+masterObject.Tuesday.radio ="input[name='radio_3']"
+masterObject.Tuesday.input_1="#input_a_3"
+masterObject.Tuesday.input_2="#input_b_3"
+masterObject.Tuesday.input_3="#input_c_3"
+masterObject.Tuesday.input_4="#input_d_3"
+masterObject.Tuesday.select_1="#select_a_3"
+masterObject.Tuesday.select_2="#select_b_3"
+masterObject.Tuesday.select_3="#select_c_3"
+masterObject.Tuesday.select_4="#select_d_3"
+
+masterObject.Wednesday = {}
+masterObject.Wednesday.number = 0
+masterObject.Wednesday.times = new Array()
+masterObject.Wednesday.amFlag = new Array()
+masterObject.Wednesday.times[0] = [nullTime, nullTime]
+masterObject.Wednesday.times[1] = [nullTime, nullTime]
+masterObject.Wednesday.amFlag[0] = 0
+masterObject.Wednesday.amFlag[1] = 0
+masterObject.Wednesday.amFlag[2] = 0
+masterObject.Wednesday.amFlag[3] = 0
+masterObject.Wednesday.img= "#WednesdayImg"
+masterObject.Wednesday.imag1 ="#Wednesday_1"
+masterObject.Wednesday.imag2 ="#Wednesday_2"
+masterObject.Wednesday.radio ="input[name='radio_4']"
+masterObject.Wednesday.input_1="#input_a_4"
+masterObject.Wednesday.input_2="#input_b_4"
+masterObject.Wednesday.input_3="#input_c_4"
+masterObject.Wednesday.input_4="#input_d_4"
+masterObject.Wednesday.select_1="#select_a_4"
+masterObject.Wednesday.select_2="#select_b_4"
+masterObject.Wednesday.select_3="#select_c_4"
+masterObject.Wednesday.select_4="#select_d_4"
+
+masterObject.Thursday = {}
+masterObject.Thursday.number = 0
+masterObject.Thursday.times = new Array()
+masterObject.Thursday.amFlag = new Array()
+masterObject.Thursday.times[0] = [nullTime,nullTime]
+masterObject.Thursday.times[1] = [nullTime,nullTime]
+masterObject.Thursday.amFlag[0] = 0
+masterObject.Thursday.amFlag[1] = 0
+masterObject.Thursday.amFlag[2] = 0
+masterObject.Thursday.amFlag[3] = 0
+masterObject.Thursday.img= "#ThursdayImg"
+masterObject.Thursday.imag1 ="#Thursday_1"
+masterObject.Thursday.imag2 ="#Thursday_2"
+masterObject.Thursday.radio ="input[name='radio_5']"
+masterObject.Thursday.input_1="#input_a_5"
+masterObject.Thursday.input_2="#input_b_5"
+masterObject.Thursday.input_3="#input_c_5"
+masterObject.Thursday.input_4="#input_d_5"
+masterObject.Thursday.select_1="#select_a_5"
+masterObject.Thursday.select_2="#select_b_5"
+masterObject.Thursday.select_3="#select_c_5"
+masterObject.Thursday.select_4="#select_d_5"
+
+masterObject.Friday = {}
+masterObject.Friday.number = 0
+masterObject.Friday.times = new Array()
+masterObject.Friday.amFlag = new Array()
+masterObject.Friday.times[0] = [nullTime,nullTime]
+masterObject.Friday.times[1] = [nullTime,nullTime]
+masterObject.Friday.amFlag[0] = 0
+masterObject.Friday.amFlag[1] = 0
+masterObject.Friday.amFlag[2] = 0
+masterObject.Friday.amFlag[3] = 0
+masterObject.Friday.img= "#FridayImg"
+masterObject.Friday.imag1 ="#Friday_1"
+masterObject.Friday.imag2 ="#Friday_2"
+masterObject.Friday.radio ="input[name='radio_6']"
+masterObject.Friday.input_1="#input_a_6"
+masterObject.Friday.input_2="#input_b_6"
+masterObject.Friday.input_3="#input_c_6"
+masterObject.Friday.input_4="#input_d_6"
+masterObject.Friday.select_1="#select_a_6"
+masterObject.Friday.select_2="#select_b_6"
+masterObject.Friday.select_3="#select_c_6"
+masterObject.Friday.select_4="#select_d_6"
+
+
+
+masterObject.Saturday = {}
+masterObject.Saturday.number = 0 
+masterObject.Saturday.times = new Array()
+masterObject.Saturday.amFlag = new Array()
+masterObject.Saturday.times[0] = [nullTime, nullTime]
+masterObject.Saturday.times[1] = [nullTime, nullTime]
+masterObject.Saturday.amFlag[0] = 0
+masterObject.Saturday.amFlag[1] = 0
+masterObject.Saturday.amFlag[2] = 0
+masterObject.Saturday.amFlag[3] = 0
+masterObject.Saturday.img= "#SaturdayImg"
+masterObject.Saturday.imag1 ="#Saturday_1"
+masterObject.Saturday.imag2 ="#Saturday_2"
+masterObject.Saturday.radio ="input[name='radio_7']"
+masterObject.Saturday.input_1="#input_a_7"
+masterObject.Saturday.input_2="#input_b_7"
+masterObject.Saturday.input_3="#input_c_7"
+masterObject.Saturday.input_4="#input_d_7"
+masterObject.Saturday.select_1="#select_a_7"
+masterObject.Saturday.select_2="#select_b_7"
+masterObject.Saturday.select_3="#select_c_7"
+masterObject.Saturday.select_4="#select_d_7"
+
+
+
+ 
+
+function toJson( temp)
+{
+  return JSON.stringify( temp );
+
+}
+
+
+function parseJson( temp )
+{
+  return JSON.parse( temp );
+ 
+}
+
+
+
+//stringObject.split(separator, howmany)
+function getData()
+{
+  var data
+  var lines
+  data = getText( "data/alarmhrs.txd" )
+  if( data != null )
+  {
+   
+    lines = data.split("\n")
+    if( lines[0] != null )
+    {
+       fields = lines[0].split("|")
+       masterObject.creationTime = fields[1]
+     
+    }
+    if( lines[2] != null )
+    {
+       lines[2] = trim( lines[2])
+       parseDataLine( lines[2] )
+    }
+  }
+ 
+
+}
+
+
+function saveData()
+{
+  var saveTime;
+  var textData;
+  var line3;
+  
+  saveControls();
+  textData = "null|alarmhrs.txd"+"|"+masterObject.creationTime+"|"+getGmt()+"\r\n"
+  textData = textData+"\r\n"
+  line3 = ""+ masterObject.number+"|"+masterObject.name+"|"+masterObject.alarm 
+  line3 = line3 + packObject(masterObject.Sunday)
+  line3 = line3 + packObject(masterObject.Monday)
+  line3 = line3 + packObject(masterObject.Tuesday)
+  line3 = line3 + packObject(masterObject.Wednesday)
+  line3 = line3 + packObject(masterObject.Thursday)
+  line3 = line3 + packObject(masterObject.Friday)
+  line3 = line3 + packObject(masterObject.Saturday)
+  line3 = line3 + "\r\n"
+  textData = textData+ line3
+  
+  post( "/alarmhr.cgi",textData );
+
+}
+
+function resetData()
+{
+  masterObject =  parseJson( backUpObject );
+  loadControls();
+}
+
+function ready()
+{
+
+$('#save').bind( 'click',saveData)
+$('#reset').bind('click',resetData)
+$("[name=radio_1]").bind('click',radio_1)
+$("[name=radio_2]").bind('click',radio_2)
+$("[name=radio_3]").bind('click',radio_3)
+$("[name=radio_4]").bind('click',radio_4)
+$("[name=radio_5]").bind('click',radio_5)
+$("[name=radio_6]").bind('click',radio_6)
+$("[name=radio_7]").bind('click',radio_7)
+
+$("#select_a_1").bind('click',select_1)
+$("#select_b_1").bind('click',select_1)
+$("#select_c_1").bind('click',select_1)
+$("#select_d_1").bind('click',select_1)
+$("#select_a_2").bind('click',select_2)
+$("#select_b_2").bind('click',select_2)
+$("#select_c_2").bind('click',select_2)
+$("#select_d_2").bind('click',select_2)
+$("#select_a_3").bind('click',select_3)
+$("#select_b_3").bind('click',select_3)
+$("#select_c_3").bind('click',select_3)
+$("#select_d_3").bind('click',select_3)
+$("#select_a_4").bind('click',select_4)
+$("#select_b_4").bind('click',select_4)
+$("#select_c_4").bind('click',select_4)
+$("#select_d_4").bind('click',select_4)
+$("#select_a_5").bind('click',select_5)
+$("#select_b_5").bind('click',select_5)
+$("#select_c_5").bind('click',select_5)
+$("#select_d_5").bind('click',select_5)
+$("#select_a_6").bind('click',select_6)
+$("#select_b_6").bind('click',select_6)
+$("#select_c_6").bind('click',select_6)
+$("#select_d_6").bind('click',select_6)
+$("#select_a_7").bind('click',select_7)
+$("#select_b_7").bind('click',select_7)
+$("#select_c_7").bind('click',select_7)
+$("#select_d_7").bind('click',select_7)
+
+$("#input_a_1").bind('mouseleave',select_1)
+$("#input_b_1").bind('mouseleave',select_1)
+$("#input_c_1").bind('mouseleave',select_1)
+$("#input_d_1").bind('mouseleave',select_1)
+$("#input_a_2").bind('mouseleave',select_2)
+$("#input_b_2").bind('mouseleave',select_2)
+$("#input_c_2").bind('mouseleave',select_2)
+$("#input_d_2").bind('mouseleave',select_2)
+$("#input_a_3").bind('mouseleave',select_3)
+$("#input_b_3").bind('mouseleave',select_3)
+$("#input_c_3").bind('mouseleave',select_3)
+$("#input_d_3").bind('mouseleave',select_3)
+$("#input_a_4").bind('mouseleave',select_4)
+$("#input_b_4").bind('mouseleave',select_4)
+$("#input_c_4").bind('mouseleave',select_4)
+$("#input_d_4").bind('mouseleave',select_4)
+$("#input_a_5").bind('mouseleave',select_5)
+$("#input_b_5").bind('mouseleave',select_5)
+$("#input_c_5").bind('mouseleave',select_5)
+$("#input_d_5").bind('mouseleave',select_5)
+$("#input_a_6").bind('mouseleave',select_6)
+$("#input_b_6").bind('mouseleave',select_6)
+$("#input_c_6").bind('mouseleave',select_6)
+$("#input_d_6").bind('mouseleave',select_6)
+$("#input_a_7").bind('mouseleave',select_7)
+$("#input_b_7").bind('mouseleave',select_7)
+$("#input_c_7").bind('mouseleave',select_7)
+$("#input_d_7").bind('mouseleave',select_7)
+
+
+ $.mask.definitions['~']='[01]';
+ $.mask.definitions['-']='[012345]';
+ $("#input_a_1").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Sunday);}});
+   $("#input_b_1").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Sunday);}});
+   $("#input_c_1").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Sunday);}});
+   $("#input_d_1").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Sunday);}});
+
+   $("#input_a_2").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Monday);}});
+   $("#input_b_2").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Monday);}});
+   $("#input_c_2").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Monday);}});
+   $("#input_d_2").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Monday);}});
+
+   $("#input_a_3").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Tuesday);}});
+   $("#input_b_3").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Tuesday);}});
+   $("#input_c_3").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Tuesday);}});
+   $("#input_d_3").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Tuesday);}});
+
+
+   $("#input_a_4").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Wednesday)}});
+   $("#input_b_4").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Wednesday)}});
+   $("#input_c_4").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Wednesday)}});
+   $("#input_d_4").mask("~9:-9", {completed:function(){validateTime(thismasterObject.Wednesday)}});
+
+
+   $("#input_a_5").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Thursday);}});
+   $("#input_b_5").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Thursday);}});
+   $("#input_c_5").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Thursday);}});
+   $("#input_d_5").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Thursday);}});
+
+   $("#input_a_6").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Friday);}});
+   $("#input_b_6").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Friday);}});
+   $("#input_c_6").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Friday);}});
+   $("#input_d_6").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Friday);}});
+
+   $("#input_a_7").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Saturday);}});
+   $("#input_b_7").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Saturday);}});
+   $("#input_c_7").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Saturday);}});
+   $("#input_d_7").mask("~9:-9", {completed:function(){validateTime(this,masterObject.Saturday);}});
+
+
+
+getData()
+backUpObject = toJson( masterObject );
+loadControls();
+}
+
+
+
+$(document).ready( ready);
+
+function saveControls()
+{
+  var name;
+
+  masterObject.Sunday.number = checkButton( $("input[name='radio_1']"))
+  masterObject.Sunday.times[0][0] = $("#input_a_1").attr("value")
+  masterObject.Sunday.times[0][1] = $("#input_b_1").attr("value")
+  masterObject.Sunday.times[1][0] = $("#input_c_1").attr("value")
+  masterObject.Sunday.times[1][1] = $("#input_d_1").attr("value")
+  masterObject.Sunday.amFlag[0]   = $("#select_a_1").attr("value")
+  masterObject.Sunday.amFlag[1]   = $("#select_b_1").attr("value")
+  masterObject.Sunday.amFlag[2]   = $("#select_c_1").attr("value")
+  masterObject.Sunday.amFlag[3]   = $("#select_d_1").attr("value")
+
+
+  masterObject.Monday.number = checkButton( $("input[name='radio_2']"))
+  masterObject.Monday.times[0][0] = $("#input_a_2").attr("value")
+  masterObject.Monday.times[0][1] = $("#input_b_2").attr("value")
+  masterObject.Monday.times[1][0] = $("#input_c_2").attr("value")
+  masterObject.Monday.times[1][1] = $("#input_d_2").attr("value")
+  masterObject.Monday.amFlag[0]   = $("#select_a_2").attr("value")
+  masterObject.Monday.amFlag[1]   = $("#select_b_2").attr("value")
+  masterObject.Monday.amFlag[2]   = $("#select_c_2").attr("value")
+  masterObject.Monday.amFlag[3]   = $("#select_d_2").attr("value")
+
+
+  masterObject.Tuesday.number = checkButton( $("input[name='radio_3']"))
+  masterObject.Tuesday.times[0][0] = $("#input_a_3").attr("value")
+  masterObject.Tuesday.times[0][1] = $("#input_b_3").attr("value")
+  masterObject.Tuesday.times[1][0] = $("#input_c_3").attr("value")
+  masterObject.Tuesday.times[1][1] = $("#input_d_3").attr("value")
+  masterObject.Tuesday.amFlag[0]   = $("#select_a_3").attr("value")
+  masterObject.Tuesday.amFlag[1]   = $("#select_b_3").attr("value")
+  masterObject.Tuesday.amFlag[2]   = $("#select_c_3").attr("value")
+  masterObject.Tuesday.amFlag[3]   = $("#select_d_3").attr("value")
+
+
+  masterObject.Wednesday.number = checkButton( $("input[name='radio_4']"))
+  masterObject.Wednesday.times[0][0] = $("#input_a_4").attr("value")
+  masterObject.Wednesday.times[0][1] = $("#input_b_4").attr("value")
+  masterObject.Wednesday.times[1][0] = $("#input_c_4").attr("value")
+  masterObject.Wednesday.times[1][1] = $("#input_d_4").attr("value")
+  masterObject.Wednesday.amFlag[0]   = $("#select_a_4").attr("value")
+  masterObject.Wednesday.amFlag[1]   = $("#select_b_4").attr("value")
+  masterObject.Wednesday.amFlag[2]   = $("#select_c_4").attr("value")
+  masterObject.Wednesday.amFlag[3]   = $("#select_d_4").attr("value")
+
+
+  masterObject.Thursday.number = checkButton( $("input[name='radio_5']"))
+  masterObject.Thursday.times[0][0] = $("#input_a_5").attr("value")
+  masterObject.Thursday.times[0][1] = $("#input_b_5").attr("value")
+  masterObject.Thursday.times[1][0] = $("#input_c_5").attr("value")
+  masterObject.Thursday.times[1][1] = $("#input_d_5").attr("value")
+  masterObject.Thursday.amFlag[0]   = $("#select_a_5").attr("value")
+  masterObject.Thursday.amFlag[1]   = $("#select_b_5").attr("value")
+  masterObject.Thursday.amFlag[2]   = $("#select_c_5").attr("value")
+  masterObject.Thursday.amFlag[3]   = $("#select_d_5").attr("value")
+
+
+  masterObject.Friday.number = checkButton( $("input[name='radio_6']"))
+  masterObject.Friday.times[0][0] = $("#input_a_6").attr("value")
+  masterObject.Friday.times[0][1] = $("#input_b_6").attr("value")
+  masterObject.Friday.times[1][0] = $("#input_c_6").attr("value")
+  masterObject.Friday.times[1][1] = $("#input_d_6").attr("value")
+  masterObject.Friday.amFlag[0]   = $("#select_a_6").attr("value")
+  masterObject.Friday.amFlag[1]   = $("#select_b_6").attr("value")
+  masterObject.Friday.amFlag[2]   = $("#select_c_6").attr("value")
+  masterObject.Friday.amFlag[3]   = $("#select_d_6").attr("value")
+
+
+  masterObject.Saturday.number = checkButton( $("input[name='radio_7']"))
+  masterObject.Saturday.times[0][0] = $("#input_a_7").attr("value")
+  masterObject.Saturday.times[0][1] = $("#input_b_7").attr("value")
+  masterObject.Saturday.times[1][0] = $("#input_c_7").attr("value")
+  masterObject.Saturday.times[1][1] = $("#input_d_7").attr("value")
+  masterObject.Saturday.amFlag[0]   = $("#select_a_7").attr("value")
+  masterObject.Saturday.amFlag[1]   = $("#select_b_7").attr("value")
+  masterObject.Saturday.amFlag[2]   = $("#select_c_7").attr("value")
+  masterObject.Saturday.amFlag[3]   = $("#select_d_7").attr("value")
+
+
+}
+
+
+function loadControls()
+{
+  setButton( $("input[name='radio_1']"), masterObject.Sunday.number )
+  $("input[@name='radio_1']:checked").val(masterObject.Sunday.number)
+  $("#input_a_1").attr("value",masterObject.Sunday.times[0][0])
+  $("#input_b_1").attr("value",masterObject.Sunday.times[0][1])
+  $("#input_c_1").attr("value",masterObject.Sunday.times[1][0])
+  $("#input_d_1").attr("value",masterObject.Sunday.times[1][1])
+  $("#select_a_1").attr("value",masterObject.Sunday.amFlag[0])
+  $("#select_b_1").attr("value",masterObject.Sunday.amFlag[1])
+  $("#select_c_1").attr("value",masterObject.Sunday.amFlag[2])
+  $("#select_d_1").attr("value",masterObject.Sunday.amFlag[3])
+
+  setButton( $("input[name='radio_2']"), masterObject.Monday.number )
+  $("#input_a_2").attr("value",masterObject.Monday.times[0][0])
+  $("#input_b_2").attr("value",masterObject.Monday.times[0][1])
+  $("#input_c_2").attr("value",masterObject.Monday.times[1][0])
+  $("#input_d_2").attr("value",masterObject.Monday.times[1][1])
+  $("#select_a_2").attr("value",masterObject.Monday.amFlag[0])
+  $("#select_b_2").attr("value",masterObject.Monday.amFlag[1])
+  $("#select_c_2").attr("value",masterObject.Monday.amFlag[2])
+  $("#select_d_2").attr("value",masterObject.Monday.amFlag[3])
+
+
+  setButton( $("input[name='radio_3']"), masterObject.Tuesday.number )
+  $("#input_a_3").attr("value",masterObject.Tuesday.times[0][0])
+  $("#input_b_3").attr("value",masterObject.Tuesday.times[0][1])
+  $("#input_c_3").attr("value",masterObject.Tuesday.times[1][0])
+  $("#input_d_3").attr("value",masterObject.Tuesday.times[1][1])
+  $("#select_a_3").attr("value",masterObject.Tuesday.amFlag[0])
+  $("#select_b_3").attr("value",masterObject.Tuesday.amFlag[1])
+  $("#select_c_3").attr("value",masterObject.Tuesday.amFlag[2])
+  $("#select_d_3").attr("value",masterObject.Tuesday.amFlag[3])
+
+
+  setButton( $("input[name='radio_4']"), masterObject.Wednesday.number )
+  $("#input_a_4").attr("value",masterObject.Wednesday.times[0][0])
+  $("#input_b_4").attr("value",masterObject.Wednesday.times[0][1])
+  $("#input_c_4").attr("value",masterObject.Wednesday.times[1][0])
+  $("#input_d_4").attr("value",masterObject.Wednesday.times[1][1])
+  $("#select_a_4").attr("value",masterObject.Wednesday.amFlag[0])
+  $("#select_b_4").attr("value",masterObject.Wednesday.amFlag[1])
+  $("#select_c_4").attr("value",masterObject.Wednesday.amFlag[2])
+  $("#select_d_4").attr("value",masterObject.Wednesday.amFlag[3])
+
+
+  setButton( $("input[name='radio_5']"), masterObject.Thursday.number )
+  $("#input_a_5").attr("value",masterObject.Thursday.times[0][0])
+  $("#input_b_5").attr("value",masterObject.Thursday.times[0][1])
+  $("#input_c_5").attr("value",masterObject.Thursday.times[1][0])
+  $("#input_d_5").attr("value",masterObject.Thursday.times[1][1])
+  $("#select_a_5").attr("value",masterObject.Thursday.amFlag[0])
+  $("#select_b_5").attr("value",masterObject.Thursday.amFlag[1])
+  $("#select_c_5").attr("value",masterObject.Thursday.amFlag[2])
+  $("#select_d_5").attr("value",masterObject.Thursday.amFlag[3])
+
+
+  setButton( $("input[name='radio_6']"), masterObject.Friday.number )
+  $("#input_a_6").attr("value",masterObject.Friday.times[0][0])
+  $("#input_b_6").attr("value",masterObject.Friday.times[0][1])
+  $("#input_c_6").attr("value",masterObject.Friday.times[1][0])
+  $("#input_d_6").attr("value",masterObject.Friday.times[1][1])
+  $("#select_a_6").attr("value",masterObject.Friday.amFlag[0])
+  $("#select_b_6").attr("value",masterObject.Friday.amFlag[1])
+  $("#select_c_6").attr("value",masterObject.Friday.amFlag[2])
+  $("#select_d_6").attr("value",masterObject.Friday.amFlag[3])
+
+
+  setButton( $("input[name='radio_7']"), masterObject.Saturday.number )
+  $("#input_a_7").attr("value",masterObject.Saturday.times[0][0])
+  $("#input_b_7").attr("value",masterObject.Saturday.times[0][1])
+  $("#input_c_7").attr("value",masterObject.Saturday.times[1][0])
+  $("#input_d_7").attr("value",masterObject.Saturday.times[1][1])
+  $("#select_a_7").attr("value",masterObject.Saturday.amFlag[0])
+  $("#select_b_7").attr("value",masterObject.Saturday.amFlag[1])
+  $("#select_c_7").attr("value",masterObject.Saturday.amFlag[2])
+  $("#select_d_7").attr("value",masterObject.Saturday.amFlag[3])
+
+  radio_1()
+  radio_2()
+  radio_3()
+  radio_4()
+  radio_5()
+  radio_6()
+  radio_7()
+
+}
+
+
+
+
+function radio_1()
+{
+  var val
+  var name;
+  name = $("input[name='radio_1']")
+  
+  val = checkButton( name)
+  if( val == 0 )
+  {
+   $("#group_a_1").hide()
+   $("#group_b_1").hide()
+  }
+  else if( val == 1 )
+  {
+   $("#group_a_1").show()
+   $("#group_b_1").hide()
+  }
+  else
+  {
+   $("#group_a_1").show()
+   $("#group_b_1").show()
+  }
+  drawTime( masterObject.Sunday )
+
+}
+
+function radio_2()
+{
+  var val
+  var name;
+  name = $("input[name='radio_2']")
+  
+  val = checkButton( name)
+  if( val == 0 )
+  {
+   $("#group_a_2").hide()
+   $("#group_b_2").hide()
+  }
+  else if( val == 1 )
+  {
+   $("#group_a_2").show()
+   $("#group_b_2").hide()
+  }
+  else
+  {
+   $("#group_a_2").show()
+   $("#group_b_2").show()
+  }
+  drawTime( masterObject.Monday )
+}
+
+function radio_3()
+{
+  var val
+  var name;
+  name = $("input[name='radio_3']")
+  
+  val = checkButton( name)
+  if( val == 0 )
+  {
+   $("#group_a_3").hide()
+   $("#group_b_3").hide()
+  }
+  else if( val == 1 )
+  {
+   $("#group_a_3").show()
+   $("#group_b_3").hide()
+  }
+  else
+  {
+   $("#group_a_3").show()
+   $("#group_b_3").show()
+  }
+  drawTime( masterObject.Tuesday )
+}
+
+function radio_4()
+{
+  var val
+  var name;
+  name = $("input[name='radio_4']")
+  
+  val = checkButton( name)
+  if( val == 0 )
+  {
+   $("#group_a_4").hide()
+   $("#group_b_4").hide()
+  }
+  else if( val == 1 )
+  {
+   $("#group_a_4").show()
+   $("#group_b_4").hide()
+  }
+  else
+  {
+   $("#group_a_4").show()
+   $("#group_b_4").show()
+  }
+  drawTime( masterObject.Wednesday )
+}
+
+function radio_5()
+{
+  var val
+  var name;
+  name = $("input[name='radio_5']")
+  
+  val = checkButton( name)
+  if( val == 0 )
+  {
+   $("#group_a_5").hide()
+   $("#group_b_5").hide()
+  }
+  else if( val == 1 )
+  {
+   $("#group_a_5").show()
+   $("#group_b_5").hide()
+  }
+  else
+  {
+   $("#group_a_5").show()
+   $("#group_b_5").show()
+  }
+  drawTime( masterObject.Thursday )
+}
+
+function radio_6()
+{
+  var val
+  var name;
+  name = $("input[name='radio_6']")
+  
+  val = checkButton( name)
+  
+  if( val == 0 )
+  {
+   $("#group_a_6").hide()
+   $("#group_b_6").hide()
+  }
+  else if( val == 1 )
+  {
+   $("#group_a_6").show()
+   $("#group_b_6").hide()
+  }
+  else
+  {
+   $("#group_a_6").show()
+   $("#group_b_6").show()
+  }
+  drawTime( masterObject.Friday )
+}
+
+function radio_7()
+{
+  var val
+  var name;
+  name = $("input[name='radio_7']")
+  
+  val = checkButton( name)
+ 
+
+
+  if( val == 0 )
+  {
+   $("#group_a_7").hide()
+   $("#group_b_7").hide()
+  }
+  else if( val == 1 )
+  {
+   $("#group_a_7").show()
+   $("#group_b_7").hide()
+  }
+  else
+  {
+   $("#group_a_7").show()
+   $("#group_b_7").show()
+  }
+  drawTime( masterObject.Saturday )
+}
+
+
+function checkButton( btn)
+{
+  var returnValue;
+  var i;
+
+  returnValue = -1;
+
+  for( i = 0; i < btn.length; i++ )
+  {
+    if( btn[i].checked )
+    {
+        returnValue = i;
+        return returnValue;
+    }
+ }
+ 
+ return returnValue
+}
+
+
+function setButton( btn,i )
+{
+  
+  if( i < btn.length )
+  {
+    
+    btn[i].checked = true;
+  }
+}
+
+function select_1()
+{
+  
+  drawTime( masterObject.Sunday )
+
+}
+
+function select_2()
+{
+ 
+  drawTime( masterObject.Monday )
+}
+
+function select_3()
+{
+ 
+  drawTime( masterObject.Tuesday )
+}
+
+function select_4()
+{
+  
+  drawTime( masterObject.Wednesday )
+}
+
+function select_5()
+{
+ 
+  drawTime( masterObject.Thursday )
+}
+
+function select_6()
+{
+ 
+  drawTime( masterObject.Friday )
+}
+
+function select_7()
+{
+
+  drawTime( masterObject.Saturday )
+}
+
+
+
+/*
+
+jQuery(function($){
+   $("#product").mask("99/99/9999",{placeholder:" "});
+});
+
+
+jQuery(function($){
+   $("#product").mask("99/99/9999",{completed:function(){alert("You typed the following: "+this.val());}});
+});
+
+
+jQuery(function($){
+   $.mask.definitions['~']='[+-]';
+   $("#eyescript").mask("~9.99 ~9.99 999");
+});
+
+*/
+
+function getText( url )
+{
+  
+  $.ajax(
+  {
+     url: url,
+     type: 'GET',
+     dataType: 'html',
+     success: ajaxSuccessData,
+     async: false,
+     error: ajaxError_1,
+    
+  }); // making Jason call
+  
+  return Jsondata;
+
+}
+
+function ajaxSuccessData( data )
+{
+ 
+  Jsondata = data;
+}
+
+
+function ajaxSuccess( data )
+{
+   //alert("ajax success data =="+data);
+  //alert("ajax successfull transfer")
+}
+function ajaxError( e, xhr, settings, exception )
+{
+  alert("ajax error " );
+  //throw("bad URL");
+   
+}
+function ajaxError_1( e, xhr, settings, exception )
+{
+ // alert("ajax error " );
+  //throw("bad URL");
+   
+}
+function post( url, data )
+{
+
+ 
+ 
+  $.ajax(
+  {
+     url: url,
+     type: 'POST',
+     data: data,
+     dataType: 'text',
+     success: ajaxSuccess,
+     async: false,
+     error: ajaxError,
+    
+  }); // making Jason call
+  
+  
+}
+ 
+function GetMonth(intMonth)
+{
+    var MonthArray = new Array("January", "February", "March",
+                               "April", "May", "June",
+                               "July", "August", "September",
+                               "October", "November", "December") 
+    return MonthArray[intMonth] 	  	 
+}
+ 
+function getGmt()
+{
+   var returnValue
+   var time = new Date()
+   var gmtMS = time.getTime() 
+              + (time.getTimezoneOffset() * 60000)
+   var gmtTime =  new Date(gmtMS)
+   var hr = gmtTime.getHours()
+   var min = gmtTime.getMinutes()
+   var sec = gmtTime.getSeconds()
+   var day = gmtTime.getDate()
+   var month = gmtTime.getMonth()
+   var year = gmtTime.getYear()
+   returnValue = " "+day +" "+ GetMonth( month)+ " "+ ( year+1900) + "  " + hr + ":" + min + ":" + sec + "  GMT "
+   
+   return returnValue
+}
+
+function packObject( dataObj)
+{
+  var returnValue
+  var temp1
+  var temp2
+  var temp3
+  var temp4
+
+  returnValue = "|"
+  if( dataObj.number == 0 )
+  {
+    ; // do nothing
+  }
+  if( dataObj.number == 1 )
+  {
+    temp1 = packConvert( dataObj,0)
+    temp2 = packConvert( dataObj,1)
+    returnValue = returnValue + temp1 +"~"+temp2
+  }
+  if( dataObj.number == 2)
+  {
+    temp1 = packConvert( dataObj,0)
+    temp2 = packConvert( dataObj,1)
+    temp3 = packConvert( dataObj,2)
+    temp4 = packConvert( dataObj,3)
+
+    returnValue = returnValue + temp1 +"~"+temp2 +"~"+
+                  temp3 +"~"+temp4
+  }
+  return returnValue
+}
+
+function packConvert( object, index )
+{
+  var returnValue
+  var hrs
+  var fields
+  var temp
+  var temp1
+  var temp2
+  var hrMap = [ "00","01","02","03","04","05","06","07","08","09","10","11","12" ]
+  
+  if( index == 0 ) { temp = object.times[0][0] }
+  if( index == 1 ) { temp = object.times[0][1] }
+  if( index == 2 ) { temp = object.times[1][0] }
+  if( index == 3 ) { temp = object.times[1][1] }
+
+  if( object.amFlag[index] == 0 )
+  {
+    returnValue = temp
+  }
+  else
+  {
+     temp2 = temp
+     fields = temp.split(":")
+     temp1 = fields[0]
+     if( temp1[0] == '0')
+     {
+       
+       temp= temp1[1];
+     }
+     else
+     {
+          temp = temp1[0]+temp1[1];
+     }
+     hrs = parseInt(temp)+12
+     
+     
+     returnValue = hrs + ":"+ temp2[3]+temp2[4]
+  }
+  return returnValue
+}
+
+
+function parseDataLine( dataLine )
+{
+  var fields
+  fields = dataLine.split("|")
+  if( fields.length != 10 ){ return; }
+ 
+  parseField(fields[3],masterObject.Sunday)
+  parseField(fields[4],masterObject.Monday)
+  parseField(fields[5],masterObject.Tuesday)
+  parseField(fields[6],masterObject.Wednesday)
+  parseField(fields[7],masterObject.Thursday)
+  parseField(fields[8],masterObject.Friday)
+  parseField(fields[9],masterObject.Saturday)
+
+} 
+
+
+function parseField( data, object)
+{
+  var fields
+  
+  fields = data.split("~")
+  
+  if( fields.length == 4 )
+  {
+    object.number = 2
+    object.times[0][0] = parseTimeField( fields[0] );
+    object.times[0][1] = parseTimeField( fields[1] );
+    object.times[1][0] = parseTimeField( fields[2] );
+    object.times[1][1] = parseTimeField( fields[3] );
+    object.amFlag[0]  = parseAmField( fields[0] );
+    object.amFlag[1] = parseAmField( fields[1] );
+    object.amFlag[2] = parseAmField( fields[2] );
+    object.amFlag[3] = parseAmField( fields[3] );
+    
+    return;
+  }
+  if( fields.length == 2 )
+  {
+    object.number = 1
+    object.times[0][0] = parseTimeField( fields[0] );
+    object.times[0][1] = parseTimeField( fields[1] );
+    object.amFlag[0]  = parseAmField( fields[0] );
+    object.amFlag[1] = parseAmField( fields[1] );
+
+    return;
+  }
+  object.number = 0
+}
+    
+function parseAmField( inputData)
+{
+ var fields
+ var hrs
+ var minutes
+ var returnValue;
+ var temp
+ var temp1
+
+ fields = inputData.split(":")
+ temp = fields[0]
+ 
+ if( temp[0] == '0')
+ {
+   temp1 = temp[1]
+ }
+ else
+ {
+   temp1 = temp[0]+temp[1];
+ }
+
+ hrs = parseInt( temp1 )
+
+ 
+ 
+ if( hrs > 12 ){ returnValue = 1 } else { returnValue = 0 }
+
+ return returnValue;
+} 
+
+function parseTimeField( inputData)
+{
+ var fields
+ var hrs
+ var temp
+ var temp1
+ var returnValue;
+ var hrMap = [ "00","01","02","03","04","05","06","07","08","09","10","11","12" ]
+
+ fields = inputData.split(":")
+ temp = fields[0]
+ if( temp[0] == '0')
+ {
+   temp1 = temp[1]
+ }
+ else
+ {
+   temp1 = temp[0]+temp[1];
+ }
+
+ hrs = parseInt( temp1 )
+
+ if( hrs > 12 ){ hrs = hrs - 12 }
+ returnValue = hrMap[hrs] + ":"+ inputData[3]+inputData[4]
+ return returnValue;
+} 
+
+function trim(stringToTrim) {
+	return stringToTrim.replace(/^\s+|\s+$/g,"");
+}
+function ltrim(stringToTrim) {
+	return stringToTrim.replace(/^\s+/,"");
+}
+function rtrim(stringToTrim) {
+	return stringToTrim.replace(/\s+$/,"");
+}
+
+function validateTime( inputVal, dataObj )
+{
+
+  if( inputVal.val() > "12:00" )
+  {
+     alert(inputVal.val()+" is greater than 12:00 try again");
+     inputVal.val("12:00");
+    
+  }
+  drawTime(dataObj)
+}
+/*
+**
+**
+**
+**  Validation Function and Function which draws graphical images
+**
+**
+**
+**
+**
+**
+*/
+
+function drawTime( dataObj )
+{
+  var alarmNumber;
+ 
+  
+  alarmNumber = checkButton( $(dataObj.radio) )
+ 
+  alarmNumber = parseInt( alarmNumber);
+
+  if( alarmNumber == 0 )
+  {
+     $( dataObj.imag1).hide();
+     $( dataObj.imag2).hide();
+  }
+  if( alarmNumber == 1 )
+  {
+    $(dataObj.imag2).hide();
+    drawImage( dataObj, dataObj.imag1,0)
+  }
+  if( alarmNumber == 2 )
+  {
+    drawImage( dataObj,dataObj.imag1,0);
+    drawImage( dataObj,dataObj.imag2,1);
+  }
+
+
+}  
+    
+
+function drawImage(dataObj, imageId, reference )
+{
+   var masterGraphic;
+   var timeSpan
+   var deltaX
+
+   masterGraphic = determineImageAttributes( dataObj )
+   timeSpan = determineTimeSpan( dataObj, reference)
+   if( timeSpan.endTime > timeSpan.startTime)
+   {
+     delataX = timeSpan.startTime*masterGraphic.width/24/60
+     $(imageId).show()
+     $(imageId).width(((timeSpan.endTime-timeSpan.startTime)/(24*60))*masterGraphic.width)
+     $(imageId).height(20)
+     $(imageId).css({ position: "absolute",
+
+            marginLeft: 0, marginTop: 0,
+
+            top: masterGraphic.pos.top, left: masterGraphic.pos.left + delataX });
+   }
+   else
+   {
+     $(imageId).hide()
+   }
+
+}
+
+function determineImageAttributes( dataObj )
+{
+  var returnValue = {}
+  returnValue.pos = $(dataObj.img).position();
+  returnValue.width = $(dataObj.img).width();
+  //alert("Image att pos "+ returnValue.pos.top+" "+ returnValue.pos.left);
+  //alert("Image att width "+ returnValue.width);
+  return returnValue;
+
+}
+
+function determineTimeSpan( dataObj, reference )
+{
+   var startObj;
+   var startSelect;
+   var endObj;
+   var endSelect;
+   var returnValue;
+   returnValue = {}
+
+   if( reference == 0 )
+   {
+      startObj      = dataObj.input_1
+      startSelect   = dataObj.select_1
+      endObj        = dataObj.input_2
+      endSelect     = dataObj.select_2
+   }
+   else
+   {
+       startObj      = dataObj.input_3
+      startSelect   = dataObj.select_3
+      endObj        = dataObj.input_4
+      endSelect     = dataObj.select_4
+    
+
+   }
+   returnValue.startTime = determineMinutes( startObj, startSelect);
+   returnValue.endTime = determineMinutes( endObj, endSelect);
+   return returnValue;
+}   
+
+function determineMinutes( inputObj, selectObj)
+{
+  var hrs
+  var minutes
+  var fields
+  var temp
+  selectValue = $(selectObj).attr("value")
+  selectValue = parseInt(selectValue)
+  //alert("select Value is "+selectValue)
+  temp = $(inputObj).attr("value")
+  if( temp[3] == '0')
+  {
+    minutes = temp[4];
+  }
+  else
+  {
+    minutes = temp[3]+temp[4]
+  }
+  if( temp[0] == '0')
+  {
+    hrs = temp[1];
+  }
+  else
+  {
+    hrs = temp[0]+temp[1]
+  }
+  minutes = parseInt(minutes);
+  selectValue = parseInt(selectValue)
+  hrs = parseInt(hrs)
+  if( selectValue == 0 )
+  {
+    minutes = minutes +hrs*60;
+  }
+  else
+  {
+    minutes = minutes+hrs*60+12*60;
+  }
+ // alert("minutes  "+minutes);
+  return minutes
+} 
+
+
+
+

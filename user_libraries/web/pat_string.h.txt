@@ -1,0 +1,201 @@
+/*
+**  Copyright 2008 Onyx Engineering
+**  This file is licensed MIT
+**
+**  File: pat_string.c
+**  String system for pattern matching
+**  and extracting information from string
+**  buffers.  Intent is to creating temporary 
+**  strings
+**
+*/
+
+#ifndef _PAT_STRING_H_
+#define _PAT_STRING_H_
+
+#define PAT_STRING_MAGIC 0x22993388
+
+typedef struct
+{
+  int  magic; // magic is use by other programs
+  int  length;
+  char *string;
+}PAT_STRING;
+
+/*
+**
+** returns buffer is buffer is large enough
+** returns NULL if buffer is to small
+**
+*/
+char *PT_toString( unsigned bufLength, char *buffer, 
+                    PAT_STRING *ptString );
+
+char *PT_extractString( PAT_STRING *pat,
+                         int         startingPosition,
+                         int         endingPosition,
+                         int         stringBufferLength,
+                         char        *extractBuffer );
+
+char *PT_toMallocString( PAT_STRING *pat );
+
+char *PT_toMallocExtractString( PAT_STRING *pat,
+                         int         startingPosition,
+                         int         endingPosition );
+                   
+
+int PT_toInteger( PAT_STRING *ptString ,int base );
+
+void PT_toPat( char *buffer , PAT_STRING *ptString );
+
+void PT_copyPat( PAT_STRING *newPat, 
+                  PAT_STRING *oldPat,
+                  int         positionStart,
+                  int         positionEnd  // -1 use old end
+                   );
+
+void PT_adjustBase( PAT_STRING *patString, 
+                     int         baseChange );
+
+void PT_adjustLength( PAT_STRING *patString,
+                       int         lengthChange );
+
+
+void PT_trim( PAT_STRING *ptString );
+
+
+void PT_replace(PAT_STRING *ptString,char searchChar, char replaceCar );
+         
+
+/*
+**
+** returns -1 if no match
+** returns position of match if match
+*/
+int PT_match( PAT_STRING *buffer, 
+                    char *matchString, 
+                    unsigned position ); 
+
+/*
+**
+** returns -1 if no match
+** returns position of match if match
+*/
+
+int PT_find( PAT_STRING *buffer, 
+                   char *matchString,
+                   unsigned position );
+
+/*
+**
+** returns -1 if no match
+** returns position of match if match
+*/
+
+int PT_findAndAdvance( PAT_STRING *buffer, 
+                        char *matchString,
+                        unsigned position );
+
+/*
+**
+**  returns number of matches
+**  same functionality as a string split
+**
+*/
+int PT_arrayFindAndAdvance( PAT_STRING *buffer,
+                            int        numberOfMatches, 
+                            char       **matchString,
+                            unsigned   position,
+                            PAT_STRING *matchPatterns );
+
+/*
+**
+** return -1 if no match
+** returns 0 if match
+**
+*/
+int PT_matchBetween(PAT_STRING *buffer,
+               char       *startString,
+               char       *endString ,
+               unsigned    startingPosition );
+
+/*
+**
+** returns number of pattern matches
+**
+**
+**
+*/
+
+
+int PT_arrayMatchBetween( PAT_STRING *buffer,
+                          int        numberOfPatterns,
+                          char       **startPatterns,
+                          char       **endPatterns,
+                          unsigned   startingPosition,
+                          PAT_STRING *patArray );
+
+
+/*
+**
+** returns number of split matches
+**
+*/
+
+unsigned PT_splitWhiteSpace( PAT_STRING *buffer, 
+                              unsigned number, 
+                              PAT_STRING *match );
+
+
+/*
+**
+** returns number of split matches
+**
+*/
+
+unsigned PT_splitChar( PAT_STRING *buffer, 
+                        char split, 
+                        unsigned number, 
+                        PAT_STRING *match );
+
+/*
+** return   0 if balanced match is found
+** returns -1 if start delimiter was not found
+** returns -2 if no match was found
+**
+*/
+int PAT_balancedFind( PAT_STRING  *buffer, 
+                      char        openDelm,
+                      char        closeDelm,
+                      int         *advancePosition,
+                      PAT_STRING  *matchPat );
+
+
+/*
+**
+** Not implemented
+**
+**
+**
+*/
+
+int PAT_concatStringLength( int patNumber, PAT_STRING *patAssembly );
+
+int PAT_concatString( int bufferLength, 
+                      char *buffer,
+                      int  patNumber,
+                      PAT_STRING *patAssembly );
+
+
+void PT_printPatString(int stringSize, PAT_STRING *ptString );
+ 
+
+
+
+
+
+
+
+
+#endif
+

@@ -1,0 +1,58 @@
+/*
+**  File:  c_staticObjectDefines.h
+**
+**  This file contains the definition of the
+**  static objects
+*/ 
+
+
+#ifndef _C_STATIC_OBJECT_DEFINES_H_
+#define _C_STATIC_OBJECT_DEFINES_H_
+
+#include "lua.h"
+
+
+
+#ifdef __cplusplus 
+
+extern "C"
+{
+#endif
+
+#include "cs_assert.h"
+
+#define EXCEPTION_STACK_SIZE  256
+extern unsigned            magic_1;
+extern unsigned            exceptionStackIndex;
+extern CS_ASSERT_BOOLEAN   assertInterlock;
+extern ExceptionStack      exceptionStack[];
+extern unsigned            magic_2;
+extern unsigned            interlockCount;
+
+
+static const STATIC_OBJECTS staticObjects[] =
+{
+  { "assert.magic_1",CFM_INT,sizeof(unsigned ),1,&magic_1,NULL },
+  { "assert.magic_2",CFM_INT,sizeof(unsigned ),1,&magic_2,NULL },
+  { "assert.exceptionStackIndex",CFM_INT, sizeof(unsigned),
+                 	1,&exceptionStackIndex, NULL },
+  { "assert.assertInterlock",CFM_INT,sizeof(unsigned),
+                        1,&assertInterlock,NULL },
+  { "assert.exceptionStack",CFM_STRUCT,
+                sizeof(ExceptionStack)*EXCEPTION_STACK_SIZE, 
+                EXCEPTION_STACK_SIZE,
+                exceptionStack,"EXCEPTION_STACK" },
+  { "assert.interlockCount",CFM_INT,sizeof(unsigned),
+                     1,&interlockCount, NULL },
+ }; 
+
+#define SOBS_NUM  ( sizeof(staticObjects)/sizeof(STATIC_OBJECTS ))
+
+
+#ifdef __cplusplus 
+
+}
+
+#endif
+
+#endif

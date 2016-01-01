@@ -1,0 +1,100 @@
+---
+---
+--- File: lua_sqlite.lua
+--- This file access the sqlite data base
+---
+---
+---
+---
+---
+
+sqliteLog = {}
+sqliteLog.handle = nil
+sqliteLog.db = "sqlScripts/tgs3.db"
+
+
+function sqliteLog.description()
+  return "sqliteLog logging functions"
+end
+
+function sqliteLog.help()
+  return 0
+end
+
+function sqliteLog.open()
+ assert( sqliteLog.handle == nil,"attempting to open an opened data base")
+ sqliteLog.handle = sqlite.open( sqliteLog.db )
+ assert( sqliteLog.handle ~= nil ,"logging data base did not open")
+end
+
+function sqliteLog.createDb()
+  local temp
+
+  ---
+  --- create test instance
+  ---
+  temp =  "CREATE TABLE testInstance( jobId INTEGER PRIMARY KEY, description TEXT, startTime INTEGER, stopTime INTEGER, timeStamp STRING );"
+   sqlite.exec( sqliteLog.handle, temp)
+   --- donot check status code as failure means the table exits
+
+   temp = "CREATE TABLE testResults( id INTEGER PRIMARY KEY AUTOINCREMENT, jobId INTEGER, unitId STRING, action STRING, status INTEGER, result STRING  );"
+   sqlite.exec( sqliteLog.handle, temp )
+
+   --- donot check status code as failure means the tables exits
+   temp = "CREATE TABLE pickleTable( jobId INTEGER PRIMARY KEY, pickleData TEXT );"
+   sqlite.exec( sqliteLog.handle, temp )
+
+ 
+end
+
+function sqliteLog.close()
+  assert( sqliteLog.handle ~= nil,"attempting to close a closed data base")
+  sqlite.close( sqliteLog.handle)
+  sqliteLog.handle = nil
+end
+
+
+function sqliteLog.createJob( jobId, description, startTime, stopTime )
+  local timeStamp
+  local sqlString
+  local status
+  local temp
+
+  timeStamp = os.date(nil,startTime)
+  sqlString = sprintf('INSERT OR REPLACE INTO testInstance( jobId, description, startTime, stopTime, timeStamp  )  values ( %d , "%s",  %d,  %d ,"%s"  );',  jobId, description, startTime, stopTime,timeStamp  )
+
+  temp, status = sqlite.exec( sqliteLog.handle, sqlString ) 
+ 
+  assert( status == 0, "job table db failure")
+end
+
+function sqliteLog.logTestAction( jobId, unitId, action, status, result )
+  local statusInt
+  local sqlString
+  local tempString
+  local temp
+  if ( errorString == nil ) or (errorString == "") then errorString = "  " end
+  if ( tgsFile == nil ) or (tgsFile == "" ) then tgsFile = " " end
+  if ( mtsFile == nil ) or (mtsFile == "") then mtsFile = "  " end
+  if status == false then statusInt = 0 else statusInt = 1 end
+  tempString = 'INSERT OR REPLACE INTO testResults( jobId, unitId, action, status, result ) '.. 
+    'values ( %d , "%s" , "%s" , %d , "%s"   );'
+   sqlString = sprintf( tempString, jobId,unitId,action,statusInt, result )
+   temp, status = sqlite.exec( sqliteLog.handle,sqlString)
+ 
+   assert( status == 0,"test result db failure")
+end
+
+function sqliteLog.logPickleData( jobId, pickleData )
+  sqlString = sprintf('INSERT OR REPLACE INTO pickleTable( jobId, pickleData ) values( %d , "%s" ) ;',
+                       jobId,pickleData )
+  temp,status = sqlite.exec( sqliteLog.handle, sqlString)
+  assert( status ==0,"pickle table failure")
+end
+
+function sqliteLog.getPickleData( jobId)
+  sqlString = 'select * from pickleTable where( jobId= '..jobId..' );'
+  temp,status = sqlite.exec( sqliteLog.handle, sqlString)
+  assert( status ==0,"pickle table retrieve error")
+  return temp
+end 

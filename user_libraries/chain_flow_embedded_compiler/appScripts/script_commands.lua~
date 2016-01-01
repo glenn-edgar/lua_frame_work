@@ -1,0 +1,137 @@
+---
+---
+--- File:  script_commands which are immediately executed
+---
+---
+---
+
+script_commands = {}
+
+
+function  script_commands.configure_io( io_configuration )
+          assert(io_configuration ~= nil )
+          script.add_command("CONFIGURE_IO",io_configuration )
+end
+
+function  script_commmands.set_node( node )
+          assert( nodeId ~= nil )
+          script.add_command("SET_NODE",nodeId )
+end
+
+function  script_commands.set_flash( id , value )
+          assert( id  ~= nil)
+          assert( value ~= nil )
+          script.add_command("SET_FLASH",id,value )
+end
+
+function  script_commands.set_flash_not_int( id, value )
+          script.add_command("SET_FLASH_NINT",id, value )
+end
+
+
+
+function script_commands.setVariable( id ,value )
+    assert(id ~= nil)
+    assert(value ~= nil )
+    script.add_command("SET_VARIABLE",id,value)
+end
+
+function script_commands.getVariableRange( start_index, end_index )
+    assert(start_index ~= nil )
+    assert(end_index ~= nil )
+    script.add_command("GET_VARIABLE",start_index,end_index )
+end
+
+
+
+function script_commands.getFlashRange( start_index, end_index )
+    assert(start_index ~= nil )
+    assert(end_index ~= nil )
+    script.add_command("GET_FLASH_VARIABLE",start_index,end_index )
+end
+
+
+function script_commands.setFlashVariable
+    assert(id ~= nil)
+    assert(value ~= nil )
+    script.add_command("SET_FLASH_VARIABLE",id,value)
+end
+
+
+function script_commands.enableScripts( start_index, end_index )
+    assert(start_index ~= nil )
+    assert(end_index ~= nil )
+    script.add_command("ENABLE_SCRIPTS",start_index,end_index )
+end
+
+
+
+function script_commands.disableScripts( start_index, end_index )
+    assert(start_index ~= nil )
+    assert(end_index ~= nil )
+    script.add_command("DISABLE_SCRIPTS",start_index,end_index )
+end
+
+function script_commands.setOnline()
+    script.add_command("ENABLE_ONLINE_MODE")
+end
+
+function script_commands.setOffline()
+   script.add_command("DISABLE_OFFLINE_MODE")
+end
+
+function script_commands.chain_program( program_index )
+  script.add_command("CHAIN",program_index)
+end
+
+--
+--
+-- These functions control ram layout
+--
+--
+
+
+function script_commands.initialize_ram( ram_size)
+  local temp
+  assert(ram_size ~= nil )
+  assert(ram_size <= 256) -- all ram areas have a size limitation of 256
+  script_commands.ram = {}
+  script_commands.ram.size = ram_size
+  script_commands.ram.pages = {}
+  for i=1,script_commands.ram.size do
+    script_commands.ram.pages[i] = true
+  end
+end
+
+function script_commands.reserve_ram( location )
+  local temp
+   assert( script_commands.ram.pages[location] ~= nil,"bad RAM page")
+   assert( script_commands.ram.pages[location] == true,"already reserved location")
+   script_commands.ram.pages[location] = false
+   return location
+end
+
+
+function script_commands.allocate_ram( allocation_size)
+  for i = 1,script_commands.ram.size-allocation_size+1 do
+     if script_commands.check_pages( i,allocation_size) == true then
+	    for j = i,i+allocation_size-1 do
+	      script_commands.ram.pages[j] = false
+         end
+
+	    return i
+	 end
+   end
+   assert(false,"block size "..allocation_size.." cannot be allocated")
+
+end
+
+function script_commands.check_pages( start,size )
+ assert( start+size-1 <= script_commands.ram.size,"out of ram space start "..start.."  size "..size.." ram size "..script_commands.ram.size )
+ for i = start, start+size-1 do
+   if script_commands.ram.pages[i] == false then return false end
+   if script_commands.ram.pages[i] == nil then assert("should not be here") end
+  end
+  return true
+end
+

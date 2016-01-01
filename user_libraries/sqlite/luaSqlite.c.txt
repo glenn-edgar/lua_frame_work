@@ -1,0 +1,169 @@
+/*
+  
+  File: luaSqlite.c
+  Interface to sqlite data base
+
+  Copyright Onyx Engineering, INC.
+  This file is licensed as MIT
+
+
+*/
+
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+#include "sqlite3.h"
+#include "luaSqlite.h"
+
+/*
+**
+**
+** Simple Sql Data Base Support
+**
+**
+**
+**
+**
+*/
+
+
+
+static int sqlResultIndex;
+
+
+
+static int lua_dbOpen( lua_State *L )
+{
+   int status;
+   char *fileName;
+   sqlite3 *sqliteDb;
+
+   fileName = (char *)lua_tostring(L, 1);
+
+   status = sqlite3_open( fileName,&sqliteDb );
+   if( status == SQLITE_OK )
+   {
+   
+     lua_pushboolean(L,1);
+     lua_pushlightuserdata ( L, sqliteDb );;
+   }
+   else
+   {
+
+     lua_pushboolean(L,0);
+     lua_pushlightuserdata(L, sqliteDb );
+
+   }
+   return 1;
+   
+}
+
+static int lua_dbClose( lua_State *L )
+{
+  sqlite3 *sqliteDb;
+  sqliteDb = (sqlite3 *)lua_topointer(L,1);
+  assert(sqliteDb != NULL );
+  sqlite3_close( sqliteDb);
+  return 0;
+}
+
+   
+
+  
+
+static int sqlCallBack( void *appObject, int argc, char **argv, char **column )
+{
+   lua_State *L;
+   int        i;
+  
+
+
+   L = ( lua_State *) appObject; 
+   
+   if( argc == 0 )
+   {
+     goto end;
+   }
+   lua_newtable(L );
+
+   for( i = 0;i < argc; i++ )
+   {
+      lua_pushstring(L,    (*argv) );
+      argv++;
+      lua_setfield( L, -2, (*column) );
+      column++;
+   }
+   lua_rawseti(L,  -2,    sqlResultIndex++);
+   
+
+end:
+   return 0;
+}
+
+static int  lua_dbExec( lua_State *L )
+{
+   int  status;
+   char *sqlString;
+   sqlite3 *sqliteDb;
+
+
+   sqlResultIndex = 1;
+   sqliteDb = (sqlite3 *)lua_topointer(L,1);
+   assert(sqliteDb != NULL );
+   sqlString = (char *)lua_tostring(L,2);
+   lua_newtable(L);
+   
+   status = sqlite3_exec( sqliteDb, sqlString,sqlCallBack,L, NULL );
+   lua_pushinteger(L,status);
+   return 2;
+
+
+}
+
+static int lua_sqliteHelp( lua_State *L )
+{
+  printf("list of sqlite support Commands \n\n");
+  printf(".open(fileName)  -- opens sqlite db \n");
+  printf(".close() -- closes sqlite db \n");
+  printf(".exec( sql String )   \n");
+  printf(".help() -- list commands     \n\n");
+  return 0;
+}   
+
+
+static int description( lua_State *L )
+{
+   lua_pushstring(L,"lua interface to sqlite");
+   return 1;
+}
+
+static const struct luaL_reg  lua_sqliteMethods[] = 
+{
+   {"open",               lua_dbOpen },
+   {"close",              lua_dbClose     },
+   {"exec",               lua_dbExec   },
+   {"help",               lua_sqliteHelp  },
+   {"description",        description },
+   { NULL, NULL },      
+   
+};
+
+
+
+int sqlLiteSupportLoad( lua_State *L )
+{
+   
+   luaL_openlib(L,"sqlite",lua_sqliteMethods,0 );
+   return 1;
+}
+
+
+
+
+

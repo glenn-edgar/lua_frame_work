@@ -1,0 +1,94 @@
+/*
+** File luaInterface.c
+** Copyright Onyx Engineering, Inc.
+** This file is licensed MIT
+**
+**
+**
+**
+*/
+
+#include <ctype.h>
+#include <errno.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <pthread.h>
+#include <assert.h>
+#include <unistd.h>
+
+
+
+
+
+
+#include "lua.h"
+
+#include "lauxlib.h"
+#include "rtc.h"
+
+static int lua_to_time_lowLevel( lua_State *L )
+{
+  RTC_t rtc;
+  int   timeStamp;
+
+  timeStamp = lua_tointeger(L,1);
+  rtc_gettime ( &rtc, timeStamp);
+  lua_pushinteger(L,rtc.year);
+  lua_pushinteger(L,rtc.month);
+  lua_pushinteger(L,rtc.mday);
+  lua_pushinteger(L,rtc.hour);
+  lua_pushinteger(L,rtc.min );
+  lua_pushinteger(L,rtc.sec ); 
+
+  return 6;
+}
+
+ 
+static int lua_to_timeStamp_lowLevel( lua_State *L )
+{
+  int returnValue;
+  RTC_t rtc;
+ 
+  rtc.year = lua_tointeger(L,1);
+  rtc.month = lua_tointeger(L,2);
+  rtc.mday = lua_tointeger(L,3);
+  rtc.hour = lua_tointeger(L,4);
+  rtc.min =  lua_tointeger(L,5);
+  rtc.sec = lua_tointeger(L,6);
+  returnValue = rtc_settime ( &rtc );
+  lua_pushinteger(L,returnValue);
+  return 1;
+}
+
+
+
+
+static int lua_loadScript(lua_State *L)
+{
+  
+
+  #include "init.h"
+
+  return 0;
+}
+
+static const struct luaL_reg  lua_cf_send_cmd[] = 
+{
+   { "to_time_lowLevel",     lua_to_time_lowLevel },
+   { "to_timeStamp_lowLevel",lua_to_timeStamp_lowLevel},
+   { NULL, NULL },      
+   
+};
+
+int lua_registercontroler( lua_State *L  )
+{
+   luaL_openlib(L,"cf_send_cmd",lua_cf_send_cmd,0 );
+   // load lua Start up script
+   lua_loadScript( L );
+
+   return 1;
+}
+
+

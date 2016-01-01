@@ -1,0 +1,436 @@
+/*
+
+Copyright 2008 OnyxEngineering
+This file is licensed as MIT
+
+This is derivative work of the malloc algorithim presented in the K&R C book
+
+
+**
+*/
+
+#include <assert.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include "cs_private_heap.h"
+
+
+#define CS_CONTROL_BLOCK_VALID 0x55aa55aa
+#define CS_MEM_BLOCK_VALID     0xAA55AA55
+
+
+
+
+
+
+
+
+
+
+
+
+static const char *cs_heap_error_string[] =
+{
+	"OK",
+	"INVALID CONTROL BLOCK",
+	"INVALID MEMORY  BLOCK",
+	"MEMORY BLOCK LESS THAN PRIVATE HEAP",
+	"MEMORY BLOCK GREATER THAN PRIVATE HEAP",
+	"MEMORY BLOCK END CORRUPTION"
+};
+
+
+
+
+static void *cs_malloc_allocate_a( CS_MEMORY_CONTROL *memoryControl,  unsigned  bytes);
+
+
+static void *cs_malloc_realloc_a( CS_MEMORY_CONTROL *memoryControl, void *ptr,  unsigned  bytes);
+
+
+static void cs_free_a( CS_MEMORY_CONTROL *memoryControl,void  *ptr);
+
+
+void cs_initialize_privateHeap( CS_MEMORY_CONTROL *memoryControl,
+				int                heapSize,
+				void               *heapMemory )
+
+{
+    	memoryControl->heapSize              = heapSize;
+    	memoryControl->allocatedSize         = 0;
+    	memoryControl->heapMemoryArea        = heapMemory;
+     	memoryControl->allocp                = &memoryControl->base;
+     	memoryControl->base.next             
+               = (CS_MEM_BLOCK *)memoryControl->heapMemoryArea;
+    	memoryControl->base.units            = 0;
+    	memoryControl->base.next->units      
+                            = heapSize / sizeof( CS_MEM_BLOCK);
+    	memoryControl->base.next->next       = &memoryControl->base;
+    	memoryControl->lastErrorCode         = CS_OK;		
+	memoryControl->validTag              = CS_CONTROL_BLOCK_VALID;
+        memoryControl->lastErrorCodeString   = cs_heap_error_string[CS_OK];
+	
+}
+
+
+
+
+void cs_reset_privateHeap( CS_MEMORY_CONTROL *memoryControl )
+{
+
+	if( cs_verifyControlBlock( memoryControl ) == CS_HEAP_TRUE )
+	{
+
+	memoryControl->allocatedSize         = 0;
+	memoryControl->allocp                = &memoryControl->base;
+	memoryControl->base.next             = (CS_MEM_BLOCK *)memoryControl->heapMemoryArea;
+	memoryControl->base.units            = 0;
+	memoryControl->base.next->units      = memoryControl->heapSize / sizeof( CS_MEM_BLOCK );
+	memoryControl->base.next->next       = &memoryControl->base;
+	memoryControl->validTag              = CS_CONTROL_BLOCK_VALID;
+	memoryControl->lastErrorCode         = CS_OK;		
+	memoryControl->lastErrorCodeString   = cs_heap_error_string[CS_OK];
+
+
+	}
+    else
+    {
+      assert(0); // raising error condition
+    }
+
+
+}
+
+
+
+void *cs_malloc( CS_MEMORY_CONTROL *memoryControl,  unsigned  bytes)
+{
+	void *returnValue;
+	
+        assert( bytes > 0 );
+	if( cs_verifyControlBlock( memoryControl) == CS_HEAP_TRUE )
+        {
+	  returnValue = cs_malloc_allocate_a( memoryControl,  bytes);
+          if( returnValue == NULL )
+          {
+            assert(0);
+          }
+
+        }
+	else
+        {
+              assert(0);
+      	      returnValue = NULL;
+   	 }
+
+   	return returnValue;
+}
+
+void *cs_realloc( CS_MEMORY_CONTROL *memoryControl, void *ptr, unsigned newSize )
+{
+
+     CS_MEM_BLOCK      *p;
+     void              *returnValue;
+
+     assert( newSize > 0 );
+     returnValue = NULL;
+     if( ptr == NULL )
+     {
+           returnValue = cs_malloc( memoryControl, newSize );
+
+          memset( returnValue,0,newSize );
+          goto done;
+         
+     }
+
+     p = (CS_MEM_BLOCK *)ptr - 1;
+
+     if( cs_verifyMemBlock( ptr ) != CS_HEAP_TRUE )
+     {
+
+            assert(0);
+	  
+      }
+
+	
+
+	if( cs_verifyControlBlock( memoryControl ) != CS_HEAP_TRUE )
+       {
+
+
+            assert(0);
+	    
+	}
+        
+        returnValue = cs_malloc_realloc_a( memoryControl,ptr,  newSize );
+
+done:
+     return returnValue;
+
+}
+
+void cs_free(CS_MEMORY_CONTROL *memoryControl,void *ptr )
+{
+	CS_MEM_BLOCK      *p;
+
+
+    	if( ptr == NULL )
+    	{
+		return;
+    	}
+
+    	p = (CS_MEM_BLOCK *)ptr - 1;
+
+	if( cs_verifyMemBlock( ptr ) != CS_HEAP_TRUE )
+        {
+
+            assert(0);
+	 
+	}
+
+
+
+	if( cs_verifyControlBlock( memoryControl ) != CS_HEAP_TRUE )
+        {
+
+            assert(0);
+	}
+
+
+	
+	if( memoryControl == NULL )
+        {
+           assert(0);
+
+         }
+
+
+	cs_free_a( memoryControl, ptr );
+
+
+
+
+	; // end function
+}
+
+
+CS_HEAP_BOOLEAN cs_verifyMemBlock( void *data )
+{
+	CS_HEAP_BOOLEAN returnValue;
+
+
+
+	returnValue = CS_HEAP_TRUE;
+
+
+
+	return returnValue;
+
+}
+
+
+CS_HEAP_BOOLEAN cs_verifyControlBlock( CS_MEMORY_CONTROL *memoryControl )
+{
+   CS_HEAP_BOOLEAN  returnValue;
+
+   if( memoryControl->validTag  != CS_CONTROL_BLOCK_VALID )
+   {
+	   memoryControl->lastErrorCode = CS_INVALID_CONTROL_BLOCK;
+	   memoryControl->lastErrorCodeString = cs_heap_error_string[ CS_INVALID_CONTROL_BLOCK ];
+	   returnValue = CS_HEAP_FALSE;
+   }
+   else
+   {
+	   returnValue = CS_HEAP_TRUE;
+   }
+   return returnValue;
+}
+
+// this is a diagnostic function
+void cs_dumpHeap( CS_MEMORY_CONTROL *memoryControl )
+{
+    CS_MEM_BLOCK *p=NULL;
+    CS_MEM_BLOCK *q=NULL;
+    unsigned     totalUnits;
+	
+     totalUnits = 0;
+	for (q= memoryControl->allocp, p=q->next; /**/; q=p, p=p->next)
+	{
+                totalUnits += p->units;
+		printf("\tp=%p p->units=%5d p+p->units=%p p->next=%p\r\n",p,p->units,p+p->units,p->next);
+		if (p == memoryControl->allocp)
+                 {
+			break;
+                  }
+    }
+    printf("total memory blocks %d total bytes %d \r\n",totalUnits, (int)(totalUnits*sizeof(CS_MEM_BLOCK)));
+}
+
+unsigned cs_freeHeapMem( CS_MEMORY_CONTROL *memoryControl )
+{
+
+      CS_MEM_BLOCK *p=NULL;
+      CS_MEM_BLOCK *q=NULL;
+      unsigned     totalUnits;
+	
+      totalUnits = 0;
+
+      for (q= memoryControl->allocp, p=q->next; /**/; q=p, p=p->next)
+      {
+         totalUnits += p->units;
+
+         if (p == memoryControl->allocp)
+         {
+            break;
+         }
+      }
+
+      return (totalUnits*sizeof(CS_MEM_BLOCK));
+}
+
+
+int cs_getHeapErrorCode( CS_MEMORY_CONTROL *memoryControl )
+{
+	return memoryControl->lastErrorCode;
+}
+
+
+const char *cs_getHeapString( CS_MEMORY_CONTROL *memoryControl )
+{
+	return memoryControl->lastErrorCodeString;
+}
+
+
+
+
+static void *cs_malloc_allocate_a( CS_MEMORY_CONTROL *memoryControl,  unsigned  bytes)
+{
+    unsigned units;
+    CS_MEM_BLOCK *p=NULL;
+    CS_MEM_BLOCK *q=NULL;
+
+
+
+    /* number of MEM's we need to hold header_info + bytes */
+    units = 1 + (bytes + sizeof(CS_MEM_BLOCK) - 1)/sizeof( CS_MEM_BLOCK);
+
+    q = memoryControl->allocp;
+
+    /* cruise for a large enough block (first fit) */
+    for (p=q->next; ; q=p, p=p->next)
+    {
+        if (p->units >= units)
+        {
+            if (p->units == units)
+            {
+                /* exactly right ... unlink <p> */
+                q->next = p->next;
+            }
+            else
+            {
+                /* reduce p's units and return p's tail */
+                p->units -= units;
+                p += p->units;
+                p->units = units;
+				
+            }
+            /* set next start point and return */
+            memoryControl->allocp = q;
+            memoryControl->allocatedSize += units;
+			memset( (p+1),0xcc,(units-1)*sizeof(CS_MEM_BLOCK) );
+			
+            return  (void *)(p+1 ); // advance past memory Block
+        }
+
+        /* wrapped around freelist ... No Memory Abort Loop */
+        if (p == memoryControl->allocp)
+        {
+            
+            return NULL;
+        }
+    }
+}
+
+static void *cs_malloc_realloc_a( CS_MEMORY_CONTROL *memoryControl, void *ptr, unsigned  bytes)
+{
+   unsigned units;
+   CS_MEM_BLOCK *p;
+   void              *returnValue;
+   /* number of MEM's we need to hold header_info + bytes */
+   units = 1 + (bytes + sizeof(CS_MEM_BLOCK) - 1)/sizeof( CS_MEM_BLOCK);
+
+    if( ptr == NULL )
+    {
+	return NULL;
+    }
+    p = (CS_MEM_BLOCK *)ptr - 1;
+
+    if( units > p->units )
+    {
+       // note this is not an optimium realloc as I did not check to see if
+       // there is an adjacent free block
+       returnValue =  cs_malloc_allocate_a( memoryControl,  bytes);
+       if( returnValue != NULL)
+       {
+          memset(returnValue,0,bytes);
+          memcpy(returnValue,ptr,bytes);
+         cs_free_a( memoryControl, ptr );;
+       }
+    }
+    else
+    {
+       returnValue = ptr;
+    }
+    return returnValue;
+}
+
+
+static void cs_free_a( CS_MEMORY_CONTROL *memoryControl, void  *ptr)
+{
+    CS_MEM_BLOCK *p;
+    CS_MEM_BLOCK *q;
+	;
+
+    if( ptr == NULL )
+    {
+		return;
+    }
+
+    p = (CS_MEM_BLOCK *)ptr - 1;
+
+
+    memoryControl->allocatedSize -= p->units;
+    for (q = memoryControl->allocp; !(p>q && p<q->next); q=q->next)
+    {
+        if (q >= q->next && (p > q || p < q->next))
+            break;
+    }
+
+    if (p+p->units == q->next)
+    {
+        /* merge right */
+        p->units += q->next->units;
+        p->next = q->next->next;
+    }
+    else
+    {
+        /* insert right */
+        p->next = q->next;
+    }
+
+    if (q+q->units == p)
+    {
+        /* merge left */
+        q->units += p->units;
+        q->next = p->next;
+    }
+    else
+    {
+        /* insert left */
+        q->next = p;
+    }
+    memoryControl->allocp = q;
+
+}
+

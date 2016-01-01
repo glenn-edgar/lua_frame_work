@@ -1,0 +1,141 @@
+--[[
+     File quickJson.lua
+     The purpose of this file is make json encoding and json decoding fast for  a Blackfin DSP Processor
+     To do this right json encoder and decoder should be written in c
+
+
+--]]
+
+
+quickJson = {}
+quickJson.pointer = nil
+quickJson.bufferSize = 1000000
+
+
+function quickJson.decode( object )
+  local temp
+  null = " "
+  
+  temp = cJson.decode( object )
+ 
+ 
+  temp = "quickJson.returnValue = "..temp
+
+  assert(loadstring(temp))()
+  return quickJson.returnValue
+end
+
+function quickJson.encode( object)
+  local returnValue
+  quickJson.pointer = cJson.encode_initialize( quickJson.bufferSize )
+  quickJson.encodeObject( object)
+  returnValue = cJson.encode_free( quickJson.pointer )
+  quickJson.pointer = nil
+
+  return returnValue
+end
+
+function quickJson.encodeObject( object)
+   if type( object ) == "table" then
+       quickJson.encode_table( object)
+   elseif type( object ) == "nil" then
+     cJson.encode_push( quickJson.pointer, "null");
+   elseif type(object) == "number" then
+     cJson.encode_push( quickJson.pointer, tostring(object))
+   elseif type(object) == "boolean" then
+     
+      cJson.encode_push( quickJson.pointer, tostring(object))
+
+   else
+      cJson.encode_push( quickJson.pointer, '"')
+      cJson.encode_push( quickJson.pointer, tostring(object))
+      cJson.encode_push( quickJson.pointer, '"')
+   end
+
+
+end
+ 
+
+
+
+ 
+function quickJson.encode_table( object)
+
+  if object[1] == nil then
+    quickJson.encodeHashTable( object)
+  else
+     quickJson.encodeArray( object)
+  end
+end
+
+function quickJson.encodeArray( object)
+  local temp
+  local sep
+  temp = {}
+
+  sep = " "
+  cJson.encode_push( quickJson.pointer, "[");
+  for i,j in ipairs( object ) do
+    cJson.encode_push( quickJson.pointer,sep)
+    if type( j ) == "table" then
+       quickJson.encode_table(j)
+   elseif type( j) == "nil" then
+     cJson.encode_push( quickJson.pointer, "null");
+   elseif type(j) == "number" then
+     cJson.encode_push( quickJson.pointer, tostring(j))
+   elseif type(j) == "boolean" then
+     
+      cJson.encode_push( quickJson.pointer, tostring(j))
+
+   else
+    
+      cJson.encode_push( quickJson.pointer, '"')
+      cJson.encode_push( quickJson.pointer, tostring(j))
+      cJson.encode_push( quickJson.pointer, '"')
+   end
+   sep = ","
+  end
+  cJson.encode_push( quickJson.pointer, "]");
+end
+
+
+function quickJson.encodeHashTable( object)
+  local temp
+ local sep
+  temp = {}
+  sep = " "
+  cJson.encode_push( quickJson.pointer, "{");
+  for i,j in pairs( object ) do
+    cJson.encode_push( quickJson.pointer,sep)
+    if type( j ) == "table" then
+      cJson.encode_push( quickJson.pointer, '"'..tostring(i)..'"')
+      cJson.encode_push( quickJson.pointer, ":")
+      quickJson.encode_table(j)
+    elseif type( j) == "nil" then
+      cJson.encode_push( quickJson.pointer, '"'..tostring(i)..'"')
+      cJson.encode_push( quickJson.pointer, ":")
+      cJson.encode_push( quickJson.pointer, "null" )
+
+   elseif type(j) == "number" then
+      cJson.encode_push( quickJson.pointer, '"'..tostring(i)..'"')
+      cJson.encode_push( quickJson.pointer, ":")
+      cJson.encode_push( quickJson.pointer, tostring(j))
+
+   elseif type(j) == "boolean" then
+      cJson.encode_push( quickJson.pointer, '"'..tostring(i)..'"')
+      cJson.encode_push( quickJson.pointer, ":")
+      cJson.encode_push( quickJson.pointer, tostring(j))
+
+   else
+      cJson.encode_push( quickJson.pointer, '"'..tostring(i)..'"')
+      cJson.encode_push( quickJson.pointer, ":")
+      cJson.encode_push( quickJson.pointer, '"')
+      cJson.encode_push( quickJson.pointer, tostring(j))
+      cJson.encode_push( quickJson.pointer, '"')
+
+   end
+   sep = ","
+   end
+    cJson.encode_push( quickJson.pointer, "}");
+end
+ 

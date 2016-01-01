@@ -1,0 +1,335 @@
+---
+---
+--- file: lua_logging.lua
+---
+---
+---
+---
+---
+
+
+logging = {}
+logging.emailFlag = false
+logging.level = 1
+logging.defaultHeader = logging.defaultHeaderFunction
+logging.defaultEntry  = logging.defaultEntryFunction
+logging.detailHelp ={}
+
+
+
+function logging.description()
+  return "tgs logging manager"
+end
+
+
+function logging.help(item)
+  if item == nil then
+    print("logging functions help")
+    print("tgs.logging.setLevel( level ) -- sets the logging level form 0 - 1")
+    print("           0 -- do not display report log   ")
+    print("           1 -- display report log")
+    print("tgs.logging.setEmail( fromUser, toUser, subject, address, port ) ")
+    print("            -- configure email account               ")
+    print("tgs.logging.setTerminalOutput() -- contact report is sent to terminal")
+    print("tgs.logging.setFileOutput( fileName ) -- contact report is sent to specified file") 
+    print("tgs.logging.setHeaderFunction( function) -- function(jobId) ")
+    print("                              -- prints header   ")
+    print("tgs.logging.setsetEntryFunction(function) where function has the form ")
+    print("    function(id,action,status,result,error,tgsFile")
+  else
+    if ( type( item ) == "string" ) and ( logging.detailHelp[ item ] ~= nil ) then
+      print( logging.detailHelp[item ] )
+    else
+      print("unrecognized help option")
+    end
+  end
+
+end
+           
+
+function logging.setHeaderFunction( headerFunction )
+   logging.defaultHeader = headerFunction
+
+end
+
+function logging.setEntryFunction( entityFunction )
+   logging.defaultEntry = entityFunction
+end
+
+
+
+---
+--- Sets the logging level
+---
+---
+---
+function logging.setLevel( level )
+
+logging.level = level
+
+end
+
+
+---
+--- Sets email address
+---
+---
+---
+---
+
+function logging.setEmail( fromUser, toUser, subject, address, port )
+
+logging.emailFlag = true
+logging.fromUser = fromUser
+logging.toUser  = toUser
+logging.subject = subject
+logging.address = address
+logging.port = port
+
+end
+
+---
+---
+--- Sets output log to terminal
+---fileName
+---
+
+
+function logging.setTerminalOutput()
+
+logging.output = nil
+
+end
+
+---
+---
+--- sets to file
+---
+---
+
+
+function logging.setFileOutput( fileName )
+
+logging.output = fileName
+
+end
+
+
+---
+--- This function is used internally and
+--- not accessable in help menu
+---
+--- jobId is the job id 
+--- results is a a list of action records
+--- action records have the 
+---
+---
+function logging.dumpOutput( jobId, results )
+  local temp
+  local x
+  print("at dump output")
+  if logging.level ~= 0 then
+     temp = logging.toString( jobId, results )
+     print("logging temp",temp)
+     if logging.output ~= nil then
+       x = io.open( logging.output, "w+" )
+     
+       if x ~= nil then
+         x:write( temp)
+         x:close(x)
+       else
+        print( temp )
+      end
+    else
+      print(temp)
+    end
+    if logging.emailFlag == true then
+      if type( logging.to) == "table" then
+       for i,j in ipairs( logging.to ) do
+         smtp.send( logging.from, j, logging.subject, temp , logging.address , logging.port) 
+       end   
+      else
+         smtp.send( logging.from, logging.to, logging.subject, temp , logging.address , logging.port)
+      end
+    end
+    temp = nil
+  end
+end
+
+
+---
+---
+--- This function for internal use only
+--- Creates a contact record and insures all fields are supported
+---
+---
+---
+---
+
+
+
+function logging.getNewContact()
+ local temp
+ temp = {}
+ temp.id = ""
+ temp.status = ""
+ temp.result = {}
+ return temp
+
+end
+
+---
+---
+--- This function takes results record and
+--- assembles a single output string
+---
+---
+
+
+function logging.toString( jobId, results )
+  local temp,temp1,temp2,temp3
+  
+  temp = {}
+
+  table.insert( temp, logging.defaultHeader( jobId) )
+
+  for i,j in ipairs( results ) do
+    for l,m in ipairs( j) do
+      temp1 = m.status
+      temp2 = m.error
+      if temp2 == "" then temp2 = "none" end
+      if m.status == false then temp1 = 0 end
+      if m.status == true then temp1 = 1 end
+     
+      -- m.result = base64.decode( m.result)
+
+      -- m.result = xmlUtil.unpickle(  m.result )  
+ 
+
+      temp3 = logging.defaultEntryFunction(  
+                                            tostring(m.id), 
+                                            tostring(m.action),
+                                            tostring(temp1),
+                                            m.result)
+      if j.level == 0 then
+       if j.status == false then
+         table.insert( temp, temp3)
+       end
+      else
+         table.insert( temp,temp3)
+      end
+    end
+  end
+  return table.concat(temp)
+
+end 
+
+function logging.dataBaseLog( jobId, results )
+  for i,j in ipairs( results ) do
+    for l,m in ipairs( j) do
+ 
+         m.result = xmlUtil.pickle( "N"..tostring( jobId), m.result )  
+         m.result = base64.encode( m.result)
+         sqliteLog.logTestAction( jobId, 
+                                  m.id, 
+                                  m.action, 
+                                  m.status, 
+                                  m.result ) 
+        
+    end
+  end
+
+end
+----
+----
+---- default logging functions
+----
+----
+----
+function logging.defaultHeaderFunction( jobId )
+  return "\n\nresults for jobId  " .. tostring( jobId ) .."\n\n"
+end
+
+
+function logging.defaultEntryFunction( id, action,status, result ) 
+   local temp
+   local index
+   temp = {}
+   index = 1
+   temp[index]  =  sprintf("id: %s \n action: %s \n status: %d \n",id,action,status)
+   index = index+1
+   for i,j in pairs( result) do
+     temp[index]  ="result->" ..tostring(i)..":  " .. tostring(j) .."  \n"
+     index = index +1
+   end
+   return table.concat(temp)
+end
+
+
+logging.defaultHeader = logging.defaultHeaderFunction
+logging.defaultEntry  = logging.defaultEntryFunction
+
+----
+----
+----
+---- detailed help
+----
+----
+----
+----
+
+
+
+logging.detailHelp["setLevel"] =
+[[
+tgs.contacts.setLevel( level ) -- sets the logging level form 0 - 1
+                                  0 -- donot dump raw data report
+                                  1 -- dump raw data report
+
+]]
+
+
+logging.detailHelp["setEmail"] =
+[[
+    tgs.logging.setEmail( fromUser, toUser, subject, address, port )
+                      -- configure email account
+		      -- fromUser must be a valid email address
+                     
+]]
+
+
+logging.detailHelp["setTerminalOuput"] =
+[[
+tgs.logging.setTerminalOutput() -- contact report is sent to terminal
+
+]]
+
+logging.detailHelp["setFileOutput"] =
+[[
+tgs.logging.setFileOutput( fileName ) -- contact report is sent to specified file
+                                         instead of the terminal
+
+]]
+
+logging.detailHelp["setHeaderFunction"] =
+[[ sqliteLog.open()
+  sqliteLog.createDb()
+
+tgs.logging.setHeaderFunction( function) -- allows a custom header to be used in report generation
+function must have the following form  function( jobId)
+   
+
+]]
+
+
+
+logging.detailHelp["setsetEntryFunction"] =
+[[
+tgs.logging.setEntryFunction(function) -- allows a customw entry function to be used in report generation
+
+ function must have the following form    function(id,action,status,result,error,tgsFile)
+
+]]
+
+
+tgs.logging = logging

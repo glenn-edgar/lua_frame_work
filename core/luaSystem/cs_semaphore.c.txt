@@ -1,0 +1,199 @@
+/*
+**
+**
+** File: cs_semaphore.c
+   Cpyright 2008 Onyx Engineerin
+    This file is licensed as MIT
+**
+**
+*/
+
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include "cs_semaphore.h"
+#include <sys/sem.h>
+
+union semun {
+ int  val;
+ struct  semid_ds *buf;
+ ushort  *array;
+} arg;
+
+
+extern int semtimedop (int __semid, struct sembuf *__sops, size_t __nsops,
+		       __const struct timespec *__timeout) __THROW;
+
+int cs_create_private_semaphore( key_t semaphoreId, unsigned numberOfSemaphores )
+{
+     int         returnValue;
+     union semun sem_union;
+     unsigned    loopCount;
+     int         status;
+     
+     returnValue =  semget( semaphoreId, numberOfSemaphores, IPC_PRIVATE |  IPC_CREAT | 0x1ff);
+     if( returnValue >= 0 )
+     { 
+          for( loopCount = 0; loopCount < numberOfSemaphores; loopCount++ )
+          {     
+            sem_union.val = 1;   
+            status = semctl( returnValue, loopCount, SETVAL, sem_union );
+ 
+          }
+        
+     }    
+     return returnValue;           
+}     
+
+    
+int cs_create_global_semaphore(  key_t semaphoreId, unsigned numberOfSemaphores )
+{
+     int returnValue;
+     union semun sem_union;
+     unsigned    loopCount;
+     int         status;
+
+  
+     returnValue =  semget( semaphoreId, numberOfSemaphores,  IPC_CREAT| 0x1ff );
+     if( returnValue >= 0 )
+     { 
+          for( loopCount = 0; loopCount < numberOfSemaphores; loopCount++ )
+          {     
+            sem_union.val = 1;   
+            status = semctl( returnValue, loopCount, SETVAL, sem_union );
+ 
+          }
+        
+     }    
+     return returnValue;           
+
+}     
+
+int cs_create_event_semaphore( key_t semaphoreId, unsigned numberOfSemaphores )
+{
+     int returnValue;
+     union semun sem_union;
+     unsigned    loopCount;
+     int         status;
+
+  
+     returnValue =  semget( semaphoreId, numberOfSemaphores,  IPC_PRIVATE |IPC_CREAT| 0x1ff );
+     if( returnValue >= 0 )
+     { 
+          for( loopCount = 0; loopCount < numberOfSemaphores; loopCount++ )
+          {     
+            sem_union.val = 0;   
+            status = semctl( returnValue, loopCount, SETVAL, sem_union );
+ 
+          }
+        
+     }    
+     return returnValue;           
+
+}    
+
+
+
+
+
+int cs_create_global_event_semaphore( key_t semaphoreId, unsigned numberOfSemaphores )
+{
+     int returnValue;
+     union semun sem_union;
+     unsigned    loopCount;
+     int         status;
+
+  
+     returnValue =  semget( semaphoreId, numberOfSemaphores,  IPC_CREAT| 0x1ff );
+     if( returnValue >= 0 )
+     { 
+          for( loopCount = 0; loopCount < numberOfSemaphores; loopCount++ )
+          {     
+            sem_union.val = 0;   
+            status = semctl( returnValue, loopCount, SETVAL, sem_union );
+ 
+          }
+        
+     }    
+     return returnValue;           
+
+}    
+
+
+
+
+int cs_get_semaphore( key_t semaphoreId )
+{ 
+     return semget( semaphoreId,  0, 0 );
+}     
+
+
+int cs_wait_for_semaphore( int semaphore, int semaphoreSubIndex )
+{
+     struct sembuf sem_b;
+     
+     sem_b.sem_num = semaphoreSubIndex;
+     sem_b.sem_op  = -1;
+     sem_b.sem_flg = 0;
+     
+     return semop( semaphore, &sem_b,  1 );
+}     
+
+
+int cs_timed_wait_for_semaphore( int semaphore, int semaphoreSubIndex, unsigned milliseconds )
+{
+     unsigned nanoSeconds;
+     unsigned seconds;
+     struct   timespec timeSpec;
+     struct sembuf sem_b;
+     
+     sem_b.sem_num = semaphoreSubIndex;
+     sem_b.sem_op  = -1;
+     sem_b.sem_flg = 0;
+
+     
+     seconds = milliseconds / 1000;
+     nanoSeconds = ( milliseconds % 1000 ) *1000000;
+     timeSpec.tv_sec = seconds;
+     timeSpec.tv_nsec = nanoSeconds;
+     
+     return semtimedop( semaphore, &sem_b, 1, &timeSpec );
+}                   
+     
+
+
+     
+int cs_no_wait_for_semaphore( int semaphore, int semaphoreSubIndex )
+{
+     struct sembuf sem_b;
+     
+     sem_b.sem_num = semaphoreSubIndex;
+     sem_b.sem_op  = -1;
+     sem_b.sem_flg =  IPC_NOWAIT;
+     
+     return semop( semaphore, &sem_b,  1 );
+}        
+
+
+int cs_release_semaphore( int semaphore, int semaphoreSubIndex )
+{
+     struct sembuf sem_b;
+     
+     sem_b.sem_num = semaphoreSubIndex;
+     sem_b.sem_op  = 1;
+     sem_b.sem_flg = IPC_NOWAIT;
+     
+     return semop( semaphore, &sem_b,  1 );
+}        
+
+
+int cs_terminate_semaphore( int semaphore )
+{
+     union semun sem_union;
+     
+     return semctl( semaphore, 0, IPC_RMID, sem_union );
+     
+}     
+

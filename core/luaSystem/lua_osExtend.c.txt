@@ -1,0 +1,414 @@
+/*
+**
+** Copyright 2008 Onyx Engineering
+** This file is licensed MIT
+
+** File: lua_osExtend.c
+** The purpose of this file is to extend
+** the os library
+**
+**
+**
+**
+*/
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
+#include <time.h>
+#include <sys/time.h>
+#include <dlfcn.h>
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+
+
+
+#include "lua_tinyPosix.h"
+#include "lua_osExtend.h"
+
+static int lua_timegm( lua_State *L);
+static int lua_safeGm( lua_State *L);
+static int os_gettime (lua_State *L);
+static int l_usleep( lua_State *L );
+static int l_sleep( lua_State *L );
+static int l_help( lua_State *L );
+static int description( lua_State *L);
+static int l_putenv( lua_State *L );
+static int dynamicLoad( lua_State *L);
+static int lua_safeDate( lua_State *L );
+static int lua_stat( lua_State *L );
+extern void lua_lock( lua_State *L );
+extern void lua_unlock( lua_State *L );
+
+void extendOsPackage( lua_State *L )
+{
+   lua_getglobal( L, LUA_OSLIBNAME );
+   lua_pushstring(L ,"dlLoad");
+   lua_pushcfunction( L, dynamicLoad );
+   lua_settable(L, -3 );
+   lua_pop(L, -1 );
+   lua_getglobal( L, LUA_OSLIBNAME );
+   lua_pushstring(L ,"gettime");
+   lua_pushcfunction( L, os_gettime );
+   lua_settable(L, -3 );
+   lua_pop(L, -1 );
+   lua_getglobal( L, LUA_OSLIBNAME );
+   lua_pushstring(L ,"putenv");
+   lua_pushcfunction( L,l_putenv );
+   lua_settable(L, -3 );
+   lua_pop(L, -1 );
+   lua_pop(L, -1 );
+   lua_getglobal( L, LUA_OSLIBNAME );
+   lua_pushstring(L ,"chdir");
+   lua_pushcfunction( L, Pchdir );
+   lua_settable(L, -3 );
+   lua_pop(L, -1 );
+   lua_getglobal( L, LUA_OSLIBNAME );
+   lua_pushstring(L ,"mkdir");
+   lua_pushcfunction( L, Pmkdir );
+   lua_settable(L, -3 );
+   lua_pop(L, -1 );
+   lua_getglobal( L,LUA_OSLIBNAME );
+   lua_pushstring(L ,"dir");
+   lua_pushcfunction( L, Pdir );
+   lua_settable(L, -3 );
+   lua_pop(L, -1 );
+   lua_getglobal( L, LUA_OSLIBNAME );
+   lua_pushstring(L ,"getcwd");
+   lua_pushcfunction( L, Pgetcwd );
+   lua_settable(L, -3 );
+   lua_pop(L, -1 );
+   lua_getglobal( L, LUA_OSLIBNAME );
+   lua_pushstring(L ,"usleep");
+   lua_pushcfunction( L, l_usleep );
+   lua_settable(L, -3 );
+   lua_pop(L, -1 );
+   lua_getglobal( L, LUA_OSLIBNAME );
+   lua_pushstring(L ,"sleep");
+   lua_pushcfunction( L, l_sleep );
+   lua_settable(L, -3 );
+   lua_pop(L, -1 );
+
+   lua_getglobal( L, LUA_OSLIBNAME );
+   lua_pushstring(L ,"safeDate");
+   lua_pushcfunction( L, lua_safeDate);
+   lua_settable(L, -3 );
+   lua_pop(L, -1 );
+   lua_getglobal( L, LUA_OSLIBNAME );
+   lua_pushstring(L ,"safeGm");
+   lua_pushcfunction( L, lua_safeGm);
+   lua_settable(L, -3 );
+   lua_pop(L, -1 );
+
+   lua_getglobal( L, LUA_OSLIBNAME );
+   lua_pushstring(L ,"stat");
+   lua_pushcfunction( L, lua_stat);
+   lua_settable(L, -3 );
+   lua_pop(L, -1 );
+
+   lua_getglobal( L, LUA_OSLIBNAME );
+   lua_pushstring(L ,"timegm");
+   lua_pushcfunction( L, lua_timegm);
+   lua_settable(L, -3 );
+   lua_pop(L, -1 );
+
+   lua_getglobal( L, LUA_OSLIBNAME );
+   lua_pushstring(L ,"help");
+   lua_pushcfunction( L, l_help );
+   lua_settable(L, -3 );
+   lua_pop(L, -1 );
+
+   lua_getglobal( L, LUA_OSLIBNAME );
+   lua_pushstring(L ,"description");
+   lua_pushcfunction( L, description );
+   lua_settable(L, -3 );
+   lua_pop(L, -1 );
+}
+
+
+
+/*
+One library function was added to src/loslib.c
+It's os_gettime() which provides a means of timing code execution between
+two (2) points in Lua code.
+
+Example:
+
+os_gettime()static int l_pipe( lua_State *L);
+
+Code sequence
+.
+.
+.
+os_gettime(1)static int l_pipe( lua_State *L);
+
+Returns milliseconds between os_gettime() call without a parameter and
+a call to os_gettime(1) with a parameter.  It uses gettimeofday() and accounts
+for micro-second wrstatic int dynamicLoad( lua_State *L)apping.  The call sequence is intended to be called in
+the specified sequence because the call to os_gettime() without a parameter
+stores the time of day internally to the loslib.c function.
+
+
+
+*/
+
+static int os_gettime (lua_State *L) 
+{
+  static struct timeval t1;
+  if (lua_isnoneornil(L, 1)) {
+    gettimeofday(&t1,NULL);
+    lua_pushnil(L);
+  } 
+  else
+  {
+     struct timeval t2;
+     time_t x1,x2;
+     gettimeofday(&t2,NULL);
+     x1=t2.tv_sec-t1.tv_sec;
+     x2=t2.tv_usec-t1.tv_usec;
+     if (x2 < 0 ) {
+       x1--;
+       x2+=1000000;
+     }
+     x1 *= 1000;
+     x2 /= 1000;
+     x1 += x2;
+     lua_pushnumber(L, ((lua_Number)x1));
+  }
+  return 1;
+}
+
+static int l_usleep( lua_State *L )
+{
+   int delayUs;
+   delayUs = lua_tointeger( L, -1);
+   usleep( delayUs);
+   return 0;
+}
+
+static int l_sleep( lua_State *L )
+{
+   int delaySec;
+   int i;
+   delaySec = lua_tointeger(L,1);
+ 
+   for( i = 0 ; i < delaySec; i++)
+   {
+      usleep(1000000);
+   }
+   return 0;
+}
+
+
+static int l_putenv( lua_State *L )
+{
+   const char *envString;
+   int   returnValue;
+
+   envString = lua_tostring(L,-1);
+   returnValue = putenv( (char *)envString);
+   lua_pushinteger(L, returnValue );
+   return 1;
+}
+
+static int dynamicLoad( lua_State *L)
+{
+  const char    *moduleName;
+  const char    *functionName;
+  void          *moduleHandle;
+  void          *functionHandle;
+  int           returnValue;
+  lua_CFunction luaFunction;
+
+  returnValue = 0;
+  moduleName = lua_tostring(L,-2);
+  functionName = lua_tostring(L,-1);
+
+  moduleHandle = dlopen(moduleName,RTLD_NOW );
+  if( moduleHandle != NULL )
+  {
+    functionHandle = dlsym( moduleHandle, functionName);
+  }
+  else
+  { 
+    returnValue = -1;
+    printf("%s\n", dlerror() );
+    goto end;
+  }
+  if( functionHandle == NULL )
+  {
+    returnValue = -2;
+    goto end;
+  }
+  luaFunction = ( lua_CFunction) functionHandle;
+  luaFunction(L);
+end:
+  lua_pushinteger(L,returnValue);
+  return 1;
+ }
+
+static int description( lua_State *L )
+{
+  lua_pushstring(L,"provides lua interface to os functions");
+  return 1;
+}
+
+static int l_help( lua_State *L )
+{
+  printf("os library calls \r\n");
+  printf(".clock os.clock() program time \r\n");
+  printf(".date  os.date([format [,time]) \r\n");
+  printf(".difftime os.difftime(t2,t1) \r\n");
+  printf(".execute  os.execute([command]) \r\n");
+  printf(".exit     os.exit[code]) \r\n");
+  printf(".getenv   string = os.getenv(\"HOME\") \r\n");
+  printf(".remove   os.remove( filename ) \r\n");
+  printf(".rename   os.rename( oldname,newname) \r\n");
+  printf(".setlocale (locale,[,category] ) \r\n");
+  printf(".time      os.time([table]) \r\n");
+  printf(".tmpname   os.tmpname()  \r\n");
+  printf(".putenv    os.putenv(\"HOME=/home/admin\") \r\n");
+  printf(".gettime   os.gettime([1]) -- used in timing calc's \r\n");
+  printf(".usleep    os.usleep(microseconds) \r\n");
+  printf(".sleep     os.sleep( seconds ) \r\n");  
+  printf(".chdir     os.chdir(path) \r\n");
+  printf(".mkdir     os.mkdir(path) \r\n");
+  printf(".dir       os.dir(path)   \r\n");
+  printf(".getcwd    os.getcwd()    \r\n");
+  printf(".dlLoad    os.dlLoad(module,function) \r\n");
+  printf(".safeDate()  -- table form of date  \r\n"); 
+  printf(".safeGm() -- table form of gmtime \r\n");
+  printf(".timegm(year,month,day,hour,minute,sec) -- returns time in epoch sec");
+  printf(".stat(file) -- returns status, size, accessTime, directoryFlag\r\n");
+  printf(".help      -- dumps out function defs \r\n");
+  return 0;
+}
+
+static void setfield (lua_State *L, const char *key, int value) 
+{
+  lua_pushinteger(L, value);
+  lua_setfield(L, -2, key);
+}
+
+static void setboolfield (lua_State *L, const char *key, int value) 
+{
+  if (value < 0)  /* undefined? */
+    return;  /* does not set field */
+  lua_pushboolean(L, value);
+  lua_setfield(L, -2, key);
+}
+
+
+static int lua_safeDate( lua_State *L )
+{
+  struct tm stm;
+  time_t t;
+   
+  t = time(NULL);
+  localtime_r(&t,&stm);
+  lua_newtable(L); 
+  setfield(L, "sec", stm.tm_sec);
+  setfield(L, "min", stm.tm_min);
+  setfield(L, "hour", stm.tm_hour);
+  setfield(L, "day", stm.tm_mday);
+  setfield(L, "month", stm.tm_mon+1);
+  setfield(L, "year", stm.tm_year+1900);
+  setfield(L, "wday", stm.tm_wday+1);
+  setfield(L, "yday", stm.tm_yday+1);
+  setboolfield(L, "isdst", stm.tm_isdst);
+  
+  return 1;
+}
+
+static int lua_safeGm( lua_State *L)
+{
+
+  struct tm stm;
+  time_t t;
+   
+  t = time(NULL);
+  gmtime_r(&t,&stm);
+  lua_newtable(L); 
+  setfield(L, "sec", stm.tm_sec);
+  setfield(L, "min", stm.tm_min);
+  setfield(L, "hour", stm.tm_hour);
+  setfield(L, "day", stm.tm_mday);
+  setfield(L, "month", stm.tm_mon+1);
+  setfield(L, "year", stm.tm_year+1900);
+  setfield(L, "wday", stm.tm_wday+1);
+  setfield(L, "yday", stm.tm_yday+1);
+  setboolfield(L, "isdst", stm.tm_isdst);
+  
+  return 1;
+
+}
+static time_t my_timegm (struct tm *tm) {
+    time_t ret;
+    char *tz;
+    tz = getenv("TZ");
+    setenv("TZ", "", 1);
+    tzset();
+    ret = mktime(tm);
+    if (tz)
+        setenv("TZ", tz, 1);
+    else
+        unsetenv("TZ");
+    tzset();
+    return ret;
+}
+
+static int lua_timegm( lua_State *L)
+{
+   struct tm stm;
+   int returnValue;
+  
+   stm.tm_year = lua_tointeger(L,1) -1900;
+   stm.tm_mon  = lua_tointeger(L,2) - 1;
+   stm.tm_mday = lua_tointeger(L,3);
+   stm.tm_hour = lua_tointeger(L,4);
+   stm.tm_min  = lua_tointeger(L,5);
+   stm.tm_sec  = lua_tointeger(L,6);
+   stm.tm_isdst = 0;
+   returnValue = my_timegm (&stm);
+   lua_pushinteger(L,returnValue);
+   return 1;
+}
+
+
+   
+   
+
+static int lua_stat( lua_State *L )
+{
+   char *file;
+   struct stat buf;
+   int  status;
+   int  returnValue;
+
+   file = (char *)lua_tostring( L,1);
+
+   status = stat( file, &buf );
+   lua_pushinteger(L,status);
+   if( status >= 0 )
+   {
+     lua_pushinteger( L, buf.st_size);
+     lua_pushinteger( L, buf.st_atime);
+     lua_pushinteger( L, S_ISDIR( buf.st_mode));
+     returnValue = 4;
+  }
+  else
+  {
+     returnValue = 1;
+  }
+  return returnValue;
+
+}

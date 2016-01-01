@@ -1,0 +1,41 @@
+/*
+
+External Interface Definitions for file lua_private_heap.c
+Copyright 2008 Onyx Engineering 
+This file is licensed as MIT
+
+*/
+
+
+#ifndef _LUA_PRIVATE_HEAP_H_
+#define _LUA_PRIVATE_HEAP_H_
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+#include "lua.h"
+#include "cs_private_heap.h"
+
+typedef struct
+{
+   CS_MEMORY_CONTROL memoryControl;
+   int               heapSize;
+   void              *heapMemory;
+}LUA_HEAP_CONTROL;
+
+
+
+LUALIB_API  void l_dumpPrivateHeapState( lua_State *L );
+LUALIB_API lua_State *luaL_newPrivateHeapstate ( LUA_HEAP_CONTROL *luaHeap );
+LUALIB_API lua_State *luaL_resetPrivateHeapstate ( lua_State *L);
+LUALIB_API void luaL_closePrivateHeapstate (lua_State *L);
+unsigned l_freeHeapMemory( lua_State *L );
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif

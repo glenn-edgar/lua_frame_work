@@ -1,0 +1,212 @@
+
+// Copyright 2008 Onyx Engineering
+// This file is licensed as MIT
+
+
+
+#include <unistd.h>
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+#include "cs_private_heap.h"
+#include "lua_private_heap.h"
+
+static const char *appName = APP_NAME;
+
+extern int lua_lock( lua_State *L);
+extern int lua_unlock( lua_State *L);
+
+static void *background( void *data );
+
+static lua_State *L;
+static lua_State *L_thread;
+
+#ifdef LUA_PRIVATE_HEAP
+static unsigned  char luaPrivateHeapArea[LUA_CONSOLE_HEAP];
+static		 LUA_HEAP_CONTROL luaConsoleControl;
+
+static unsigned char luaBackgroundHeap[ LUA_BACKGROUND_HEAP];
+static               LUA_HEAP_CONTROL luaBackgroundControl;
+#endif
+
+extern lua_State *constructLuaState( lua_State *L );
+
+static int constructArgs( lua_State *L, int argc, char **argv );
+
+
+
+
+
+int main (int argc, char **argv) 
+{
+    int  error;
+    int  interactiveMode;
+    int  index;
+    int  status;
+    char inputString[133];
+    pthread_t pthread;
+
+#if  LUA_PRIVATE_HEAP
+    luaConsoleControl.heapSize = LUA_CONSOLE_HEAP;
+    luaConsoleControl.heapMemory = luaBackgroundHeap;
+    L = luaL_newPrivateHeapstate ( &luaConsoleControl );
+  
+#else
+    L = luaL_newstate();
+#endif
+    constructArgs(L, argc, argv );
+    constructLuaState( L );
+      
+
+    if( argc < 2 )
+    {
+      interactiveMode = 0;
+    }
+    else
+    {
+      interactiveMode = atoi( argv[1] );
+    }
+   if( argc > 2 )
+   {
+	   interactiveMode = 4;
+   }	   
+ 
+    switch( interactiveMode )
+    {
+        case 1:
+           background( NULL );
+           break;
+
+        case 2:
+           pthread_create( &pthread, NULL, background, NULL );
+           processCommandMode( L );
+           break;
+
+	case 3:
+	   luaL_dofile (L,  argv[2]);
+	   break;
+       
+        case 0:
+        default:
+           processCommandMode( L );
+           break;
+    }
+
+}
+
+
+/*
+** This thread executes data in back ground state
+**
+**
+**
+*/
+
+
+static void *background( void *data )
+{
+  
+  while( 1)
+  {
+      lua_lock(L);
+      callLuaFunction( L, "processEvents","","" ) ;
+      lua_unlock(L);
+      usleep( 100000 );  // .5 seconds
+  }
+  return NULL;
+}
+
+static int appRedirect;
+static int appArgc;
+static char **appArgv;
+static int lua_registerArgs( lua_State *L );
+
+static int constructArgs( lua_State *L, int argc, char **argv )
+{
+  int returnValue;
+
+  appArgc = argc;
+  appArgv = argv;
+  lua_registerArgs( L );
+
+  return returnValue;
+}
+
+
+static int lua_argNumber( lua_State *L )
+{
+   lua_pushinteger(L, appArgc );
+   return 1;
+}
+
+
+static int lua_getArg( lua_State *L )
+{
+   int index;
+   int returnValue;
+
+   index = lua_tointeger(L,1);
+   if( index > appArgc -1 )
+   {
+     returnValue = 0;
+   }
+   else
+   {
+     returnValue = 1;
+     lua_pushstring(L,appArgv[ index]);
+   }
+   return returnValue;
+ }
+
+
+static int description( lua_State *L )
+{
+  lua_pushstring(L, "main program argument support");
+  return 1;
+}
+
+static int lua_help( lua_State *L )
+{
+  printf("program argument functions \n");
+  printf(".number()   -- returns argc \n");
+  printf(".arg(index) -- returns argv[index] \n");
+  printf("help()                    -- dumps out commands \r\n\r\n");
+  return 0;
+}   
+
+
+
+
+static const struct luaL_reg  lua_args[] = 
+{
+   { "arg",            lua_getArg    },
+   { "number",         lua_argNumber },
+   { "description",    description   },
+   { "help",           lua_help      },
+   { NULL, NULL }      
+   
+};
+
+
+
+static int lua_registerArgs( lua_State *L )
+{
+   
+
+
+   luaL_openlib(L,"mainArgs",lua_args,0 );
+   return 1;
+}
+
+
+
+
+

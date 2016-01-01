@@ -1,0 +1,19 @@
+include ../../Makefile.def 
+
+LIBPATH = -L.  -L../sqlLib
+LIBS =   -lsqlLib -lm -ldl -lpthread   
+INC = -I. -I../sqlLib
+PRGNAME = sqliteShell
+
+ 
+
+all : CFLAGS = $(GLOBAL_CFLAGS) $(COMMONCFLAGS) $(X86CFLAGS) 
+all :  shell.o $(SUBDIRS)
+	$(CC) -O2 -Wall -rdynamic -D_REENTRANT $(CFLAGS) $(INC)   -o $(PRGNAME)  shell.o $(LIBPATH) $(LIBS)
+
+clean:
+	rm -f sqliteShell
+	rm -f *.o *~
+
+shell.o : shell.c
+	$(CC) -c shell.c $(CFLAGS) $(INC)

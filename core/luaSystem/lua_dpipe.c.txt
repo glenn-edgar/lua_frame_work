@@ -1,0 +1,283 @@
+/*
+**
+** File: Bidirectional Pipe program
+** lua_dpipe.c
+** This c package is designed to have a higher lua frame work 
+** support it.
+**
+**
+**
+**
+**
+*/
+
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+#include <signal.h>
+
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+#include <sys/types.h>
+#include <signal.h>
+
+#define PIPE_READEND 0
+#define PIPE_WRITEEND 1
+
+#define	PARENT_READ	readpipe[0]
+#define	CHILD_WRITE	readpipe[1]
+#define CHILD_READ	writepipe[0]
+#define PARENT_WRITE	writepipe[1]
+
+int	writepipe[2];	/* parent -> child */
+int	readpipe [2];	/* child -> parent */
+
+
+static int pipe_init( char *prog, char **argv, int *rfd, int *wfd, pid_t *rpid);
+
+static int d_pipeOpen( lua_State *L)
+{
+   int  index;
+   int  argNum;
+   int  wfd = -1;
+   int  rfd = -1;
+   char *argv[11]; // max of 10 prameters
+   int  pid;
+   int  status;
+ 
+
+
+   pid   = -1;
+   status = -1;
+
+   memset( argv, 0, sizeof(argv ));
+   argNum = lua_tointeger(L, 1);
+
+   if( argNum > 10 ){ argNum = 10; }
+
+   for( index = 0; index < argNum; index++)
+   {
+     argv[index] = (char *)lua_tostring(L,2+index);
+   }
+
+   status = pipe_init( argv[0], argv, &rfd, &wfd, &pid);
+  
+  lua_pushinteger(L,status);
+  lua_pushinteger(L,pid);
+  lua_pushinteger( L, rfd);
+  lua_pushinteger( L, wfd);
+  return 4;
+}
+
+static int d_pipeClose(  lua_State *L )
+{
+  int pid;
+  int read;
+  int write;
+
+  pid   = lua_tointeger(L,1);
+  read  = lua_tointeger(L,2);
+  write = lua_tointeger(L,3);
+  close( write );
+  close( read );
+
+  kill( pid, SIGKILL);
+  waitpid(pid, NULL, 0);
+  return 0;
+}
+
+
+static int d_verifyPid( lua_State *L )
+{
+   int pid;
+   int temp;
+   int status;
+   int returnValue;
+
+   pid = lua_tointeger(L,1);
+   status = waitpid( pid, &temp, WNOHANG );
+   if( status == 0 )
+   {
+     returnValue = 1;
+   }
+   else
+   {
+     returnValue = 0;
+   }
+   lua_pushinteger(L,returnValue );
+   return 1;
+}
+//SIGPIPE
+static int d_read( lua_State *L )
+{
+  int    handle;
+  size_t size;
+  int    readSize;
+  char   *buffer;
+
+  size = 2000;
+  handle = lua_tointeger(L,1);
+  buffer = (char *)malloc(size);
+  assert( buffer != NULL );
+ 
+  readSize = read(handle, buffer, size);
+
+  if( readSize > 0 )
+  {
+
+    lua_pushlstring(L, buffer, readSize );
+  }
+  else
+  { 
+   
+    lua_pushnil(L);
+  }
+  free(buffer);
+
+  return 1;
+}
+
+ 
+static int d_write( lua_State *L )
+{
+  int   handle;
+  size_t size;
+  char   *buffer;
+
+  handle = lua_tointeger(L,1);
+  buffer = (char *)lua_tolstring(L, 2, &size);
+  size = write( handle, buffer, size );
+  lua_pushinteger(L,size );
+  return 1;
+}
+
+static int d_signal( lua_State *L)
+{
+  int pid;
+  int signal;
+  int status;
+
+  pid = lua_tointeger(L,1);
+  signal = lua_tointeger(L,2);
+  status = kill(pid,signal);
+  lua_pushinteger(L,status);
+  return 1;
+}
+
+static int d_description( lua_State *L )
+{
+  lua_pushstring(L,"lua bidirectional pipe package c support");
+  return 1;
+}
+
+static int d_pipeHelp( lua_State *L )
+{
+  printf(".open(numArgs,Args ...) -- returns status, pid, readStream. writeStream  \n");
+  printf(".close(pid,readStream,writeStream)  \n");
+  printf(".read( stream) .. returns string reads data to process \n");
+  printf(".write(stream,buffer)  .. write data to process \n");
+  printf(".verifyPid(pid)  -- returns state of process \n");
+  printf(".signal(pid,signal) -- sends signal to a process \n"); 
+  printf(".help()       print out command descriptions \n");
+  return 0;
+}
+
+static const struct luaL_reg  lua_dpipe_c[] = 
+{
+   {"open",           d_pipeOpen        },
+   {"close",          d_pipeClose       },
+   {"read",           d_read            },
+   {"write",          d_write           },
+   {"verifyPid",      d_verifyPid       },
+   {"signal",         d_signal          },
+   {"help",           d_pipeHelp        },
+   {"description",    d_description     },
+   { NULL, NULL },      
+   
+};
+
+
+
+int lua_dpipe_load( lua_State *L )
+{
+   luaL_openlib(L,"dpipe",lua_dpipe_c,0 );
+   return 1;
+}
+
+
+static sigset_t   dpipeSet; 
+
+
+static int pipe_init( char *prog, char **argv, int *rfd, int *wfd, pid_t *rpid) 
+{
+
+   pid_t pid;
+
+   int   temp1,temp2;
+
+   sigemptyset(&dpipeSet);
+   sigaddset(&dpipeSet,SIGPIPE );
+   sigprocmask( SIG_BLOCK, &dpipeSet, NULL );
+
+   /*
+      two pipes are created.  Only one path for each pipe is retained
+   */
+
+   temp1 = pipe(readpipe);
+   temp2 = pipe(writepipe);
+/*
+   flags = fcntl(readpipe[0], F_GETFL);
+   fcntl(readpipe[0], F_SETFL, flags | O_NONBLOCK);
+
+
+
+   flags = fcntl(readpipe[1], F_GETFL);
+   fcntl(readpipe[1], F_SETFL, flags | O_NONBLOCK);
+   flags = fcntl(writepipe[0], F_GETFL);
+   fcntl(writepipe[0], F_SETFL, flags | O_NONBLOCK);
+   flags = fcntl(writepipe[1], F_GETFL);
+   fcntl(writepipe[1], F_SETFL, flags | O_NONBLOCK);
+*/
+    pid = fork();
+   switch (pid) 
+   {
+     case -1:
+        // error condition should not get here
+        return -1;
+        break;
+
+    case 0:
+       // child branch of program
+       close(PARENT_WRITE);
+       close(PARENT_READ);
+       dup2(CHILD_READ,  0);  
+       dup2(CHILD_WRITE, 1);  
+       dup2(CHILD_WRITE, 2);
+       close(CHILD_READ);
+       close(CHILD_WRITE);
+       execvp( prog, argv);
+       printf("bad execvp \n");
+       exit(1); // should not get here
+       break;
+
+  
+   default:
+      // main branch
+      close(CHILD_READ);
+      close(CHILD_WRITE);
+
+      *rfd = PARENT_READ;
+      *wfd = PARENT_WRITE;
+      *rpid = pid;
+   }
+   return 1;
+}
+

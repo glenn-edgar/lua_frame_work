@@ -1,0 +1,245 @@
+/*
+   
+   Copyright 2008 Onyx Engineering 
+   This file is licensed MIT
+
+   File: lua_stringBuffer.c
+   Sets up the lua Interface between
+
+
+*/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+
+#include "stringBuffer.h"
+#include "lua_stringBuffer.h"
+
+static int lua_create( lua_State *L )
+{
+  SB_HANDLE handle;
+  int size;
+
+  size = lua_tointeger(L, -1 );
+  handle = SB_create( size );
+  if(  handle == NULL )
+  {
+      luaL_error( L, "cannot create string buffer \n");
+  }
+
+  lua_pushlightuserdata(L,handle );
+  return 1;
+}
+
+static int lua_resize( lua_State *L )
+{
+  SB_HANDLE handle;
+  int newSize;
+  int status;
+
+  handle = (void *)lua_topointer(L,-2);
+  newSize = lua_tointeger(L,-1);
+  status = SB_resize( handle,newSize );
+  if( status != 0 )
+  {
+      luaL_error( L, "cannot resize string buffer \n");
+  }
+  return 0;
+}  
+  
+static int lua_term( lua_State *L )
+{
+  SB_HANDLE handle;
+
+  handle = (void *)lua_topointer(L,-1);
+  SB_terminate( handle );
+  return 0;
+}
+
+static int lua_clear( lua_State *L )
+{
+   SB_HANDLE handle;
+
+   handle = ( void *)lua_topointer(L,-1);
+   SB_freeBuffer( handle );
+   return 0;
+}
+ 
+static int  lua_append( lua_State *L )
+{
+ SB_HANDLE handle;
+ char      *str;
+ int       status;
+
+ handle = ( void *)lua_topointer(L,-2);
+ str    = (char *)lua_tostring(L,-1);
+
+ status = SB_appendString( handle, str );
+ if( status != 0 )
+ {
+      luaL_error( L, "string buffer overflow \n");
+ }
+ return 0;
+}
+
+static int lua_appendFile( lua_State *L )
+{
+ SB_HANDLE handle;
+ char      *fileName;
+ FILE      *file;
+ int       status;
+
+ handle = (void *)lua_topointer(L,-2);
+ fileName = (char *)lua_tostring(L,-1);
+
+ file = fopen(fileName,"r");
+ if( fileName != NULL )
+ {
+   status = SB_appendFile( handle, file );
+   if( status != 0 )
+   {
+      luaL_error( L, "string buffer overflow \n");
+   }
+ }
+ else
+ {
+   luaL_error( L, "invalid file name \n");
+ }
+ return 0;
+}
+
+static int lua_buffer( lua_State *L )
+{
+ SB_HANDLE handle;
+ handle = (void *)lua_topointer(L,1);
+ lua_pushlightuserdata(L,SB_getBuffer(  handle ) );
+ lua_pushinteger( L, SB_currentSize( handle ) );
+ return 2;
+}  
+ 
+static int  lua_bufSize( lua_State *L )
+{
+ SB_HANDLE handle;
+ handle = (void *)lua_topointer(L,1);
+ lua_pushinteger(L, SB_bufferSize( handle ));
+ return 1;
+}
+
+static int lua_freeSize( lua_State *L )
+{
+ SB_HANDLE handle;
+ handle = (void *)lua_topointer(L,1);
+ lua_pushinteger(L, SB_freeSize( handle ));
+ return 1;
+}
+
+static int lua_extract( lua_State *L )
+{
+  SB_HANDLE handle;
+  int       start;
+  int       length;
+  char      *buffer;
+  int       stringSize;
+  
+
+  handle = (void *)lua_topointer(L,1);
+  start  = lua_tointeger(L,2);
+  length = lua_tointeger(L,3);
+  
+  stringSize = SB_currentSize(handle);
+
+  if( length == -1 )
+  {
+    length = stringSize;
+  }
+  if( start > stringSize )
+  {
+    goto noString;
+  }
+  if( length > stringSize-start )
+  {
+    length = stringSize -start;
+  }
+  if( length <= 0 )
+  {
+    goto noString;
+  }
+
+  buffer = SB_getBuffer( handle );
+  buffer = buffer+start;
+
+  lua_pushlstring(L, buffer, length );
+  return 1;
+
+noString:
+   lua_pushstring(L,"");
+   return 1;
+}
+  
+
+static int lua_pushString( lua_State *L )
+{
+ SB_HANDLE handle;
+ handle = (void *)lua_topointer(L,1);
+ lua_pushlstring ( L, SB_getBuffer(  handle ), SB_bufferSize(handle ) - SB_freeSize(handle));
+ return 1;
+}
+
+
+
+static int description( lua_State *L )
+{
+  lua_pushstring(L,"string buffer function");
+  return 1;
+}
+
+
+static int lua_help( lua_State *L )
+{
+  printf("list of strBuf  commands \r\n\r\n");
+  printf(".create(size)   -- returns handle\n");
+  printf(".resize(handle,newSize) \n");
+  printf(".terminate(handle)\n" );
+  printf(".clear(handle) -- clears buffer\n");
+  printf(".appendString(handle,string)\n");
+  printf(".appendFile(handle,fileName)  -- appends content of file to buffer\n");
+  printf(".bufLen(handle) --- returns Buffer Length\n");
+  printf(".freeLen(handle) --- returns free length \n");
+  printf(".getBuffer(handle) --- returns buffer address and current size of buffer\n");
+  printf(".extract(handle,start,number) -- returns string\n");
+  printf("    --- note number = -1 returns whole buffer \n");
+  printf(".pushstring(handle ) -- returns content of buffer as lus string\n");
+  printf(".help()    -- dumps out commands \r\n\r\n");
+  return 0;
+}   
+
+
+static const struct luaL_reg  lua_stringBuffer[] = 
+{
+   {"create",          lua_create       },
+   {"resize",          lua_resize       },
+   {"terminate",       lua_term         },
+   {"clear",           lua_clear        },
+   {"appendString",    lua_append       },
+   {"appendFile",      lua_appendFile   }, 
+   {"bufLen",          lua_bufSize      },
+   {"freeLen",         lua_freeSize     },
+   {"getBuffer",       lua_buffer       },
+   {"extract",         lua_extract      },
+   {"pushString",      lua_pushString   },
+   {"help",            lua_help         },
+   {"description",     description      },
+   { NULL, NULL },      
+   
+};
+
+
+
+int lua_stringBufferLoad( lua_State *L )
+{
+   
+   luaL_openlib(L,"strBuf",lua_stringBuffer,0 );
+   return 1;
+}

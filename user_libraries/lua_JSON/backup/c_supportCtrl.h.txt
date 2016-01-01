@@ -1,0 +1,31 @@
+/*
+**  File:  c_supportCtrl.h
+**
+**  This file defines the public in c_supportCtrl.c
+**
+*/ 
+
+
+#ifndef _C_SUPPORT_CTRL_H_
+#define _C_SUPPORT_CTRL_H_
+
+#include "lua.h"
+
+
+
+#ifdef __cplusplus 
+
+extern "C"
+{
+#endif
+
+void initialize_C_support( lua_State *L );
+#ifdef __cplusplus 
+
+}
+
+#endif
+
+#endif
+
+

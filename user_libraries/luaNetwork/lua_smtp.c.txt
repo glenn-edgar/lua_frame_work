@@ -1,0 +1,232 @@
+/*
+** 
+**  Copyright 2008 OnyxEngineering
+**  This file is licensed MIT
+**   File: lua_smtp.c
+** lua interface to a smtp client with little error checking
+**
+**
+**
+**
+**
+**
+*/
+
+
+
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdio.h>
+#include <netdb.h>         /* gethostbyname  */
+#include <netinet/in.h>    /* htons          */
+#include <sys/socket.h>
+#include "lua_smtp.h"
+
+
+static int sendmail
+(
+  const char *password,
+  const char *from,
+  const char *to,
+  const char *subject,
+  const char *body,
+  const char *hostname,
+  const int   port
+);
+ 
+static int lua_send( lua_State *L )
+{
+   int  returnValue;
+   char *from;
+   char *to;
+   char *subject;
+   char *body;
+   char *hostname;
+   int  port;
+   char *password;	
+	
+
+  password =  (char*)lua_tostring(L,1);
+  from = (char *) lua_tostring(L, 2);
+  to   = (char *)lua_tostring(L, 3);
+  subject = (char *)lua_tostring( L,4 );
+  body = (char *)lua_tostring(L,5);
+  hostname = (char *)lua_tostring( L,6);
+  port = (int)lua_tointeger(L,7);
+  returnValue = sendmail( password, from, to, subject, body, hostname, port );
+  lua_pushinteger(L,returnValue );
+  return 1;
+}
+ 
+static void sendmail_write(const int sock,
+                           const char *str,
+                           const char *arg, 
+                           int   reply)
+{
+   char buf[4096];
+   int  rc;
+
+   if (arg != NULL)
+   {
+     snprintf(buf, sizeof(buf), str, arg);
+   }
+   else
+   {
+     snprintf(buf, sizeof(buf), str);
+   }
+
+   send(sock, buf, strlen(buf), 0);
+
+   if(reply)
+   {
+      if((rc = recv(sock, buf, sizeof(buf) - 1, 0)) == -1)
+      {
+       perror("recv");
+       printf("%s", "ERROR");
+      }
+      else
+      {
+           buf[rc] = 0;
+           printf("%s", buf);
+      }
+  }
+}
+
+static int sendmail( const char *password,
+                                const char *from,
+                               const char *to,
+                               const char*subject,
+                                const char *body, 
+                                const char *hostname,
+                                const int port
+                    )
+{
+  struct hostent *host;
+  struct sockaddr_in saddr_in;
+  int sock = 0;
+  char buf[4096];
+  int  rc;
+
+
+  sock = socket(AF_INET, SOCK_STREAM, 0);
+  
+  sleep(1);
+  host = gethostbyname(hostname);
+  sleep(1);
+
+  saddr_in.sin_family = AF_INET;
+  saddr_in.sin_port = htons((u_short)port);
+  saddr_in.sin_addr.s_addr = 0;
+
+  memcpy((char*)&(saddr_in.sin_addr), host->h_addr, host->h_length);
+
+ 
+  sleep(1);
+  if(connect(sock, (struct sockaddr*)&saddr_in, sizeof(saddr_in)) == -1)
+  {
+   return -2;
+  }
+
+
+  //read out server welcome message
+  if((rc = recv(sock, buf, sizeof(buf) - 1, 0)) == -1)
+  {
+    perror("recv");
+   printf("%s", "ERROR");
+  }
+  else
+  {
+   buf[rc] = 0;
+   printf("%s", buf);
+  }
+
+#if 0
+In other words, the correct form of the AUTH PLAIN value is 'authid\0userid\0passwd' where '\0' is the null byte.
+
+Some ESMTP AUTH PLAIN implementations don't follow that procedure completely. We see that in the trace using Netscape's 4.8 MUA connecting to a modified Qmail 1.03 to do PLAIN authentication:
+In other words, the correct form of the AUTH PLAIN value is 'authid\0userid\0passwd' where '\0' is the null byte.
+
+Some ESMTP AUTH PLAIN implementations don't follow that procedure completely. We see that in the trace using Netscape's 4.8 MUA connecting to a modified Qmail 1.03 to do PLAIN authentication:
+
+    C: ehlo client.example.com
+    S: 220-esmtp.example.com
+    C: AUTH PLAIN dGVzdAB0ZXN0AHRlc3RwYXNz
+    S: 235 ok, go ahead (#2.0.0)
+    C: RCPT TO:<....>
+
+In this sample, the user name was 'test' and the password 'testpass'. 
+Here, the Netscape client immediately blasts the authentication information to the server (including the artificial authorization identity 'test') without waiting for the server to announce his SMTP Auth capabilites.
+
+
+    C: ehlo client.example.com
+    S: 220-esmtp.example.com
+    C: AUTH PLAIN dGVzdAB0ZXN0AHRlc3RwYXNz
+    S: 235 ok, go ahead (#2.0.0)
+    C: RCPT TO:<....>
+#endif
+#if  0
+  sendmail_write(sock, "helo %s\r\n", from, 1); // greeting
+  sendmail_write(sock, "mail from: %s\r\n", from, 1); // from
+#endif
+  sendmail_write(sock,"elhlo %s \r\n",from,1 );
+  sendmail_write(sock,"AUTH PLAIN %s",password,1);
+// test section
+  sendmail_write(sock, "rcpt to: %s\r\n", to, 1); // to
+  sendmail_write(sock, "data\r\n", NULL, 1); // begin data
+  // next comes mail headers
+  sendmail_write(sock, "From: %s\r\n", from, 0);
+  sendmail_write(sock, "To: %s\r\n", to, 0);
+  sendmail_write(sock, "Subject: %s\r\n", subject, 0);
+  sendmail_write(sock, "Date: 6/6/6\r\n", NULL, 0);
+
+  sendmail_write(sock, "\r\n", NULL, 0);
+
+  sendmail_write(sock, "%s\r\n", body, 0); // data
+
+  sendmail_write(sock, ".\r\n", NULL, 1); // end data
+
+  sendmail_write(sock, "QUIT", NULL, 0); // terminate
+  close(sock);
+
+
+  return 0;
+}
+
+
+static int description( lua_State *L )
+{
+  lua_pushstring(L, "smtp client");
+  return 1;
+}
+
+static int lua_help( lua_State *L )
+{
+ 
+  printf("send(password,from,to,subject,body,host_address,port)   -- sends email message \r\n");
+  printf(" --- 25 is the default port \r\n");
+  printf("help()                    -- dumps out commands \r\n\r\n");
+  return 0;
+}   
+
+
+static const struct luaL_reg  lua_smtpClientLib[] = 
+{
+   {"send",           lua_send   },
+   {"description",    description },
+   {"help",           lua_help   }, 
+   { NULL, NULL },      
+   
+};
+
+
+
+int lua_smtpClient( lua_State *L )
+{
+   
+
+
+   luaL_openlib(L,"smtp",lua_smtpClientLib,0 );
+   return 1;
+}
+

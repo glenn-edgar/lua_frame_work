@@ -1,0 +1,31 @@
+/*
+**
+** File luaInterface.h
+** 
+**
+**
+**
+*/
+
+
+#ifndef _LUA_INTERFACE_H_
+#define _LUA_INTERFACE_H_
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+
+
+int luaInterface( lua_State *L );
+int lua_registerUri( lua_State *L );
+int lua_registerErrorCB( lua_State *L );
+int lua_registerSSI( lua_State *L );
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif

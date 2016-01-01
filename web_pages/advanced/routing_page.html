@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"/>
+		<title>Routing Setup</title>
+		<link type="text/css" href="/themes/base/ui.all.css" rel="stylesheet"/>
+		<link type="text/css" href="/css/indyme.css" rel="stylesheet"/>
+		<script type="text/javascript" src="/jquery-1.3.2.min.js"></script>	
+		<script type="text/javascript" src="/jquery-ui-1.7.custom.min.js"></script>
+		<script type="text/javascript" src="/javaScript/indyme_utils.js"></script>	
+		<script type="text/javascript" src="/javaScript/inputHandlers.js"></script>
+		<script type="text/javascript" src="/javaScript/json2.js"></script>
+		<script type="text/javascript" src="/javaScript/routing_page.js"></script>
+		<script type="text/javascript" src="/javaScript/select_support.js"></script>
+		<script type="text/javascript" src="/javaScript/table_handlers.js"></script>
+	</head>
+	
+	<body class="main">
+		
+		<form action="editScriptStore.lua" method="post">
+			
+			<div id="row-0">
+				<!--#include virtual="/advanced/banner.html"-->
+										<label>Routing Setup</label>
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+				
+				<!--#include virtual="/advanced/function.html"-->
+				
+				<div id="tabs" class="tab">
+					<ul>
+						<li><a href="#tabs-blank">1-100</a></li>
+						<li><a href="#tabs-blank">101-200</a></li>
+					</ul>
+				</div>
+				
+				<div id="tabs-blank" class="tbl">
+					<table id="table-0" width=100% cellspacing=0 cellpadding=5 border=0>
+						<tr align=center>
+							<td width=30><input type=checkbox id="TOP_CH-0"></td>
+							<td width=1></td>
+							<td width=100></td>
+							<td width=125><b>ROUTE NUMBER</b></td>
+							<td width=250><b>ROUTE NAME</b></td>
+							<td></td>
+ 						</tr>
+					</table>
+				</div>
+ 			</div>
+			
+	        <!--#include virtual="/advanced/ebanner.html"-->
+										<label id="editTitle"></label>
+					               	</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+				
+				<table width=100% class="function">
+					<tr>
+						<td height=10></td>
+					</tr>
+					
+					<tr>
+						<td>
+							<table>
+								<tr>
+									<td width=20></td>
+									<td><label><b>Route Number:</b></label></td>
+									<td width=20></td>
+									<td><label><b>Route Name:</b></label></td>
+								</tr>
+								
+								<tr>
+									<td width=20></td>
+									<td><input type=text id="ROUTE_NUMBER"></td>
+									<td width=20></td>
+									<td><input  size = 30  maxlength = 30 type=text id="ROUTE_NAME"></td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+					
+					<tr>
+						<td height=15></td>
+					</tr>
+				</table>
+				
+				<div id="tab-display" class="tab">
+					<ul>
+						<li><a href="#route-1" class="tabBold">Route 1</a></li>
+						<li><a href="#route-2" class="tabBold">Route 2</a></li>
+						<li><a href="#route-3" class="tabBold">Route 3</a></li>
+						<li><a href="#route-4" class="tabBold">Route 4</a></li>
+					</ul>
+					
+					<div id="route-1">
+						<br>
+						<table id="routingEditTable">
+							<tr align=center>
+								<td width=20></td>
+								<td><label for="textPage"><b>Available Pagers</b></label></td>
+								<td><label><b>Route 1</b></label></td>
+								<td><label for="textPage"><b>Selected Pagers</b></label></td>
+							<tr>
+							
+							<tr align=center>
+								<td width=20></td>
+								<td><select name="textPage" id="available1" multiple="multiple" size=10></select></td>
+								<td width=200>
+									<button type=button id="BT_SELECT1" style="width:150px">Select Pager ---&gt;</button><br><br>
+									<button type=button id="BT_REMOVE1" style="width:150px">&lt;--- Remove Pager</button>
+								</td>
+								<td><select name="textPage" id="select1" multiple="multiple" size=10 style="width:150px"></select></td>
+							</tr>
+						</table>
+						<br>
+					</div>
+					
+					<div id="route-2">
+						<br>
+						<table id="routingEditTable">
+							<tr align=center>
+								<td width=20></td>
+								<td><label for="textPage"><b>Available Pagers</b></label></td>
+								<td><label><b>Route 2</b></label></td>
+								<td><label for="textPage"><b>Selected Pagers</b></label></td>
+							<tr>
+							
+							<tr align=center>
+								<td width=20></td>
+								<td><select name="textPage" id="available2" multiple="multiple" size=10></select></td>
+								<td width=200>
+									<button type=button id="BT_SELECT2" style="width:150px">Select Pager ---&gt;</button><br><br>
+									<button type=button id="BT_REMOVE2" style="width:150px">&lt;--- Remove Pager</button>
+								</td>
+								<td><select name="textPage" id="select2" multiple="multiple" size=10 style="width:150px"></select></td>
+							</tr>
+						</table>
+						<br>
+					</div>
+					
+					<div id="route-3">
+						<br>
+						<table id="routingEditTable">
+							<tr align=center>
+								<td width=20></td>
+								<td><label for="textPage"><b>Available Pagers</b></label></td>
+								<td><label><b>Route 3</b></label></td>
+								<td><label for="textPage"><b>Selected Pagers</b></label></td>
+							<tr>
+							
+							<tr align=center>
+								<td width=20></td>
+								<td><select name="textPage" id="available3" multiple="multiple" size=10></select></td>
+								<td width=200>
+									<button type=button id="BT_SELECT3" style="width:150px">Select Pager ---&gt;</button><br><br>
+									<button type=button id="BT_REMOVE3" style="width:150px">&lt;--- Remove Pager</button>
+								</td>
+								<td><select name="textPage" id="select3" multiple="multiple" size=10 style="width:150px"></select></td>
+							</tr>
+						</table>
+						<br>
+					</div>
+					
+					<div id="route-4">
+						<br>
+						<table id="routingEditTable">
+							<tr align=center>
+								<td width=20></td>
+								<td><label for="textPage"><b>Available Pagers</b></label></td>
+								<td><label><b>Route 4</b></label></td>
+								<td><label for="textPage"><b>Selected Pagers</b></label></td>
+							<tr>
+							
+							<tr align=center>
+								<td width=20></td>
+								<td><select name="textPage" id="available4" multiple="multiple" size=10></select></td>
+								<td width="200">
+									<button type=button id="BT_SELECT4" style="width:150px">Select Pager ---&gt;</button><br><br>
+									<button type=button id="BT_REMOVE4" style="width:150px">&lt;--- Remove Pager</button>
+								</td>
+								<td><select name="textPage" id="select4" multiple="multiple" size=10 style="width:150px"></select></td>
+							</tr>
+						</table>
+						<br>
+					</div>
+				</div>
+			</div>
+		</form>
+		<!--#include virtual="/advanced/table_handler.html"-->
+	</body>
+</html>

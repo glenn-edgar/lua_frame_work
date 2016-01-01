@@ -1,0 +1,339 @@
+---
+--- File: script_opcodes
+---
+---  These are commands which are compiled
+---
+---
+---
+---
+
+
+script_opcodes = {}
+
+
+
+
+
+function script_opcodes.set_constant(var,constant)
+ if type(constant) == "boolean" then
+   if constant == true then constant = 1 else constant = 0 end
+ end
+ script.add_link("SET_CONSTANT",var,(constant-constant%256)/256,constant%256)
+end
+
+
+function script_opcodes.stop()
+   script.add_link( "STOP" )
+end
+
+function script_opcodes.reset()
+   script.add_link( "RESET" )
+end
+
+function script_opcodes.halt()
+  script.add_link("HALT")
+end
+
+function script_opcodes.enable_script( script_start, script_end )
+  assert(script_start ~= nil)
+  assert(script_end ~= nil)
+  script.add_link("ENABLE_SCRIPT", script_id,script_end)
+end
+
+function script_opcodes.disable_script( script_start, script_end )
+  assert(script_start ~=nil )
+  assert(script_end ~= nil )
+  script.add_link("DISABLE_SCRIPT", script_id,script_end)
+end
+
+function script_opcodes.enable_script_if( var, script_start, script_end )
+  assert( var ~= nil )
+  assert(script_start ~= nil )
+  assert(script_end ~= nil )
+  script.add_link("ENABLE_SCRIPT_IF",var,script_start,script_end)
+end
+
+function script_opcodes.disable_script_if( var,script_start,script_end )
+  assert(var ~= nil )
+  assert(script_start ~= nil )
+  assert(script_end ~= nil) 
+  script.add_link("DISABLE_SCRIPT_IF",var,script_start,script_end )
+end
+
+function script_opcodes.stobe_watch_dog()
+  script.add_link("STROBE_WATCH_DOG")
+end
+
+
+function script_opcodes.wait_event( event )
+  assert(event ~= nil )
+  script.add_link("WAIT_EVENT",event)
+end
+
+
+
+function script_opcodes.move_from_flash( appVariable, flashVariable )
+ assert( appVariable ~= nil)
+ assert( flashVariable ~= nil )
+ script.add_link("MOVE_FROM_FLASH",appVariable, flashVariable )
+end
+
+function script_opcodes.move_to_flash( flashVariable,appVariable )
+  assert(flashVariable ~= nil )
+  assert( appVariable ~= nil )
+  script.add_link("MOVE_TO_FLASH",flashVariable,appVariable )
+end
+
+
+function script_opcodes.verify_lt( var, limit_var)
+  assert( var ~= nil )
+  assert( limit_var ~= nil )
+  script.add_link( "VERIFY_LT", var, limit_var )
+end
+
+function script_opcodes.verify_le( var, limit_var)
+  assert( var ~= nil )
+  assert( limit_var ~= nil )
+  script.add_link("VERIFY_LE",var,limit_var)
+end
+
+
+function script_opcodes.verify_gt( var, limit_var)
+  assert( var ~= nil )
+  assert( limit_var ~= nil )
+  script.add_link("VERIFY_GT",var,limit_var)
+end
+
+function script_opcodes.verify_ge( var, limit_var)
+  assert( var ~= nil )
+  assert( limit_var ~= nil )
+  script.add_link("VERIFY_GE",var,limit_var)
+end
+
+
+
+
+function script_opcodes.verify_boolean( var, limit_var )
+  assert( var ~= nil )
+  assert( limit_var ~= nil )
+  script.add_link("VERIFY_BOOLEAN",var,limit_var)
+end
+
+function script_opcodes.verify_range( var, lower, upper )
+ assert(var ~= nil )
+ assert(lower ~= nil )
+ assert(upper ~= nil )
+ script.add_link( "VERIFY_RANGE",value,lower,upper )
+end
+
+function script_opcodes.verify_not_range( var, lower,upper )
+ assert(var ~= nil )
+ assert(lower ~= nil )
+ assert(upper ~= nil )
+ script.add_link( "VERIFY_NOT_RANGE",value,lower,upper )
+end
+
+
+function script_opcodes.verify_monitor_lt( var, limit_var)
+  assert( var ~= nil )
+  assert( limit_var ~= nil )
+  script.add_link( "VERIFY_MONITOR_LT", var, limit_var )
+end
+
+function script_opcodes.verify_monitor_le( var, limit_var)
+  assert( var ~= nil )
+  assert( limit_var ~= nil )
+  script.add_link("VERIFY_MONITOR_LE",var,limit_var)
+end
+
+
+function script_opcodes.verify_monitor_gt( var, limit_var)
+  assert( var ~= nil )
+  assert( limit_var ~= nil )
+  script.add_link("VERIFY_MONITOR_GT",var,limit_var)
+end
+
+function script_opcodes.verify_monitor_ge( var, limit_var)
+  assert( var ~= nil )
+  assert( limit_var ~= nil )
+  script.add_link("VERIFY_MONITOR_GE",var,limit_var)
+end
+
+
+
+
+function script_opcodes.verify_monitor_boolean( var, limit_var )
+  assert( var ~= nil )
+  assert( limit_var ~= nil )
+  script.add_link("VERIFY_MONITOR_BOOLEAN",var,limit_var)
+end
+
+function script_opcodes.verify_monitor_range( value, lower, upper )
+ assert(value ~= nil )
+ assert(lower ~= nil )
+ assert(upper ~= nil )
+ script.add_link( "VERIFY_MONITOR_RANGE",value,lower,upper )
+end
+
+function script_opcodes.verify_monitor_not_range( var, lower,upper )
+ assert( var ~= nil )
+ assert( lower ~= nil )
+ assert( upper ~= nil)
+ script.add_link( "VERIFY_MONITOR_NOT_RANGE",value,lower,upper )
+end
+
+
+
+
+
+
+
+
+
+---
+---
+--- Arithmetic functions
+---
+---
+
+
+
+
+function script_opcodes.boolean_negate( var )
+  assert(var ~= nil)
+  script.add_link("BOOLEAN_NEGATE",var)
+end
+
+
+
+function script_opcodes.or_bits( var, start_index, end_index)
+  assert( var ~= nil )
+  assert( start_index ~= nil )
+  assert( end_index ~= nil )
+  script.add_link( "OR_BITS", var, starting_index, end_index )
+end
+
+function script_opcodes.and_bits( var, start_index, end_index )
+   assert( var ~= nil )
+   assert( start_index ~= nil )
+   assert( end_index ~= nil )
+   script.add_link( "AND_BITS", var, starting_index, ending_index )
+end
+
+
+
+
+
+function script_opcode.find_min( storeage_var, starting_var, ending_var)
+   assert( storeage_var ~= nil )
+   assert( starting_var ~= nil )
+   assert( ending_var ~= nil )
+   script.add_link( "FIND_MIN", storeage_var, starting_var, ending_var )
+end
+
+function script_opcode.find_max( storeage_var, starting_var, ending_var)
+   assert( storeage_var ~= nil )
+   assert( starting_var ~= nil )
+   assert( ending_var ~= nil )
+   script.add_link( "FIND_MAX", storeage_var, starting_var, ending_var )
+end
+
+
+function script_opcode.debounce(var_ref,var_entry,count )
+  assert(var_ref ~= nil )
+  assert(var_entry ~= nil )
+  assert(count ~= nil )
+  script.add_link("DEBOUNCE",var_entry,count )
+end
+
+function script_opcode.filter_var(var_sum,var_entry,count)
+ assert(var_sum ~= nil)
+ assert(var_entry ~= nil )
+ assert( count ~= nil )
+ script.add_link("FILTER",var_sum,var_entry,count )
+end
+
+
+function script_opcode.set_counter( var, constant ) -- constant is a 16 bit value
+  assert(var ~= nil)
+  assert(constant ~= nil )
+  script.add_link("SET_CONSTANT",var,(constant-constant%256)/256,constant%256)
+end
+
+function script_opcode.clear_counter( var )
+    assert(var ~= nil)
+    script.add_link("SET_CONSTANT",var,0,0)
+end
+
+function script_opcode.increment_counter( var,constant )
+  assert(var ~= nil )
+  assert(constant ~= nil) 
+  script.add_link("INCREMENT",var,(constant-constant%256)/256,constant%256)
+end
+
+function script_opcode.decrement_counter(var, constant )
+  assert(var ~= nil )
+  assert(constant ~= nil)
+  script.add_link("DECREMENT",var,(constant-constant%256)/256,constant%256)
+end
+
+
+
+
+
+
+
+---
+---  time functions
+---
+---
+
+
+function script_opcode.delay( ticks_100_ms )
+ assert( ticks_100_ms ~= nil )
+ script.add_link( "DELAY_100ms", ticks_100_ms )
+end
+
+
+
+function script_opcode.get_second( var)
+  assert(var ~= nil)
+  script.add_link("GET_SECOND",var )
+end
+
+function script_opcode.get_minute( var)
+  assert(var ~= nil )
+  script.add_link("GET_MINUTE",var)
+end
+
+function sc.get_hour( var )
+  assert(var ~= nil)
+  script.add_link("GET_HOUR",var)
+end
+
+----
+----
+---- io functions
+----
+
+
+
+function script_opcode.set_gpio( gpio, state )
+ assert( gpio ~= nil )
+ assert( state ~= nil )
+ script.add_link( "SET_GPIO", gpio, state )
+end
+
+function script_opcode.read_gpio( gpio,var )
+ assert( gpio ~= nil )
+ script.add_link( "READ_GPIO",gpio,var )
+end
+
+function script_opcode.read_a_to_d( var, a_d_channel)
+  assert( var ~= nil )
+  assert( a_d_channel ~= nil )
+  script.add_link("READ_A_TO_D",var,a_d_channel)
+end
+
+
+

@@ -1,0 +1,190 @@
+/*
+**
+**  Priviate Heap Implementations
+    Copyright 2008 Onyx Engineering
+    This is file is licensed as MIT
+**
+**
+**
+**
+*/
+
+
+#include <ctype.h>
+#include <errno.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "cs_private_heap.h"
+
+
+/* This file uses only the official API of Lua.
+** Any function declared here could be written as an application function.
+*/
+
+
+#include "lua.h"
+
+#include "lauxlib.h"
+#include "lua_private_heap.h"
+
+
+
+static void *l_privateHeapAlloc (void *ud, void *ptr, size_t osize, size_t nsize);
+
+
+LUALIB_API lua_State *luaL_newPrivateHeapstate ( LUA_HEAP_CONTROL *heapControl )
+{
+  lua_State *L;
+
+  L = NULL;
+  cs_initialize_privateHeap( &heapControl->memoryControl, heapControl->heapSize, heapControl->heapMemory );
+  L = lua_newstate(l_privateHeapAlloc, heapControl );
+  return L;
+}
+
+
+static void *l_privateHeapAlloc (void *ud, void *ptr, size_t osize, size_t nsize)
+{
+  LUA_HEAP_CONTROL *heapControl;
+  void             *returnValue;
+
+  returnValue = NULL;
+  heapControl = (LUA_HEAP_CONTROL *)ud;
+
+  if (nsize == 0)
+  {
+    cs_free(&heapControl->memoryControl, ptr);
+    returnValue = NULL;
+  }
+  else
+  {
+     returnValue = cs_realloc( &heapControl->memoryControl, ptr, nsize );
+  }
+  return returnValue;
+}
+
+unsigned l_freeHeapMemory( lua_State *L )
+{
+   LUA_HEAP_CONTROL  *luaHeapControl;
+   unsigned           returnValue;
+   void               *temp;
+   
+   
+
+   lua_getallocf( L, &temp );
+   // this extra step is done to remove warning
+   luaHeapControl = (LUA_HEAP_CONTROL *)temp;
+   if( luaHeapControl == NULL )
+   {
+
+      returnValue = 0;
+   }
+   else
+   {
+      returnValue = cs_freeHeapMem( &luaHeapControl->memoryControl );
+   }
+   return returnValue;
+}
+
+LUALIB_API  void l_dumpPrivateHeapState( lua_State *L )
+{
+   LUA_HEAP_CONTROL  *luaHeapControl;
+   void              *temp;
+
+   lua_getallocf( L, &temp );
+   // this extra step is done to remove compiler warning
+   luaHeapControl = (LUA_HEAP_CONTROL *)temp;
+   if( luaHeapControl == NULL )
+   {
+
+      printf("Public Heap is used \n");
+   }
+   else
+   {
+
+      cs_dumpHeap( &luaHeapControl->memoryControl );
+   }
+}
+
+
+
+
+
+
+LUALIB_API lua_State *luaL_resetPrivateHeapstate ( lua_State *L )
+{
+  LUA_HEAP_CONTROL *luaHeapControl;
+  void             *temp;
+  lua_getallocf( L, &temp );
+  luaHeapControl = ( LUA_HEAP_CONTROL *)temp;
+  cs_reset_privateHeap( &luaHeapControl->memoryControl );
+  L = lua_newstate(l_privateHeapAlloc, &luaHeapControl->memoryControl );
+
+
+  return L;
+}
+
+
+
+LUALIB_API void luaL_closePrivateHeapstate (lua_State *L)
+{
+
+ ; // do nothing for now
+
+
+}
+
+static int  lheap_dumpHeapMem( lua_State *L )
+{
+   l_dumpPrivateHeapState( L );
+   return 0;
+}
+
+static int  lheap_freeHeapMem( lua_State *L )
+{
+   unsigned size;
+
+   size = l_freeHeapMemory(L);
+   lua_pushnumber(L,size);
+   return 1;
+}
+
+
+
+
+static int lheap_help( lua_State *L )
+{
+  printf("list of private commands \n\n");
+  printf(".dumpFreeHeapBlocks()   prints out list of free Heap Blocks  \n");
+  printf(".freeHeapMem  returns free Heap Memory  \n");
+  printf(".help -- list commands \n\n");
+  return 0; // number of parameters
+}
+
+
+static int description( lua_State *L )
+{
+  lua_pushstring(L,"provides support for lua heap functions");
+  return 1;
+}
+
+static const struct luaL_reg lua_lheapLib[] =
+{
+
+   { "dumpFreeHeapBlocks",lheap_dumpHeapMem },
+   { "freeHeapMem",       lheap_freeHeapMem },
+   { "help",              lheap_help   },
+   { "description",       description },
+   { NULL, NULL }
+};
+
+
+int lprivateHeap_load( lua_State *L )
+{
+   luaL_openlib(L,"privateHeap",lua_lheapLib,0 );
+   return 1;
+}
+

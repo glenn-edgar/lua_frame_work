@@ -1,0 +1,13 @@
+
+#Copyright Onyx Engineering 2008
+#This software is licensed as MIT license
+
+#CC = bfin-linux-uclibc-gcc
+
+#CFLAGS = -Wall  -O1 -D__uClinux__ -DEMBED -mfdpic -ggdb -D_CLX_
+
+CC = gcc
+
+AR = ar
+ARFLAGS = -rc
+RANLIB = ranlib

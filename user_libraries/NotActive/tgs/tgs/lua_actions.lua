@@ -1,0 +1,378 @@
+---
+--- Copyright Indyme Corporation 2008
+---
+--- File: lua_actions.lua
+--- action functions do the following tasks
+---   1. list actions available to user
+---   2. set actions 
+---   3. queue actions
+---   4. execute actions
+---
+
+actions = {}
+actions.actionList = {}
+actions.detailHelp ={}
+
+actions.ops = {}
+actions.ops.ping = "PING"
+actions.ops.pingGateWay = "PING_GATEWAY"
+actions.ops.echo = "ECHO"
+actions.ops.connect = "CONNECT"
+actions.ops.disconnect = "DISCONNECT"
+actions.ops.timeDelay  = "TIME_DELAY"
+actions.ops.getFile = "GET_FILE"
+actions.ops.putFile = "PUT_FILE"
+actions.ops.getTime = "GET_TIME"
+actions.ops.setTime = "SET_TIME"
+actions.ops.getVersion = "GET_VERSION"
+actions.ops.telnetScreens = "TELNET_SCREENS"
+actions.ops.reboot = "REBOOT"
+actions.ops.refresh = "REFRESH"
+actions.ops.ps = "PS"
+actions.ops.proc = "PROC"
+
+
+
+function actions.description()
+ return "tgs action manager"
+end
+
+function actions.help(item)
+  if item == nil then
+    print("tgs.actions.list() -- list actions available to user" )
+    print("tgs.actions.clear()  -- clears existing actions ")
+    print("tgs.actions.connect()                                ")
+    print("tgs.actions.disconnect()                        ")
+    print("tgs.actions.timeDelay( timeDelay )                   ")
+    print("tgs.actions.getFile( sourceFile, destinationFile)        ")
+    print("tgs.actions.putFile( sourceFile, destinationFile )       ")
+    print("tgs.actions.getFiles({ {sourceFile, destinationFile} .. })        ")
+    print("tgs.actions.putFiles({ {sourceFile, destinationFile} .. } )       ")
+    print("tgs.actions.getTime()                                  ")
+    print("tgs.actions.setTime()                                ")
+    print("tgs.actions.getVersion()                             ")
+    print("tgs.actions.ping( counts, successCount)             ")
+    print("tgs.actions.pingGateWay( counts, successCount)      ")
+    print("tgs.actions.echo( echo_string)           ")
+    print("tgs.actions.reboot()                    ")
+    print("tgs.actions.refresh()            --4400/4500 only    ")
+    print("tgs.actions.telnetScreens()      --4400 only       ")
+    print("tgs.actions.ps()                 --clx only       ")
+    print("tgs.actions.proc( procFile )     --clx only       ")
+  else
+    if ( type( item ) == "string" ) and ( actions.detailHelp[ item ] ~= nil ) then
+      print( actions.detailHelp[item ] )
+    else
+      print("unrecognized help option")
+    end
+  end
+
+end
+
+
+
+
+
+function actions.clear()
+  actions.actionList = {}
+end
+
+function actions.getActionList()
+  return actions.actionList
+end
+
+function actions.list()
+ local temp
+ temp = actions.actionList
+ print("list of specified actions")
+ for i,j in ipairs( actions.actionList ) do
+    print( j.name, unpack(j.parameters))
+ end
+
+end
+
+function actions.connect()
+  actions.packData(actions.ops.connect)
+end
+
+function actions.disconnect()
+  actions.packData(actions.ops.disconnect)
+end
+
+function actions.timeDelay( timeDelay )
+  actions.packData(actions.ops.timeDelay,timeDelay )
+end
+
+function actions.getFiles( fileList )
+ 
+  for i,j in ipairs( fileList ) do
+  
+    actions.getFile( j[1], j[2] )
+  end
+end
+  
+
+function actions.getFile( sourceFile, destinationFile)
+ actions.packData(actions.ops.getFile,sourceFile,destinationFile)
+end
+
+function actions.putFiles( fileList )
+ 
+  for i,j in ipairs( fileList ) do
+
+    actions.putFile( j[1], j[2] )
+  end
+end
+
+
+function actions.putFile( sourceFile, destinationFile )
+  actions.packData(actions.ops.putFile,sourceFile,destinationFile)
+end
+
+function actions.getTime()
+  actions.packData(actions.ops.getTime)
+end
+
+function actions.setTime()
+  actions.packData(actions.ops.setTime)
+end
+
+function actions.getVersion()
+  actions.packData(actions.ops.getVersion)
+end
+
+
+function actions.pingGateWay( counts, successCount)
+  actions.packData(actions.ops.pingGateWay,counts,successCount)
+end
+
+function actions.ping(  counts, successCount )
+  actions.packData(actions.ops.ping,counts, successCount )
+end
+
+function actions.reboot()
+  actions.packData(actions.ops.reboot)
+end
+
+function actions.refresh()
+  actions.packData(actions.ops.refresh)
+end
+
+function actions.telnetScreens(key)
+  actions.packData(actions.ops.telnetScreens,key)
+end
+
+function actions.echo( echoString )
+  actions.packData(actions.ops.echo,echoString )
+end
+
+
+function actions.ps()
+  actions.packData( actions.ops.ps )
+end
+
+function actions.proc(procFile)
+  actions.packData( actions.ops.proc,procFile)
+end
+
+
+---
+---
+---
+--- static support functions
+---
+---
+---
+
+function actions.packData( name , ... )
+  local
+  temp = {}
+  assert( name ~= nil,"invalid opcode")
+
+  temp.name = name
+  temp.parameters = {...}
+  table.insert( tgs.actions.actionList, temp )
+end
+
+
+
+
+actions.detailHelp["list"] =
+[[
+
+tgs.actions.list() -- list actions which have been specified
+
+]]
+
+
+actions.detailHelp["clear"] =
+[[
+    
+tgs.actions.clear() -- clears action list
+
+]]
+
+actions.detailHelp["ping"] =
+[[
+tgs.actions.ping( Counts, successLevel ) 
+                     --- executes a ping command Counts time and expects success counts to pass
+
+]]
+
+actions.detailHelp["pingGateWay"] =
+[[
+tgs.actions.pingGateWay( Counts, successLevel ) 
+                     --- command pings gateway  command  Counts time and expects success counts to pass
+
+]]
+
+actions.detailHelp["connect"] =
+[[
+
+tgs.actions.connect() --- connects to remote unit.  Needs to be done for other operations except for ping
+operation
+
+]]
+
+actions.detailHelp["disconnect"]=
+[[
+
+tgs.actions.disconnect() --- disconnects the remote unit.  Needs to be last statement execpt for reboot command
+
+
+]]
+
+actions.detailHelp["timeDelay"] =
+[[
+
+tgs.actions.timeDelay( delaySec ) -- delays process by a specified seconds
+The primary purpose of this function is to allow a rebooted system to recover before
+processing can be proceeded.
+
+]]
+
+
+
+actions.detailHelp["getFile"] =
+[[
+
+tgs.actions.getFile( "pingTest", "logging/$unit/pingTestA" ) -- gets a file from the remote unit and places the 
+file in the destination director.  The parameter $unit is replaced with the store Id of the remote unit system.
+
+ 
+]]
+
+actions.detailHelp[ "getFiles"] =
+[[
+tgs.actions.getFiles( { {"pingTest", "logging/$unit/pingTestA"}, ... {"xxx", "logging/$unit/xxx" } }
+This file allows multiple files to be fetched.  This command reduces to a multiple number of getFile
+]]
+
+actions.detailHelp["putFile"] =
+[[
+tgs.actions.putFile( "baseline/$unit/pingTest", "pingTest" )  --- puts a file from the TGS directory and places 
+it in the path specified on the remote unit. The parameter $unit is replaced with the store Id of the remote unit system.
+ 
+]]
+
+actions.detailHelp[ "putFiles"] =
+[[
+tgs.actions.putFiles( { {"logging/$unit/pingTestA","pingTest"}, ... {"logging/$unit/xxx","xxx" } }
+This file allows multiple files to be uploaded to remote unit.  This command reduces to a multiple number of putFile
+]]
+
+
+actions.detailHelp["getTime"] =
+[[
+
+ tgs.actions.getTime() -- gets time of the remote unit remote unit
+
+
+]]
+
+actions.detailHelp["setTime"] =
+[[
+ tgs.actions.setTime()  -- set the GMT Time of the TGS to the GMT Time of the remote unit.  
+ Daylight and time zone compensation is the responsibility of the remote unit
+
+
+]]
+
+
+actions.detailHelp["getVersion"] =
+[[unitEntry.device
+
+ tgs.actions.getVersion() -- retrieves software version of the unit
+
+
+]]
+
+actions.detailHelp["echo"] =
+[[
+
+ tgs.actions.echo( echo_string)  -- while running prints out "unitId" and echo string
+ primarily used for debugging operations
+
+]]
+
+actions.detailHelp["reboot"] =
+[[
+
+tgs.actions.reboot() -- requires a tgs connection.  Reboots the system and performs a disconnect
+
+
+]]
+
+actions.detailHelp["refresh"] =
+[[
+
+tgs.actions.refresh() --   Application reloads TXD's Files
+
+
+]]
+
+
+actions.detailHelp["ps"] = 
+[[
+
+tgs.actions.ps() --- fetches a list of linux processes active in the system
+
+]]
+
+actions.detailHelp["proc"] = 
+[[
+
+tgs.actions.proc(proc_File) --- fetches a proc file from the active system 
+
+]]
+
+actions.detailHelp["telnetScreens"] =
+[[
+
+tgs.actions.telnetScreens( key )  
+-- returns entire content of telnet screen for a given key 
+-- valid key entries are as follows "
+tgs.actions.telnetScreens("F1")
+tgs.actions.telnetScreens("F2")
+tgs.actions.telnetScreens("F3")
+tgs.actions.telnetScreens("F4")
+tgs.actions.telnetScreens("F5")
+tgs.actions.telnetScreens("F6")
+tgs.actions.telnetScreens("F7")
+tgs.actions.telnetScreens("F8")
+tgs.actions.telnetScreens("F9")
+tgs.actions.telnetScreens("F10")
+tgs.actions.telnetScreens("SF1")
+tgs.actions.telnetScreens("SF2")
+tgs.actions.telnetScreens("SF3")
+tgs.actions.telnetScreens("SF4")
+tgs.actions.telnetScreens("SF5")
+tgs.actions.telnetScreens("SF6")
+tgs.actions.telnetScreens("SF7")
+tgs.actions.telnetScreens("SF8")
+tgs.actions.telnetScreens("SF9")
+tgs.actions.telnetScreens("SF10")
+
+]]
+
+tgs.actions = actions

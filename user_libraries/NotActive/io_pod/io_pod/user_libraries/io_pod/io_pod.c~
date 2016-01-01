@@ -1,0 +1,84 @@
+/*
+** 
+**  Copyright 2009 Onyx Engineering, Inc
+**  This file implements the lua interface to the IO_POD
+**  
+**
+**
+**
+**
+**
+*/
+
+#define _GNU_SOURCE
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <assert.h>
+#include <string.h>
+
+
+
+
+int initialialize_io_pod_read( char *fileName )
+{
+   int handle;
+   handle = open( fileName, O_RDONLY|O_DIRECT ); 
+   printf("Handle is %d \n",handle);
+   return handle;
+}
+
+
+int initialialize_io_pod_write( char *fileName )
+{
+   int handle;
+   handle = open( fileName, O_WRONLY|O_SYNC ); 
+   return handle;
+}
+
+
+
+
+void terminate_io_pod( int handle1, int handle2 )
+{
+   close(handle1 );
+   close(handle2 );
+}
+
+
+/*
+ returns status which is number of bytes read
+*/
+int io_pod_read( int handle, char *buffer, int length )
+{
+   int status;
+   if( length > 512 )
+   {
+     length = 512;
+   }
+ 
+   lseek( handle, 0, SEEK_SET);
+   status = read( handle, buffer, length);
+
+   return status;
+}
+
+/*
+ return status which is number of bytes written
+
+*/
+int io_pod_write(int handle, char *string, int length )
+{
+
+   int      status;
+   lseek( handle, 0,SEEK_SET);
+   status = (int)write( handle, string, length);
+   fsync(handle);
+   return status;
+}
+
+

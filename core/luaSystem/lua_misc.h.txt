@@ -1,0 +1,29 @@
+/*
+**
+** Copyright 2008 Onyx Engineering
+** This file is licensed MIT
+**
+** File: lua_misc.h
+** Contains various lua type utilities
+**
+**
+**
+**
+**
+**
+**
+*/
+
+
+#ifndef _LUA_MISC_H_
+#define _LUA_MISC_H_
+
+#include "lua.hpp"
+
+
+void loadLuaUtilties( lua_State *L );
+
+
+
+
+#endif

@@ -1,0 +1,102 @@
+/*
+    Copyrignt 2008 Onyx Engineering
+    This file is licensed as MIT
+**  File:  cs_private_heap.h
+**
+** This file implements a private heap function based upon 
+** algorithim in C & R C book
+**  Derivative work to algorithm in the book
+**
+*/ 
+
+
+#ifndef _CS_PRIVATE_HEAP_H_
+#define _CS_PRIVATE_HEAP_H_
+
+#ifdef __cplusplus 
+
+extern "C"
+{
+#endif
+
+typedef enum
+  {
+    CS_OK = 0, 
+    CS_INVALID_CONTROL_BLOCK = 1, 
+    CS_INVALID_MEMORY_BLOCK_UNDER_ADDRESS = 2, 
+    CS_INVALID_MEMORY_BLOCK_OVER_ADDRESS = 3, 
+    CS_INVALID_MEMORY_BLOCK_ENDING = 4,
+     
+  } CS_HEAP_ERROR_CODE;
+
+typedef enum
+  {
+    CS_HEAP_FALSE = 0, 
+    CS_HEAP_TRUE = 1, 
+  } CS_HEAP_BOOLEAN;
+
+
+// this is the header must not change size
+
+  typedef void    *CS_HEAP_TYPE;
+  
+  typedef struct CS_MEM_BLOCK
+  {
+    struct CS_MEM_BLOCK *next;
+    unsigned        units;
+  } CS_MEM_BLOCK;
+
+
+// control structure for Memory Handle
+  typedef struct
+  { char             *heapMemoryArea;
+    CS_MEM_BLOCK     base;
+    CS_MEM_BLOCK     *allocp;                          // last free block
+    unsigned         allocatedSize;
+    unsigned         heapSize;
+    unsigned         validTag;
+    CS_HEAP_ERROR_CODE lastErrorCode;
+    const char       *lastErrorCodeString;
+  } CS_MEMORY_CONTROL;
+
+  void cs_initialize_privateHeap(CS_MEMORY_CONTROL *
+                                 memoryControl, 
+                                 int heapSize, 
+                                 void *heapMemory);
+
+
+  void cs_reset_privateHeap(CS_MEMORY_CONTROL *
+                                  memoryControl);
+
+  void            *cs_malloc(CS_MEMORY_CONTROL *memoryControl, 
+                             unsigned bytes);
+
+  void            *cs_realloc(CS_MEMORY_CONTROL *memoryControl, 
+                             void *prt, unsigned newSize);
+
+  void            cs_free(CS_MEMORY_CONTROL *memoryControl,void *ptr );
+
+  CS_HEAP_BOOLEAN cs_verifyMemBlock(void *data);
+
+  CS_HEAP_BOOLEAN cs_verifyControlBlock(CS_MEMORY_CONTROL *
+                                        memoryControl);
+// these are diagnostic functions
+
+  void            cs_dumpHeap(CS_MEMORY_CONTROL *memoryControl);
+
+  unsigned        cs_freeHeapMem(CS_MEMORY_CONTROL *memoryControl);
+
+  int             cs_getHeapErrorCode(CS_MEMORY_CONTROL *
+                                      memoryControl);
+
+  const char   *cs_getHeapString(CS_MEMORY_CONTROL *memoryControl);
+
+#ifdef __cplusplus 
+
+}
+
+#endif
+
+#endif
+
+

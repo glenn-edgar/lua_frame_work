@@ -1,0 +1,44 @@
+/*
+**  File:  c_formatTypes.h
+**
+**  This defines the format types defined by 
+**  lua C support 
+**
+*/ 
+
+
+#ifndef _C_FORMAT_TYPES_H_
+#define _C_FORMAT_TYPES_H_
+
+#include "lua.h"
+
+
+
+#ifdef __cplusplus 
+
+extern "C"
+{
+#endif
+
+extern const char *cfm_int;
+extern const char *cfm_str;
+extern const char *cfm_long;
+extern const char *cfm_double;
+extern const char *cfm_short;
+extern const char *cfm_char;
+extern const char *cfm_ptr;
+extern const char *cfm_struct;
+extern const char *cfm_structPtr; 
+
+
+
+
+
+#ifdef __cplusplus 
+
+}
+
+#endif
+
+
+#endif

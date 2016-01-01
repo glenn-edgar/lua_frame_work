@@ -1,0 +1,445 @@
+<!DOCTYPE HTML>
+<html><head>
+
+
+    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+    <title>Front Door Alarm Management</title>
+    <link type="text/css" href="/themes/base/ui.all.css" rel="Stylesheet">
+    <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>	
+    <script type="text/javascript" src="/js/jquery-ui-1.7.custom.min.js"></script>
+    <script type="text/javascript" src="/js/json2.js"></script>
+    <script type="text/javascript" src="/js/maskinput.js"></script>
+    <script type="text/javascript" src="/js/front_door_alarm.js"></script>
+</head><body>
+ 
+  <form id="form" action="/editScriptStore.lua">
+
+    <div id="row-0"> <right>
+	
+                  <table id="table-header" bgcolor="orange" border="0" cellpadding="5" cellspacing="0" width="100%"> 
+                     <tbody>
+                 
+                    <tr>
+                    <td width="25"></td>
+                    <td algin="CENTER" width="100">
+                     <button id="save" type="button">Save</button>
+                     
+                    </td>
+                    <td align="center" width="100">
+                     <button id="reset" type="button">Reset</button>
+                    </td>
+                   <td align="left">
+                    <h1>Front Door Alarm Management</h1>
+                   </td>
+                   
+  
+                   
+                 
+                 </tr></tbody></table><br><br>
+ 
+    
+<h3>Monday</h3>
+<img id="MondayImg" src="images/TimeLine.jpg"  />
+<table border="0" cellpadding="5" cellspacing="0" > 
+<tbody>
+   <tr>
+     <td align="left" width = 200 >
+        
+         Alarm Number<br>
+        <input name="radio_2" value="0" type="radio">No Alarms <br>
+        <input name="radio_2" value="1" type="radio">One Alarms<br>
+        <input name="radio_2" value="2" type="radio">Two Alarms<br>
+        
+     </td>
+   <td align="left" width = 200 >
+         <div id="group_a_2">
+         First Alarm Start <br>
+         <input size="6" maxlength="6" id="input_a_2" type="text">
+         <select id = "select_a_2">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+         </select>
+         <br>
+         <br>First Alarm End<br>
+         <input size="5" maxlength="5" id="input_b_2" type="text">
+         <select id = "select_b_2">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+         </select>
+
+         </div>
+   </td>
+   <td align="left"  width = 200>
+         <div id="group_b_2">
+          Second Alarm Start <br>
+          <input size="5" maxlength="5" id="input_c_2" type="text">
+          <select id = "select_c_2">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+          </select>
+          <br>
+          <br>Second Alarm End <br>
+          <input size="5" maxlength="5" id="input_d_2" type="text">
+          <select id = "select_d_2">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+          </select>
+
+
+          </div>
+         
+   </td>  
+      
+      </tr>
+    </tbody></table>
+		
+<h3>Tuesday</h3>
+
+<img id="TuesdayImg" src="images/TimeLine.jpg"  />
+<table border="0" cellpadding="5" cellspacing="0" > 
+<tbody>
+   <tr>
+     <td align="left" width = 200 >
+        
+         Alarm Number<br>
+        <input name="radio_3" value="0" type="radio">No Alarms <br>
+        <input name="radio_3" value="1" type="radio">One Alarms<br>
+        <input name="radio_3" value="2" type="radio">Two Alarms<br>
+        
+     </td>
+   <td align="left" width = 200 >
+         <div id="group_a_3">
+         First Alarm Start <br>
+         <input size="6" maxlength="6" id="input_a_3" type="text">
+         <select id = "select_a_3">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+         </select>
+         <br>
+         <br>First Alarm End<br>
+         <input size="5" maxlength="5" id="input_b_3" type="text">
+         <select id = "select_b_3">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+         </select>
+
+         </div>
+   </td>
+   <td align="left"  width = 200>
+         <div id="group_b_3">
+          Second Alarm Start <br>
+          <input size="5" maxlength="5" id="input_c_3" type="text">
+          <select id = "select_c_3">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+          </select>
+          <br>
+          <br>Second Alarm End <br>
+          <input size="5" maxlength="5" id="input_d_3" type="text">
+          <select id = "select_d_3">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+          </select>
+
+
+          </div>
+         
+   </td>  
+      
+      </tr>
+    </tbody></table>
+<h3>Wednesday</h3>
+
+<img id="WednesdayImg" src="images/TimeLine.jpg"  />
+<table border="0" cellpadding="5" cellspacing="0" > 
+<tbody>
+   <tr>
+     <td align="left" width = 200 >
+        
+         Alarm Number<br>
+        <input name="radio_4" value="0" type="radio">No Alarms <br>
+        <input name="radio_4" value="1" type="radio">One Alarms<br>
+        <input name="radio_4" value="2" type="radio">Two Alarms<br>
+        
+     </td>
+   <td align="left" width = 200 >
+         <div id="group_a_4">
+         First Alarm Start <br>
+         <input size="6" maxlength="6" id="input_a_4" type="text">
+         <select id = "select_a_4">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+         </select>
+         <br>
+         <br>First Alarm End<br>
+         <input size="5" maxlength="5" id="input_b_4" type="text">
+         <select id = "select_b_4">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+         </select>
+
+         </div>
+   </td>
+   <td align="left"  width = 200>
+         <div id="group_b_4">
+          Second Alarm Start <br>
+          <input size="5" maxlength="5" id="input_c_4" type="text">
+          <select id = "select_c_4">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+          </select>
+          <br>
+          <br>Second Alarm End <br>
+          <input size="5" maxlength="5" id="input_d_4" type="text">
+          <select id = "select_d_4">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+          </select>
+
+
+          </div>
+         
+   </td>  
+      
+      </tr>
+    </tbody></table>
+<h3>Thursday</h3>
+
+<img  id="ThursdayImg" src="images/TimeLine.jpg"  />
+<table border="0" cellpadding="5" cellspacing="0" > 
+<tbody>
+   <tr>
+     <td align="left" width = 200 >
+        
+         Alarm Number<br>
+        <input name="radio_5" value="0" type="radio">No Alarms <br>
+        <input name="radio_5" value="1" type="radio">One Alarms<br>
+        <input name="radio_5" value="2" type="radio">Two Alarms<br>
+        
+     </td>
+   <td align="left" width = 200 >
+         <div id="group_a_5">
+         First Alarm Start <br>
+         <input size="6" maxlength="6" id="input_a_5" type="text">
+         <select id = "select_a_5">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+         </select>
+         <br>
+         <br>First Alarm End<br>
+         <input size="5" maxlength="5" id="input_b_5" type="text">
+         <select id = "select_b_5">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+         </select>
+
+         </div>
+   </td>
+   <td align="left"  width = 200>
+         <div id="group_b_5">
+          Second Alarm Start <br>
+          <input size="5" maxlength="5" id="input_c_5" type="text">
+          <select id = "select_c_5">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+          </select>
+          <br>
+          <br>Second Alarm End <br>
+          <input size="5" maxlength="5" id="input_d_5" type="text">
+          <select id = "select_d_5">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+          </select>
+
+
+          </div>
+         
+   </td>  
+      
+      </tr>
+    </tbody></table>
+
+<h3>Friday</h3>
+
+<img id="FridayImg" src="images/TimeLine.jpg"  />
+<table border="0" cellpadding="5" cellspacing="0" > 
+<tbody>
+   <tr>
+     <td align="left" width = 200 >
+        
+         Alarm Number<br>
+        <input name="radio_6" value="0" type="radio">No Alarms <br>
+        <input name="radio_6" value="1" type="radio">One Alarms<br>
+        <input name="radio_6" value="2" type="radio">Two Alarms<br>
+        
+     </td>
+   <td align="left" width = 200 >
+         <div id="group_a_6">
+         First Alarm Start <br>
+         <input size="6" maxlength="6" id="input_a_6" type="text">
+         <select id = "select_a_6">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+         </select>
+         <br>
+         <br>First Alarm End<br>
+         <input size="5" maxlength="5" id="input_b_6" type="text">
+         <select id = "select_b_6">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+         </select>
+
+         </div>
+   </td>
+   <td align="left"  width = 200>
+         <div id="group_b_6">
+          Second Alarm Start <br>
+          <input size="5" maxlength="5" id="input_c_6" type="text">
+          <select id = "select_c_6">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+          </select>
+          <br>
+          <br>Second Alarm End <br>
+          <input size="5" maxlength="5" id="input_d_6" type="text">
+          <select id = "select_d_6">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+          </select>
+
+
+          </div>
+         
+   </td>  
+      
+      </tr>
+    </tbody></table>
+<h3>Saturday</h3>
+
+<img id="SaturdayImg "src="images/TimeLine.jpg"  />
+<table border="0" cellpadding="5" cellspacing="0" > 
+<tbody>
+   <tr>
+     <td align="left" width = 200 >
+        
+         Alarm Number<br>
+        <input name="radio_7" value="0" type="radio">No Alarms <br>
+        <input name="radio_7" value="1" type="radio">One Alarms<br>
+        <input name="radio_7" value="2" type="radio">Two Alarms<br>
+        
+     </td>
+   <td align="left" width = 200 >
+         <div id="group_a_7">
+         First Alarm Start <br>
+         <input size="6" maxlength="6" id="input_a_7" type="text">
+         <select id = "select_a_7">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+         </select>
+         <br>
+         <br>First Alarm End<br>
+         <input size="5" maxlength="5" id="input_b_7" type="text">
+         <select id = "select_b_7">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+         </select>
+
+         </div>
+   </td>
+   <td align="left"  width = 200>
+         <div id="group_b_7">
+          Second Alarm Start <br>
+          <input size="5" maxlength="5" id="input_c_7" type="text">
+          <select id = "select_c_7">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+          </select>
+          <br>
+          <br>Second Alarm End <br>
+          <input size="5" maxlength="5" id="input_d_7" type="text">
+          <select id = "select_d_7">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+          </select>
+
+
+          </div>
+         
+   </td>  
+      
+      </tr>
+    </tbody></table>
+<h3>Sunday</h3>
+
+<img id="SundayImg" src="images/TimeLine.jpg"  />
+<table border="0" cellpadding="5" cellspacing="0" > 
+<tbody>
+   <tr>
+     <td align="left" width = 200 >
+        
+         Alarm Number<br>
+        <input name="radio_1" value="0" type="radio">No Alarms <br>
+        <input name="radio_1" value="1" type="radio">One Alarms<br>
+        <input name="radio_1" value="2" type="radio">Two Alarms<br>
+        
+     </td>
+   <td align="left" width = 200 >
+         <div id="group_a_1">
+         First Alarm Start <br>
+         <input size="6" maxlength="6" id="input_a_1" type="text">
+         <select id = "select_a_1">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+         </select>
+         <br>
+         <br>First Alarm End<br>
+         <input size="5" maxlength="5" id="input_b_1" type="text">
+         <select id = "select_b_1">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+         </select>
+
+         </div>
+   </td>
+   <td align="left"  width = 200>
+         <div id="group_b_1">
+          Second Alarm Start <br>
+          <input size="5" maxlength="5" id="input_c_1" type="text">
+          <select id = "select_c_1">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+          </select>
+          <br>
+          <br>Second Alarm End <br>
+          <input size="5" maxlength="5" id="input_d_1" type="text">
+          <select id = "select_d_1">
+            <option  value="0">AM</option>
+            <option value="1">PM</option>
+          </select>
+
+
+          </div>
+         
+   </td>  
+      
+      </tr>
+    </tbody></table>
+
+
+<img id ="Sunday_1" src="images/ProgressBar.jpg" style="display:none";  />
+<img id ="Sunday_2" src="images/ProgressBar.jpg" style="display:none";  />
+<img id ="Monday_1" src="images/ProgressBar.jpg"  style="display:none"; />
+<img id ="Monday_2" src="images/ProgressBar.jpg"  style="display:none"; />
+<img id ="Tuesday_1" src="images/ProgressBar.jpg"  style="display:none"; />
+<img id ="Tuesday_2" src="images/ProgressBar.jpg"  style="display:none"; />
+<img id ="Wednesday_1" src="images/ProgressBar.jpg" style="display:none";  />
+<img id ="Wednesday_2" src="images/ProgressBar.jpg" style="display:none";  />
+<img id ="Thursday_1" src="images/ProgressBar.jpg" style="display:none";  />
+<img id ="Thursday_2" src="images/ProgressBar.jpg" style="display:none";  />
+<img id ="Friday_1" src="images/ProgressBar.jpg"  style="display:none"; />
+<img id ="Friday_2" src="images/ProgressBar.jpg"  style="display:none"; />
+<img id ="Saturday_1" src="images/ProgressBar.jpg" style="display:none";  />
+<img id ="Saturday_2" src="images/ProgressBar.jpg"  style="display:none"; />
+
+
+</form></body></html>

@@ -1,0 +1,27 @@
+/*
+** Copyright 2008 Onyx Engineering
+** This file is licensed MIT
+**
+** File: lua_stringBuffer.h
+**
+** Interface file for lua_stringBuffer.c
+**
+**
+**
+**
+*/
+
+#ifndef _LUA_PAT_STRING_H_
+#define _LUA_PAT_STRING_H_
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+
+
+int lua_stringBufferLoad( lua_State *L );
+
+
+
+#endif

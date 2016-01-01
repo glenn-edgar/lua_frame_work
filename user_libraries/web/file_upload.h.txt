@@ -1,0 +1,26 @@
+/*
+** file_upload.h
+**
+**
+**
+**
+**
+**
+*/
+
+
+#ifndef _FILE_UPLOAD_H_
+#define _FILE_UPLOAD_H_
+
+/*
+**
+** Returns error code
+** 0 = success
+**
+*/
+
+char  *file_upload( int *errorflag, int post_data_length, char *post_data, char *file_directory);
+
+
+
+#endif

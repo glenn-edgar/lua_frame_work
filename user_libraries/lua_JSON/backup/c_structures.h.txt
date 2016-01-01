@@ -1,0 +1,76 @@
+/*
+**  File:  c_structures.h
+**
+**  This file defines the public in c_structures.c
+**
+*/ 
+
+
+#ifndef _C_STRUCTURES_H_
+#define _C_STRUCTURES_H_
+
+#include "lua.h"
+
+
+
+#ifdef __cplusplus 
+
+extern "C"
+{
+#endif
+
+#include "basicMemOps.h"
+
+const STRUCTURE_DEFINITION *
+findStructureDefinition( const STRUCTURE_DEFINITION *strDef,
+                         const char *structureName );
+
+
+unsigned 
+getStructureSize( const STRUCTURE_DEFINITION *strDef,
+                  const char *structureName );
+
+const FIELD_DEFINITION*
+findStructureField( const FIELD_DEFINITION *fieldDefinition,
+                    const char *fieldName );
+/*
+**
+** takes a lua table and 
+** writes to corresponding C structure
+** tableIndex is location of lua table
+*/
+
+
+void 
+writeStructure( lua_State                  *L, 
+                const STRUCTURE_DEFINITION *strDef,
+                int                        tableIndex,
+                const char                 *structureName, 
+                void                       *address );
+
+/*
+**
+** Constructs lua table and places on the stack
+**
+**
+**
+**
+*/
+
+void 
+readStructure( lua_State *L, 
+                     const STRUCTURE_DEFINITION *strDef, 
+                     const char                 *structureName, 
+                     void                       *address );
+
+
+
+
+#ifdef __cplusplus 
+
+}
+
+#endif
+
+
+#endif

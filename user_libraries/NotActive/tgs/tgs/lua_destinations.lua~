@@ -1,0 +1,153 @@
+---
+---
+--- File: lua_destinations.lua
+--- This file sets target destination for tgs contact
+--- 
+---
+---
+---
+
+destination = {}
+destination.chain = nil
+destination.units = {}
+
+
+
+function destination.help()
+  print("tgs.destination.clear() -- clear destination data ")
+  print("tgs.destination.setChain( chain ) ")
+  print("tgs.destination.addStore( unit ) ")
+  print("tgs.destination.addStoreList( fileName ) ")
+  print("tgs.destination.query( queryString ) ")
+  print("tgs.destination.listRequiredFields() ")
+  print("tgs.destination.listAllFields() ")
+  print("tgs.destination.listStores()  ")
+end
+
+
+
+
+
+
+function destination.clear()
+  destination.chain = nil
+  destination.units = {}
+end
+
+function destination.setChain( chain )
+  assert( tgs.units.verifyChain( chain ) == true, "invalid chain")
+  destination.chain = chain
+  destination.units = {}
+
+end
+
+function destination.getUnitList()
+  return destination.chain, destination.units
+end
+
+
+function destination.addAll()
+   destination.units = tgs.units.getChain( destination.chain)
+end
+--
+--
+-- unit is a string or a list of unit
+--
+--
+function destination.addStore( unit )
+ assert( destination.chain ~= nil, "need to define chain")
+ if type(unit) == "string" then
+   destination.addStoreTemp(unit)
+ elseif type(unit) == "table" then
+   for i,j in ipairs( unit ) do
+     destination.addStoreTemp( j )
+   end
+ else
+   assert( false, "invalid unit parameter")
+ end
+end
+
+
+
+
+function destination.addStoreFileList( fileName )
+     assert( destination.chain ~= nil, "need to define chain")
+     for line in io.lines(fileName) do 
+       if line == nil then return end
+       line = string.trim(line)
+       destination.addStoreTemp( line )
+     end
+end
+
+
+function destination.query( queryString )
+   local temp1,temp2,key
+   temp1 = {}
+   assert( destination.chain ~= nil, "need to define chain")
+   key  = tgs.units.getKey( destination.chain)
+   temp1 = tgs.units.getUnitTable( destination.chain )
+   temp2 = ts.query(  queryString, temp1 )
+   if temp2 ~= nil then
+      for i,j in pairs( temp2 ) do
+        destination.addStoreTemp( j[ key ] )
+      end
+   end
+end
+
+function destination.listRequiredFields( )
+ local temp
+ assert( destination.chain ~= nil, "need to define chain")
+ temp = tgs.units.listRequiredFields( destination.chain )
+ return ts.keys( temp ) 
+end
+
+function destination.listAllFields(  )
+ local temp
+ assert( destination.chain ~= nil, "need to define chain")
+ temp = tgs.units.listAllFields( destination.chain )
+ return ts.keys( temp ) 
+end
+
+
+---
+---
+--- This is a debug function
+---
+---
+
+
+function destination.listStores()
+ local key
+ local temp
+ temp = {}
+ assert( destination.chain ~= nil, "need to define chain")
+ key = tgs.units.getKey( destination.chain )
+ 
+ for i,j in pairs(destination.units) do
+ 
+   table.insert(temp,j[key])
+ end
+ table.sort(temp)
+ return temp
+end
+
+---
+---
+--- local support functions
+---
+---
+
+function destination.addStoreTemp( unitId )
+ local temp
+ local key
+ 
+
+ temp = tgs.units.getEntry( destination.chain,unitId )
+
+ if temp == nil then print("unit",unit,"unit is not recognized ") return end
+
+ destination.units[ unitId ] = temp
+end
+
+
+tgs.destination = destination

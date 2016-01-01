@@ -1,0 +1,307 @@
+-- lua_extensions.lua
+
+sc = {}   -- script compiler object
+
+
+sc.script_map = {}
+sc.constants  = {}
+sc.defaults   = {}
+sc.includeTable    = {}
+sc.number_of_scripts = 0
+sc.current_id = nil
+sc.compiled_object = {}
+sc.working = {}
+
+
+
+function sc.compile()
+ -- check validity of routes
+ routes.check_routes()
+ -- check validy of alarms
+ alarms.check_alarms()
+ -- generate messages
+ messages.generate( sc.compiled_object )
+ -- generate devices
+ od.generate( sc.compiled_object )
+ -- generate routes
+ routes.generate( sc.compiled_object)
+ -- generate alarms
+ alarms.generate(sc.compiled_object)
+ -- generate constants
+
+ sc.generate_constant( sc.compiled_object )
+ sc.generate_defaults( sc.compiled_object )
+ sc.generate_include_files(sc.compiled_object)
+
+ -- generate scripts
+
+ sc.generate_script( sc.compiled_object)
+
+end
+
+
+
+function sc.generate_script( temp )
+  local temp1, temp2
+
+  for i,j in ipairs(sc.script_map) do
+
+	if j.auto_start == true then temp2 =1 else temp2 = 0 end
+    temp1 = "START_SCRIPT,"..j.script_id..","..temp2
+	table.insert(temp,temp1)
+	sc.expand_script( j, temp)
+	temp1 = "END_SCRIPT"
+    table.insert(temp,temp1)
+ end
+
+
+end
+
+
+function sc.expand_script(j, temp )
+  local temp1
+  for i,j in ipairs(j.commands) do
+    temp1 = "ADD_ELEMENT,"..j.opcode..","..j.param1..","..j.param2..","..j.param3
+	table.insert(temp,temp1)
+  end
+
+end
+
+
+
+function sc.load_constant( var, constant)
+   local temp
+   assert( var ~= nil)
+   assert( constant ~= nil )
+   temp = {"LOAD_CONSTANT",var,constant}
+   table.insert(sc.constants,temp)
+
+end
+
+
+function sc.zero_array( starting_var , ending_var )
+  local temp
+  assert( starting_var ~= nil)
+  assert( ending_var ~= nil )
+  temp = {"ZERO_ARRAY",starting_var,ending_var}
+  table.insert(sc.constants,temp)
+end
+
+
+function sc.generate_constant( temp )
+  local temp1
+  for i,j in ipairs(sc.constants) do
+
+   temp1= j[1]..","..j[2]..","..j[3]
+   table.insert(temp,temp1)
+  end
+end
+
+
+function sc.get_compiled_object()
+  return sc.compiled_object
+
+end
+
+function sc.define_script( script_id, auto_start, description )
+ local temp1
+
+ print("starting script",script_id)
+
+ sc.working = {}
+ sc.working.auto_start = auto_start
+ sc.working.description = description
+ sc.working.script_id  = script_id
+ sc.working.commands = {}
+ sc.current_id = script_id
+ sc.number_of_scripts = sc.number_of_scripts +1
+ sc.current_id = script_id
+end
+
+function sc.add_link( opcode, param1, param2, param3 )
+  local temp
+  temp = {}
+
+   print(opcode,param1,param2,param3)
+  if param1 == nil then param1 = -1 end
+  if param2 == nil then param2 = -1 end
+  if param3 == nil then param3 = -1 end
+
+  if param1 == true then param1 =  1 end
+  if param2 == true then param2 =  1 end
+  if param3 == true then param3 =  1 end
+
+  if param1 == false then param1 = 0 end
+  if param2 == false then param2 = 0 end
+  if param3 == false then param3 = 0 end
+
+
+
+
+  temp.opcode = opcode
+  temp.param1  = param1
+  temp.param2  = param2
+  temp.param3  = param3
+  table.insert(sc.working.commands,temp)
+  temp = nil
+end
+
+function sc.end_script()
+  print("ending script",sc.current_id)
+  table.insert(sc.script_map,sc.working)
+  sc.current_id = nil
+end
+
+function sc.initialize_ram( ram_size)
+  local temp
+  sc.ram = {}
+  sc.ram.size = ram_size
+  sc.ram.pages = {}
+  for i=1,sc.ram.size do
+    sc.ram.pages[i] = true
+  end
+end
+
+function sc.reserve_ram( location )
+  local temp
+   assert( sc.ram.pages[location] ~= nil,"bad RAM page")
+   assert( sc.ram.pages[location] == true,"already reserved location")
+   sc.ram.pages[location] = false
+   return location
+end
+
+
+function sc.allocate_ram( allocation_size)
+  for i = 1,sc.ram.size-allocation_size+1 do
+     if sc.check_pages( i,allocation_size) == true then
+	    for j = i,i+allocation_size-1 do
+	      sc.ram.pages[j] = false
+         end
+
+	    return i
+	 end
+   end
+   assert(false,"block size "..allocation_size.." cannot be allocated")
+
+end
+
+function sc.check_pages( start,size )
+ assert( start+size-1 <= sc.ram.size,"out of ram space start "..start.."  size "..size.." ram size "..sc.ram.size )
+ for i = start, start+size-1 do
+   if sc.ram.pages[i] == false then return false end
+   if sc.ram.pages[i] == nil then assert("should not be here") end
+  end
+  return true
+end
+
+function sc.include( fileName )
+  local temp
+  assert( fileName ~= nil )
+  temp = {"INCLUDE_FILE",fileName}
+  table.insert(sc.includeTable,temp)
+
+end
+
+function sc.load_default_ip( ip1,ip2,ip3,ip4 )
+  assert(ip1 ~= nil )
+  assert(ip2 ~= nil )
+  assert(ip3 ~= nil )
+  assert(ip4 ~= nil )
+   temp = {"LOAD_DEFAULT_IP",ip1,ip2,ip3,ip4}
+  table.insert(sc.defaults,temp)
+
+end
+
+function sc.load_default_gateway( ip1,ip2,ip3,ip4 )
+  assert(ip1 ~= nil )
+  assert(ip2 ~= nil )
+  assert(ip3 ~= nil )
+  assert(ip4 ~= nil )
+   temp = {"LOAD_DEFAULT_GW",ip1,ip2,ip3,ip4}
+  table.insert(sc.defaults,temp)
+
+end
+
+function sc.load_network_mask( ip1,ip2,ip3,ip4 )
+  assert(ip1 ~= nil )
+  assert(ip2 ~= nil )
+  assert(ip3 ~= nil )
+  assert(ip4 ~= nil )
+   temp = {"LOAD_DEFAULT_NM",ip1,ip2,ip3,ip4}
+  table.insert(sc.defaults,temp)
+
+end
+
+function sc.load_primary_dns( ip1,ip2,ip3,ip4 )
+  assert(ip1 ~= nil )
+  assert(ip2 ~= nil )
+  assert(ip3 ~= nil )
+  assert(ip4 ~= nil )
+  temp = {"LOAD_PRIMARY_DNS",ip1,ip2,ip3,ip4}
+  table.insert(sc.defaults,temp)
+
+end
+
+function sc.load_secondary_dns( ip1,ip2,ip3,ip4 )
+  assert(ip1 ~= nil )
+  assert(ip2 ~= nil )
+  assert(ip3 ~= nil )
+  assert(ip4 ~= nil )
+  temp = {"LOAD_SECONDARY_DNS",ip1,ip2,ip3,ip4}
+  table.insert(sc.defaults,temp)
+
+
+end
+
+function sc.load_default_password( password)
+  assert(password ~= nil )
+  temp = {"LOAD_DEFAULT_PASSWORD",password }
+  table.insert(sc.defaults, temp)
+end
+
+function sc.write_phi( phyReg, Value,  ES_1_2 )
+  assert(phyReg ~= nil )
+  assert(value ~= nil )
+  assert(ES_1_2 ~= nil )
+  temp = {"WRITE_PHI",phyReg,value,ES_1_2}
+  table.insert(sc.defaults,temp)
+
+end
+
+function sc.load_default_email( to,from,server,user_name, password )
+  assert(to ~= nil )
+  assert(from ~= nil )
+  assert(server ~= nil )
+  assert(password ~= nil )
+  temp = {"LOAD_DEFAULT_EMAIL",to,from,server,user_name,password}
+  table.insert(sc.defaults,temp)
+
+end
+
+
+function sc.generate_defaults( temp )
+  local temp1
+  for i,j in ipairs(sc.defaults) do
+   temp1 = nil
+    for l,m in ipairs(j) do
+
+	  if temp1 == nil then
+	    temp1 = m
+	  else
+		 temp1 = temp1 .."," .. m
+	   end
+	end
+   table.insert(temp,temp1)
+  end
+end
+
+
+function sc.generate_include_files(temp)
+  local temp1
+  for i,j in ipairs(sc.includeTable) do
+
+   temp1= j[1]..","..j[2]
+   table.insert(temp,temp1)
+  end
+end
+

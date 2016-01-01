@@ -1,0 +1,29 @@
+/*
+**
+** File: lua_load.c
+** This file load lua network applications
+**
+**
+*/
+
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+#include "lua_curl.h"
+#include "lua_smtp.h"
+#include "lua_client.h"
+
+
+
+int lua_loadNetworkApps( lua_State *L )
+{
+
+   lua_smtpClient( L );
+   lua_curl_load( L );
+   lua_tcpClient( L );
+   return 0;
+}
+
+

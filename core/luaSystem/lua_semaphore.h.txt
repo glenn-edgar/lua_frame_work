@@ -1,0 +1,43 @@
+/*
+** File: lua_semaphore.c
+   Copyright 2008 Onyx Engineering
+    This file is licensed as MIT
+**
+**
+**
+**
+**
+*/
+
+
+
+#ifndef _LUA_SEMAPHORE_H_
+#define _LUA_SEMAPHORE_H_
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+
+#include "lua.h"
+#include "lauxlib.h"
+unsigned lua_lockCount( lua_State *L );
+ 
+int lua_registerSemaphoreSupport( lua_State *L );
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+
+
+
+
+
+
+
+
+
+

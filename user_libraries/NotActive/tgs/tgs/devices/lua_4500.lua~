@@ -1,0 +1,454 @@
+--- File: lua_clx.lua
+--- 
+---  This file implements the tgs actions for CLX devices
+---
+---
+---
+---
+
+dev_4500 = {}
+
+---
+--- Setting 4400 telnet screens
+---
+---
+---
+---
+
+dev_4500.keys = {}
+dev_4500.clearScreen = string.char(0x1b).."[2J"
+dev_4500.es =  string.char(0x1b).."O"
+dev_4500.keys["F1"]    = dev_4500.es.."p"
+dev_4500.keys["F2"]    = dev_4500.es.."q"
+dev_4500.keys["F3"]    = dev_4500.es.."r"
+dev_4500.keys["F4"]    = dev_4500.es.."s"
+dev_4500.keys["F5"]    = dev_4500.es.."t"
+dev_4500.keys["F6"]    = dev_4500.es.."u"
+dev_4500.keys["F7"]    = dev_4500.es.."v"
+dev_4500.keys["F8"]    = dev_4500.es.."x"
+dev_4500.keys["F9"]    = dev_4500.es.."y"
+dev_4500.keys["F10"]   = dev_4500.es.."z"
+dev_4500.keys["SF1"]   = dev_4500.es.."P"
+dev_4500.keys["SF2"]   = dev_4500.es.."Q"
+dev_4500.keys["SF3"]   = dev_4500.es.."R"
+dev_4500.keys["SF4"]   = dev_4500.es.."S"
+dev_4500.keys["SF5"]   = dev_4500.es.."T"
+dev_4500.keys["SF6"]   = dev_4500.es.."U"
+dev_4500.keys["SF7" ]  = dev_4500.es.."V"
+dev_4500.keys["SF8"]   = dev_4500.es.."X"
+dev_4500.keys["SF9"]   = dev_4500.es.."Y"
+dev_4500.keys["SF10"]  = dev_4500.es.."Z"
+
+
+
+
+
+
+--
+-- register common code drivers
+--
+dev_4500.ECHO        = common_device_code.ECHO
+dev_4500.TIME_DELAY = common_device_code.TIME_DELAY
+dev_4500.PING       =common_device_code.PING
+dev_4500.PING_GATEWAY = common_device_code.PING_GATEWAY
+
+dev_4500.connection = {}
+dev_4500.ncftp = {}
+
+function dev_4500.INIT( )
+
+dev_4500.ncftp = {}
+
+end
+
+function dev_4500.CONNECT( parameters, actionResult, chain, unitEntry )
+  local status
+  dev_4500.passwords = {}
+ 
+  actionResult.status =  lua_4400_ppp.connect( chain, dev_4500, unitEntry ,actionResult.result)
+ 
+  if actionResult.status ~= 1 then
+    return actionResult.status 
+  end
+
+  status = dev_4500.determineType( dev_4500.ip)
+  if status == true then
+     dev_4500.setPassWords()
+     actionResult.result.status = "Connection Successful"
+     actionResult.status = true
+  else
+     actionResult.result.status = "Cannot connect to ftp"
+     actionResult.status = false
+  end
+  return actionResult.status
+end
+
+function dev_4500.DISCONNECT(parameters, actionResult, chain, unitEntry )
+   actionResult.status = true
+   actionResult.result.status = "disconnecting "..dev_4500.ip
+   lua_4400_ppp.disconnect( chain, dev_4500, actionResult.result )
+   return actionResult.status
+end
+
+
+
+function dev_4500.GET_FILE(parameters, actionResult, chain, unitEntry )
+  local getFile
+  
+  getFile = dev_4500.parseUnitReplacement( chain, unitEntry, parameters[2])
+
+   actionResult.status = curl.ftpGet( dev_4500.passwords.ftp_user,
+                                      dev_4500.passwords.ftp_password,
+                                      dev_4500.ip,
+                                      getFile, parameters[1] )
+   
+  actionResult.result.mtsFile = parameters[1]
+  actionResult.result.tgsFile = getFile
+  actionResult.result.status = actionResult.status
+  if actionResult.status == 0 then
+    actionResult.status = true
+  else
+    actionResult.status = false
+  end
+ 
+  getFile = nil
+  return actionResult.status
+end
+     dev_4500.passwords.ftp_user            = Target[dev_4500.type].ftp_username
+      dev_4500.passwords.ftp_password        = Target[dev_4500.type].ftp_password
+
+function dev_4500.PUT_FILE(parameters, actionResult, chain, unitEntry )
+  local sendFile
+ 
+  sendFile = dev_4500.parseUnitReplacement( chain, unitEntry, parameters[1] )
+  
+   actionResult.status = curl.ftpPut( dev_4500.passwords.ftp_user,
+                                      dev_4500.passwords.ftp_password,
+                                      dev_4500.ip,
+                                      sendFile, parameters[2] )
+   
+  actionResult.result.mtsFile = parameters[2]
+  actionResult.result.tgsFile = sendFile
+  actionResult.result.status = actionResult.status
+  if actionResult.status == 0 then
+    actionResult.status = true
+  else
+    actionResult.status = false
+  end
+ 
+  getFile = nil
+  return actionResult.status
+end
+
+function dev_4500.GET_TIME(parameters, actionResult, chain, unitEntry, correctionFlag )
+ local sock
+
+ local data
+  local returnValue
+
+  if correctionFlag == nil then correctionFlag = false end
+
+  sock = tcp_client.connect( dev_4500.ip, 80)
+ 
+  if sock > 0 then
+     returnValue = tcp_client.send(sock,"GET /i_activate/gettime.htm \r\n\r\n")
+     actionResult.status, actionResult.result.timeString = tcp_client.recv(sock,256)
+     tcp_client.close( sock)
+     
+     if actionResult.status == true then
+         dev_4500.processTimeString( actionResult, unitEntry, correctionFlag )
+     end
+
+  else
+     actionResult.status = false
+
+     actionResult.result.status = "cannot connect to HTTP"
+  end
+ 
+  return actionResult.status 
+end
+
+function dev_4500.SET_TIME(parameters, actionResult, chain, unitEntry )
+  local sock,mtsTime
+  -- log time difference
+  dev_4500.GET_TIME(parameters, actionResult, chain, unitEntry, true)
+  -- now set time
+  mtsTime = tgs_time.generate4400Time( unitEntry)
+  sock = tcp_client.connect( dev_4500.ip, 80)
+  
+  if sock > 0 then
+     tcp_client.send(sock,"GET /i_activate/settime.htm?"..mtsTime.. "  \r\n\r\n")
+     actionResult.status = true
+     actionResult.result.correctionTime = mtsTime
+     actionResult.result.status = "time has been set"
+     tcp_client.close( sock)
+     
+  else
+     actionResult.status = false
+     actionResult.result.status = "cannot connect to HTTP for setting time"
+  end
+ 
+  return actionResult.status 
+end
+
+
+
+
+function dev_4500.GET_VERSION(parameters, actionResult, chain, unitEntry )
+  local sock
+  local returnValue
+  sock = tcp_client.connect( dev_4500.ip, 21)
+  
+  if sock > 0 then
+     returnValue, data = tcp_client.recv(sock,256)
+     actionResult.status = returnValue
+     actionResult.result.data = string.trim(data)
+     actionResult.result.status = returnValue
+     tcp_client.close( sock)
+  else
+
+     actionResult.status = false
+     actionResult.result.status = "cannot connect to ftp"
+  end
+ 
+  return actionResult.status
+end
+
+function dev_4500.REBOOT( parameter, actionResult, chain, unitEntry )
+  local sock
+  local returnValue
+  sock = tcp_client.connect( dev_4500.ip, 80)
+  
+  if sock > 0 then
+     returnValue = tcp_client.send(sock,"GET /i_reports/reboot.htm \r\n\r\n")
+     actionResult.status = 1
+     actionResult.result.status = "Hard redev_4500.esboot"
+     tcp_client.close( sock)
+  else
+     actionResult.status = false
+     actionResult.result.status = "cannot connect to HTTP"
+  end
+ 
+  return actionResult.status 
+end
+
+function dev_4500.REFRESH( parameter, actionResult, chain , unitEntry )
+  local sock
+  local returnValue
+  sock = tcp_client.connect( dev_4500.ip, 80)
+  
+  if sock > 0 then
+     returnValue = tcp_client.send(sock,"GET /i_activate/refresh.htm \r\n\r\n")
+     actionResult.status = 1
+     actionResult.result.status = "Refresh Application"
+     tcp_client.close( sock)
+  else
+     actionResult.status = false
+     actionResult.result.status = "cannot connect to HTTP"
+  end
+ 
+  return actionResult.status 
+end
+
+function dev_4500.readFunction()
+   local flag,data,temp_data
+   flag = true
+   data = ""
+   while flag do
+     flag,temp_data = tcp_client.recv(dev_4500.sock,256,1)
+     if flag == true then data = data.. temp_data end
+   end
+   return data
+end
+
+
+
+function dev_4500.readFunction_login()
+   local flag,data
+   flag, data = tcp_client.recv(dev_4500.sock,256)
+   if flag == false then data = "" end
+   return data
+end
+function dev_4500.writeFunction( data )
+    tcp_client.send(dev_4500.sock,data)
+end
+
+function dev_4500.TELNET_SCREENS( parameter, actionResult, chain, unitEntry)
+  local matchList
+  local returnValue
+  local key
+  local tempList
+
+ 
+  key = dev_4500.keys[ parameter[1] ]
+
+  if key == nil then actionResult.status = false actionResult.result = "bad key" return actionResult.status end
+ 
+  matchList = { {"Login:", dev_4500.passwords.telnet_user.."\r\n" }, 
+                {"Password:",dev_4500.passwords.telnet_password.."\r\n"},
+                {"Logged into",nil }
+              }
+
+  
+  dev_4500.sock = tcp_client.connect( dev_4500.ip, dev_4500.passwords.telnet_port  )
+  if dev_4500.sock > 0 then
+   
+     returnValue = lua_expect.match( dev_4500.readFunction_login, dev_4500.writeFunction, matchList )
+
+   
+
+     if returnValue == true then
+       os.execute("sleep 2")
+       --for i = 1,100 do
+       actionResult.result.initial = dev_4500.readFunction()
+       dev_4500.writeFunction(key)
+       
+       actionResult.result.key_length = string.len(key)
+       actionResult.result.key_data = string.byte(key,1)..string.byte(key,2)..string.byte(key,3)
+       os.execute("sleep 2")
+      actionResult.result.data = dev_4500.readFunction()
+    
+      actionResult.status = returnValue
+     else
+      actionResult.status = returnValue
+      actionResult.result.status = "Could not login"
+     end
+  
+     tcp_client.close( dev_4500.sock)
+  else
+     actionResult.status = false
+     actionResult.result.status = "cannot connect to telnet"
+  end
+  return actionResult.status
+end
+
+function dev_4500.help()
+ print("implements 4500 tgs commands")
+end
+
+function dev_4500.description()
+  return "implements 4500 tgs commands"
+end
+
+
+
+----
+----
+----
+----  Local functions
+----
+----
+----
+----
+----
+function dev_4500.parseUnitReplacement( chain, unitEntry, fileName )
+   local key
+   local unitName
+   local match
+   local returnValue
+
+   match = "$unit"
+   key = chain.key   
+   unitName = unitEntry[ key]
+   if string.find( fileName, match ) ~= nil then
+    returnValue = string.gsub(fileName, match, unitName )
+   else
+    returnValue = fileName
+   end
+   return returnValue
+end
+
+function dev_4500.determineType( ip )
+  local sock
+  local returnValue
+  dev_4500.type = nil
+  sock = tcp_client.connect( ip, 21)
+  
+  if sock > 0 then
+     returnValue, data = tcp_client.recv(sock,256)
+     status = string.find(data,"CU4500")
+     if ((returnValue == true) and ( status ~=nil  ) ) then
+        dev_4500.type = "4500"
+     end 
+     status = string.find(data,"CU4400")
+     if( (returnValue == true) and ( status ~= nil ) ) then
+        dev_4500.type = "4400"
+     end 
+     tcp_client.close(sock)
+  else
+     returnValue = false
+  end
+  if( dev_4500.type == nil ) then returnValue = false end
+
+  return returnValue
+end
+
+function dev_4500.setPassWords()
+     
+      dev_4500.passwords.ftp_user            = Target[dev_4500.type].ftp_username
+      dev_4500.passwords.ftp_password        = Target[dev_4500.type].ftp_password
+      dev_4500.passwords.telnet_user         = Target[dev_4500.type].telnet_username
+      dev_4500.passwords.telnet_password     = Target[dev_4500.type].telnet_password
+      dev_4500.passwords.telnet_port         = Target[dev_4500.type].telnet_port  
+      assert( dev_4500.passwords.ftp_user ~= nil, "missing ftp user name")
+      assert( dev_4500.passwords.ftp_password ~= nil,"missing ftp password")
+      assert( dev_4500.passwords.telnet_user ~= nil, "missing telnet user name")
+      assert( dev_4500.passwords.telnet_password ~= nil,"missing telnet password")
+      assert( dev_4500.passwords.telnet_port ~= nil,"missing telnet port")
+      
+
+end
+
+function dev_4500.processTimeString( actionResult, unitEntry,correctionFlag )
+  local tempList, tempList1, tempString,dummy
+  local year,month,day,hour,minute,sec,temp
+ 
+  -- parsing the string aaaaaaaaa|1/15/2009 20:23:26|1/15/2009 12:23:26|OK 
+  tempList = string.split( actionResult.result.timeString,"|" )
+ 
+  if tempList[2] == nil then actionResult.status = false return end
+  tempString = tempList[2]
+ 
+ -- separating string 1/15/2009 12:23:26
+  tempString = tempString.trim(tempString)
+  tempList = string.split( tempString," ")
+
+  
+  if tempList[1] == nil then actionResult.status = false return end
+
+  -- separating string1/15/2009
+  tempString = tempList[1]
+  tempList1 = string.split(tempString,"/")
+  month = tonumber( tempList1[1])
+  day   = tonumber( tempList1[2])
+  year  = tonumber( tempList1[3])
+  if ( month == nil) or ( day== nil) or (year==nil) then actionResult.status = false return end
+  if year < 100 then year = year +2000 end
+ 
+  -- separating string 12:23:26
+  tempString = tempList[2]
+
+ 
+  tempList1 = string.split(tempString,":")
+  hour     = tonumber(tempList1[1])
+  minute   = tonumber(tempList1[2])
+  second   = tonumber(tempList1[3])
+
+  
+  if ( hour == nil) or ( minute == nil) or (second==nil) then actionResult.status = false return end
+
+
+ 
+  actionResult.result.tgsTime = os.time()
+  actionResult.result.debug = sprintf("%d %d %d %d %d %d",year,month,day,hour,minute,second)
+  actionResult.result.mtsTime = os.timegm( year,month,day,hour,minute,second)
+ 
+end
+
+
+
+
+devices.addDevice( "4500", dev_4500)
+devices.addDevice( "4400", dev_4500)
+
+

@@ -1,0 +1,35 @@
+/*
+**
+** Copyright 2008 Onyx Engineering
+** This file is licensed MIT
+**
+** File: lua_osExtend.h
+** The purpose of this file is to extend
+** the lua library OS
+**
+**
+**
+**
+*/
+
+
+#ifndef _LUA_OS_EXT_H_
+#define _LUA_OS_EXT_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "lua.h"
+
+void extendOsPackage( lua_State *L );
+
+
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif
+

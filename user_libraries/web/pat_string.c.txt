@@ -1,0 +1,771 @@
+/*
+**
+**  Copyright 2008 Onyx Engineering
+**  This file is licensed MIT
+**  File: pat_string.c
+**  String system for pattern matching
+**  and extracting information from string
+**  buffers.  Intent is not to creating temporary 
+**  strings
+**
+*/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+#include "pat_string.h"
+
+#define SPLIT_STATE 0
+#define MATCH_STATE 1
+
+static int matchStr( char *buffer, unsigned length, char *match);
+static int balancedDelimiterMatch( char    *buffer, 
+                                   unsigned length,
+                                   unsigned startPos, 
+                                   char     openDelm,
+                                   char     closeDelm,
+                                   int      *start,
+                                   int      *end );
+
+                    
+
+/*
+**
+** returns buffer is buffer is large enough
+** returns NULL if buffer is to small
+**
+*/
+
+char *PT_toMallocString( PAT_STRING *pat )
+{
+   char *returnValue;
+   
+   returnValue = malloc( pat->length + 1 );
+   assert( returnValue != NULL );
+   memset( returnValue, 0, pat->length +1 );
+   memcpy( returnValue, pat->string, pat->length );
+   return returnValue;
+}
+
+char *PT_toString( unsigned bufLength, char *buffer, PAT_STRING *ptString )
+{
+   char *returnValue;
+
+   if( ptString->length +1 > bufLength )
+   { 
+     returnValue = NULL;
+   }
+   else
+   {
+     returnValue = buffer;
+     memset( buffer,0, bufLength);
+     memcpy( buffer,ptString->string,ptString->length);
+   }
+   return returnValue;
+}
+
+char *PT_toMallocExtractString( PAT_STRING *pat,
+                         int         startingPosition,
+                         int         endingPosition )
+{
+   char       *returnValue;
+   PAT_STRING temp;
+
+   PT_copyPat( &temp,pat,startingPosition,endingPosition );
+   returnValue = PT_toMallocString( &temp );
+   return returnValue;
+}
+
+
+char *PT_extractString( PAT_STRING *pat,
+                         int         startingPosition,
+                         int         endingPosition,
+                         int         stringBufferLength,
+                         char        *extractBuffer )
+
+{
+   char       *returnValue;
+   PAT_STRING temp;
+
+   PT_copyPat( &temp,pat,startingPosition,endingPosition );
+   returnValue = PT_toString( stringBufferLength, 
+                               extractBuffer,
+                               &temp );
+   return returnValue;
+}
+
+int PT_toInteger( PAT_STRING *ptString ,int base )
+{
+   int   returnValue;
+   char *tempPtr;
+
+   returnValue = 0;
+   tempPtr = malloc( ptString->length +1 );
+   if( tempPtr != NULL )
+   {
+     memset( tempPtr,0, ptString->length +1);
+     memcpy( tempPtr, ptString->string,ptString->length);
+     returnValue = strtol( tempPtr, NULL, base );
+     free( tempPtr);
+   }
+   else
+   {
+     // post some kind of error here
+     returnValue = 0;
+   }
+   return returnValue;
+}
+ 
+
+
+void PT_toPat( char *buffer,  PAT_STRING *ptString )
+{
+   ptString->length = strlen(buffer);
+   ptString->string = buffer;
+   
+}
+
+void PT_adjustLength( PAT_STRING *patString,
+                       int         lengthChange )
+{
+  patString->length -= lengthChange;
+}
+
+void PT_adjustBase( PAT_STRING *patString, 
+                     int         baseChange )
+{
+    patString->string += baseChange;
+    patString->length -= baseChange;
+}
+
+void PT_copyPat( PAT_STRING *newPat, 
+                  PAT_STRING *oldPat,
+                  int         positionStart,
+                  int         positionEnd  // -1 use old end
+                   )
+{
+   if( positionEnd > oldPat->length-1 )
+   {
+      positionEnd = oldPat->length-1;
+   }
+   if( positionEnd < 0 )
+   {
+     positionEnd = oldPat->length-1;
+   }
+
+   if( positionStart > oldPat->length-1 )
+   {
+      positionStart = oldPat->length-1;
+   }
+   if( positionStart < 0 )
+   {
+     positionStart = oldPat->length-1;
+   }
+   newPat->length = positionEnd - positionStart +1;
+   newPat->string = oldPat->string + positionStart;
+}
+   
+void PT_trim( PAT_STRING *ptString )
+{
+  int      index;
+  int      trimStart;
+  int      trimEnd;
+  char     *tempPtr;
+  
+  trimStart = 0;
+  trimEnd = ptString->length;
+  tempPtr =  ptString->string;
+  for( index = 0; index < ptString->length; index++ )
+  {
+     if( *tempPtr++ > ' ' )
+     {
+       trimStart = index;
+       break;
+     }
+  }
+ 
+  tempPtr =  ptString->string + ptString->length-1;
+  trimEnd = -1;
+  for( index = ptString->length-1; index >=0; index-- )
+  {
+     if( *tempPtr-- > ' ' )
+     {
+       trimEnd = index;
+       break;
+     }
+  }
+
+  ptString->string = ptString->string + trimStart;
+  ptString->length = trimEnd-trimStart+1;
+
+}
+
+void PT_replace(PAT_STRING *ptString,char searchChar, char replaceChar )
+{
+  int index;
+  char *temp;
+
+  temp = ptString->string;
+
+  for( index = 0; index < ptString->length; index++ )
+  {
+     if( *temp == searchChar )
+     {
+        *temp = replaceChar;  
+     }
+     temp++;
+  }
+}
+
+
+/*
+**
+** returns -1 if no match
+** returns position of match if match
+*/
+int PT_match( PAT_STRING *buffer, 
+                    char *matchString, 
+                    unsigned position ) 
+{
+   int returnValue;
+   int temp;
+  
+   returnValue = -1;
+   temp = matchStr( buffer->string+position,
+                    buffer->length-position, 
+                    matchString );
+   if( temp == 0 ) { returnValue = position ; }
+   return returnValue;
+} 
+
+/*
+**
+** returns -1 if no match
+** returns position of match if match
+*/
+
+int PT_find( PAT_STRING *buffer, char *matchString, unsigned position )
+{
+
+  unsigned loopCount;
+  unsigned returnValue;
+  int      temp;
+
+  returnValue = -1;
+  for( loopCount = position;
+       loopCount < buffer->length;
+       loopCount++ )
+  {
+    temp = matchStr( buffer->string+loopCount,
+                     buffer->length-loopCount, 
+                     matchString );
+
+    if( temp == 0 )
+    {
+       returnValue = loopCount;
+       break;
+    }
+  }    
+  return returnValue;
+ 
+}
+
+/*
+**
+** returns -1 if no match
+** returns position of match if match
+*/
+
+int PT_findAndAdvance( PAT_STRING *buffer, 
+                        char *matchString,
+                        unsigned position )
+{
+  int returnValue;
+  
+  returnValue = PT_find( buffer,matchString,position);
+  if( returnValue >= 0 )
+  {
+    PT_adjustBase( buffer,returnValue + strlen(matchString));
+  }
+  return returnValue;
+} 
+                    
+int PT_matchBetween(PAT_STRING *buffer,
+               char       *startString,
+               char       *endString ,
+               unsigned    startingPosition )
+{
+   int startPosition;
+   int endPosition;
+   int returnValue = -1;
+
+   startPosition =  PT_findAndAdvance( buffer, startString, startingPosition ); 
+   if( startPosition < 0 )
+   {
+      goto end;
+   }
+  
+   endPosition = PT_find( buffer, endString, startingPosition );
+   endPosition = endPosition -1 ;
+   if( endPosition < 0 )
+   {
+     goto end;
+   }
+            
+   returnValue = 0;
+   PT_copyPat( buffer, buffer,0,endPosition  ); 
+end:
+   return returnValue;
+
+}
+
+/*
+**
+** returns number of split matches
+**
+*/
+
+unsigned PT_splitWhiteSpace( PAT_STRING *buffer, 
+                              unsigned number, 
+                              PAT_STRING *match )
+{
+  int   returnValue;
+  int   state;
+  char  *tempPtr;
+  unsigned loopCount;
+
+  tempPtr = buffer->string; 
+  if( number == 0)
+  {
+     returnValue =0;
+     goto end;
+  }
+  if( *tempPtr++ <= ' ' )
+  {
+    returnValue = 0;
+    state = SPLIT_STATE;
+  }
+  else
+  {
+    returnValue = 1;
+    match->string = tempPtr-1;
+    state = MATCH_STATE;
+  }
+ 
+  for( loopCount = 1; loopCount < buffer->length; loopCount++ )
+  {
+     if( state == SPLIT_STATE )
+     {
+         if( *tempPtr++ > ' ' )
+         {
+           returnValue +=1;
+           match->string = tempPtr-1;
+           state = MATCH_STATE;
+         }
+       
+     }
+     else
+     {
+         if( *tempPtr++ <= ' ' )
+         {
+            match->length = tempPtr - match->string-1;
+            if( returnValue >= number)
+            {
+               goto end;
+            }
+            else
+            {
+              match++;
+              state = SPLIT_STATE;
+            }
+         } 
+      
+     }
+ 
+  }// for
+    if( state == MATCH_STATE )
+     {     
+        match->length = tempPtr-match->string;
+     }
+
+end:
+  return returnValue;
+}
+
+/*
+**
+** returns number of split matches
+**
+*/
+
+unsigned PT_splitChar( PAT_STRING *buffer, 
+                        char split, 
+                        unsigned number, 
+                        PAT_STRING *match )
+{
+  int   returnValue;
+  int   state;
+  char  *tempPtr;
+  unsigned loopCount;
+
+  tempPtr = buffer->string; 
+  if( number == 0)
+  {
+     returnValue =0;
+     goto end;
+  }
+  if( *tempPtr++ == split )
+  {
+    returnValue = 0;
+    state = SPLIT_STATE;
+  }
+  else
+  {
+    returnValue = 1;
+    match->string = tempPtr-1;
+    state = MATCH_STATE;
+  }
+ 
+  for( loopCount = 1; loopCount < buffer->length; loopCount++ )
+  {
+     if( state == SPLIT_STATE )
+     {
+         if( *tempPtr++ != split )
+         {
+           returnValue +=1;
+           match->string = tempPtr-1;
+           state = MATCH_STATE;
+         }
+       
+     }
+     else
+     {
+         if( *tempPtr++ == split )
+         {
+            match->length = tempPtr - match->string-1;
+            if( returnValue >= number)
+            {
+               goto end;
+            }
+            else
+            {
+              match++;
+              state = SPLIT_STATE;
+            }
+         } 
+      
+     }
+
+  }// for
+     if( state == MATCH_STATE )
+     {     
+        match->length = tempPtr-match->string;
+     }
+
+end:
+  return returnValue;
+}
+
+void PT_printPatString(int stringSize, PAT_STRING *ptString )
+{
+
+  char       *tempPtr;
+  char       *buffer;
+
+  buffer = malloc( stringSize );
+  
+  tempPtr=  PT_toString( stringSize, buffer, ptString );
+  if( tempPtr != NULL )
+  {
+     printf(" string ~%s~ \n",tempPtr );
+  }
+  free(buffer);
+} 
+
+
+/*
+**
+**  returns number of matches
+**  same functionality as a string split
+**  note there will always be at least one match
+*/
+int PT_arrayFindAndAdvance( PAT_STRING *buffer,
+                            int        numberOfMatches, 
+                            char       **matchString,
+                            unsigned   position,
+                            PAT_STRING *matchPatterns )
+{
+   PAT_STRING *temp;
+   PAT_STRING *previous;
+   char       *currentMatch;
+   int        index;
+   int        currentPosition;
+   int        returnValue;
+   
+   returnValue = 0;
+   temp        = matchPatterns;
+   previous    = buffer;
+   currentPosition = position;
+   for( index = 0; index < numberOfMatches; index++ )
+   {
+     currentMatch = *matchString++;
+     if( currentMatch == 0 )
+     {
+        // null string break loop
+        goto done;
+     }
+     returnValue += 1;
+     PT_copyPat( temp,previous,currentPosition, -1 ); 
+     currentPosition = 
+      PT_findAndAdvance( temp,currentMatch,0); 
+     if( currentPosition >= 0 )
+     {
+       previous = temp;
+     }
+     else
+     {
+       // no match break loog
+       goto done;
+     }
+   }
+done:
+   return returnValue;                
+ 
+}     
+ 
+
+
+
+/*
+**
+** returns number of pattern matches
+**
+**
+**
+*/
+
+
+int PT_arrayMatchBetween( PAT_STRING *buffer,
+                          int        numberOfPatterns,
+                          char       **startMatch,
+                          char       **endMatch,
+                          unsigned   startingPosition,
+                          PAT_STRING *matchPatterns )
+{
+   PAT_STRING *temp;
+   char       *start;
+   char       *end;
+   int        index;
+   int        returnValue;
+   int        status;
+   
+   returnValue = 0;
+   temp        = matchPatterns;
+   PT_adjustBase( buffer, startingPosition );
+         
+
+   for( index = 0; index < numberOfPatterns; index++ )
+   {
+     start = *startMatch++;
+     end   = *endMatch++;
+     PT_copyPat( temp, buffer, 0, -1 ); 
+     status =  PT_matchBetween( temp,start,end,0);
+     if(status == 0 )
+     {
+        returnValue +=1;
+        temp++;
+        PT_findAndAdvance( buffer,end,0);
+     }
+     else
+     {
+       goto end;
+     } 
+   }
+ 
+end:
+   return returnValue;                
+ 
+}     
+ 
+
+/*
+** return   0 if balanced match is found
+** returns -1 if start delimiter was not found
+** returns -2 if no match was found
+**
+**
+**
+**
+*/
+int PAT_balancedFind( PAT_STRING  *buffer, 
+                      char        openDelm,
+                      char        closeDelm,
+                      int         *advancePosition,
+                      PAT_STRING  *matchPat )
+{
+
+  int  returnValue;
+  int  start;
+  int  end;
+
+  returnValue = balancedDelimiterMatch( buffer->string,
+                                        buffer->length,
+                                        0,
+                                        openDelm,
+                                        closeDelm,
+                                        &start,
+                                        &end );
+  if( returnValue == 0 )
+  {
+     *advancePosition = end +1;
+     PT_copyPat( matchPat,buffer, start,end );
+  } 
+ 
+  return returnValue;
+ 
+}
+
+/*
+**
+** Not implemented
+**
+**
+**
+*/
+
+int PAT_concatStringLength( int patNumber, PAT_STRING *patAssembly )
+{
+  return 0;
+}
+
+
+int PAT_concatString( int bufferLength, 
+                      char *buffer,
+                      int  patNumber,
+                      PAT_STRING *patAssembly )
+{
+   return 0;
+}
+
+
+
+
+
+/*
+**
+**
+**  static support functions
+**
+**
+*/
+
+static int matchStr( char *buffer, unsigned length, char *match)
+{
+  int returnValue;
+  unsigned loopCount;
+  int iterationLength;
+
+  iterationLength = strlen(match);
+  if( iterationLength > length )
+  {
+    returnValue = -1;
+    goto end;
+  }
+  for( loopCount = 0; loopCount < iterationLength; loopCount++ )
+  {
+    if( *buffer++ != *match++)
+    {
+      returnValue = -1;
+      goto end;
+    }
+  }
+  returnValue = 0; 
+
+end:
+  return returnValue;
+}
+
+/*
+
+   returns  0 if match and
+   returns -1 if no start delimiter
+   returns -2 if no balanced match
+
+**
+**
+**
+*/
+
+
+static int balancedDelimiterMatch( char    *buffer, 
+                                   unsigned length,
+                                   unsigned startPos, 
+                                   char     openDelm,
+                                   char     closeDelm,
+                                   int      *start,
+                                   int      *end )
+{
+  int index;
+  int state;
+  int returnValue;
+  int balance;
+
+  state       =   0;
+  returnValue =  -1;
+  *start      =  -1;
+  *end        =  -1;
+  balance     =   0;
+
+  for( index = startPos; index < length; index++ )
+  {
+    if( *buffer == 0 )
+    {
+       goto end;
+    }
+    switch( state )
+    {
+      case 0:   // looking for start token
+        if( *buffer == openDelm )
+        {
+          *start = index;
+           state = 1;
+           returnValue = -2;
+           balance = 1;
+        }
+        break;
+ 
+      case 1:  // looking for balance end
+        if( *buffer == openDelm )
+        {
+          balance +=1;
+        }
+        else if( *buffer == closeDelm )
+        {
+          balance -= 1 ;
+          if( balance == 0 )
+          {
+            returnValue = 0;
+            *end = index;
+            goto end;
+          }
+        }
+        else
+        {
+          ; // donothing
+        }
+        break;
+     default:
+       ; // error condition
+   } // end case
+end:
+   return returnValue;
+}
+  // first find delimiter start
+
+
+  // next find delimiter match  
+
+
+  return returnValue;
+}

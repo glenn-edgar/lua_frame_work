@@ -1,0 +1,326 @@
+/*
+   
+   Copyright 2008 Onyx Engineering
+   This file is licensed MIT
+   File: lua_pat_string.c
+   Sets up the lua Interface between
+
+
+*/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+
+
+#include "mongo.h"
+
+
+
+
+static mongo_connection connection;
+
+static int lua_mongo_connect( lua_State *L )
+{
+   int returnCode;
+   char  *host;
+   int   port;
+   mongo_connections_options options;
+   host = lua_tostring(L,1);
+   port = lua_tointeger(L,2);
+   
+   strcpy(options.host, host );
+   options.port = port;
+   returnCode = mongo_connect( &connection, &options );
+   lua_pushinteger(L,returnCode );
+   return 1;
+}
+
+static int lua_mongo_connect_pair( lua_State *L )
+{
+   int returnCode;
+   char  *host_left,;
+   int    *port_left;
+   char  *host_right;
+   int   port_rig;
+   mongo_connections_options options_left;
+   mongo_connections_options options_right;
+
+
+   host_left = lua_tostring(L,1);
+   port_left = lua_tointeger(L,2);
+   host_right = lua_tostring(L,1);
+   port_right = lua_tointeger(L,2);
+   
+   strcpy(options_left.host, host_left );
+   options_left.port = port_left;
+
+   strcpy(options_right.host, host_right );
+   options_left.right = port_right;
+
+   returnCode = mongo_connect( &connection, &options_left,&options_right );
+   lua_pushinteger(L,returnCode );
+   return 1;
+}
+    
+static int lua_mongo_reconnect( lua_State *L )
+{
+   int returnCode;
+   returnCode = mongo_reconnect( &connection );
+   lua_pushinteger(L,returnCode );
+   return 1;
+}
+
+static int lua_mongo_disconnect( lua_State *L )
+{
+   int returnCode;
+   returnCode = mongo_disconnect( &connection );
+   lua_pushinteger(L,returnCode );
+   return 1;
+}
+static int lua_mongo_destroy( lua_State *L )
+{
+   int returnCode;
+   returnCode = mongo_destroy( &connection );
+   lua_pushinteger(L,returnCode );
+   return 1;
+}
+
+
+
+
+static int lua_mongo_insert(  lua_State *L )
+{
+    char *nameSpace;
+    bson *data;
+
+    nameSpace = lua_tostring(L,1);
+    data = (bson *)lua_topointer(L,2);
+    returnCode = mongo_insert( &connection, nameSpace, data );
+   lua_pushinteger(L,returnCode );
+   return 1;
+}
+
+
+static int lua_mongo_update( lua_State *L )
+{
+   bson *name_space;
+   bson *cond;
+   bson *op;
+   int   flags;
+   int   multi_flag;
+   int   upsert_flag;
+   int   returnValue;
+
+   name_space   = (char *)lua_tostring(L,1);
+   cond         = (bson *)lua_topointer(L,2);
+   op           = (bson *)lua_topointer(L,3);
+   multi_flag   = lua_tointeger(L,4);
+   upsert_flag  = lua_tointeger(L,5);
+   flags = 0;
+   if( multi_flag != 0 ) { flag |= MONGO_UPDATE_UPSERT; }
+   if( upsert_flag != 0 ){ flag |= MONGO_UPDATE_MULTI; }
+
+   returnValue =  mongo_update(&connection, name_space, cond, op, flags);
+   lua_pushinteger(L,returnCode );
+   return 1;
+}
+
+static int lua_mongo_remove(lua_State *L)
+{
+   bson *name_space;
+   bson *cond;
+   int   returnValue;
+
+   name_space   = (char *)lua_tostring(L,1);
+   cond         = (bson *)lua_topointer(L,2);
+
+   returnValue =  mongo_remove(&connection, name_space, cond);
+   lua_pushinteger(L,returnCode );
+   return 1;
+}
+
+static int lua_mongo_find( lua_State *L )
+{
+    mongo_cursor *cursor;
+    char         *name_space;
+    bson         *query;
+    bson         *fields;
+    int          nToReturn;
+    int          nToSkip;
+    int          options;  // sort flag 1 assending -1 decessending ????
+
+    name_space = (char *)lua_tostring(L,1);
+    query      = (bson *)lua_topointer(L,2);
+    fields     = (bson *)lua_topointer(L,3);
+    nToReturn  = lua_tointeger(L,4);
+    nToSkip    = lua_tointeger(L,5);
+    options    = lua_tointeger(L,6);
+    cursor = mongo_find( &connection, 
+                         name_space, 
+                         query, 
+                         fields ,
+                         nToReturn ,
+                         nToSkip, 
+                         options);
+
+   lua_pushlightuserdata (L, cursor );
+
+   return 1;
+}
+
+
+static lua_mongo_cursor_next( lua_State *L )
+{
+   mongo_cursor *cursor;
+
+   cursor = lua_topointer(L,1);
+   if( mongo_cursor_next(cursor ) )
+   {
+      lua_pushlightuserdata (L, cursor->current );
+   }
+   else
+   { 
+      lua_pushlightuserdata(L,NULL );
+   }
+   lua_pushlightuserdata(L,cursor );
+   return 2;
+}
+
+
+static int lua_mongo_cursor_destroy( lua_State *L )
+{
+   mongo_cursor *cursor;
+   int          returnValue;
+
+   cursor = lua_topointer(L,1);
+   returnValue = mongo_cursor_destroy(cursor);
+   lua_pushinteger(L,1);
+   return 1;
+}
+
+static int lua_mongo_count( lua_State *L )
+{
+   int count;
+   char *data_base;
+   char *collection;
+   bson *query;
+
+   data_base  = (char *)lua_tostring(L,1);
+   collection = (char *)lua_tostring(L,2);
+   query      = (bson *)lua_topointer(L,3);
+
+   count = mongo_count(&connection, data_base, collection, query);
+   lua_pushinteger(L,1);
+   return 1;
+}
+
+#if 0
+
+
+
+/* ----------------------------
+   HIGHER LEVEL - indexes - command helpers eval
+   ------------------------------ */
+
+/* Returns true on success */
+/* WARNING: Unlike other drivers these do not cache results */
+
+static const int MONGO_INDEX_UNIQUE = 0x1;
+static const int MONGO_INDEX_DROP_DUPS = 0x2;
+bson_bool_t mongo_create_index(mongo_connection * conn, const char * ns, bson * key, int options, bson * out);
+bson_bool_t mongo_create_simple_index(mongo_connection * conn, const char * ns, const char* field, int options, bson * out);
+
+/* ----------------------------
+   COMMANDS
+   ------------------------------ */
+
+bson_bool_t mongo_run_command(mongo_connection * conn, const char * db, bson * command, bson * out);
+
+/* for simple commands with a single k-v pair */
+bson_bool_t mongo_simple_int_command(mongo_connection * conn, const char * db, const char* cmd,         int arg, bson * out);
+bson_bool_t mongo_simple_str_command(mongo_connection * conn, const char * db, const char* cmd, const char* arg, bson * out);
+
+bson_bool_t mongo_cmd_drop_db(mongo_connection * conn, const char * db);
+bson_bool_t mongo_cmd_drop_collection(mongo_connection * conn, const char * db, const char * collection, bson * out);
+
+void mongo_cmd_add_user(mongo_connection* conn, const char* db, const char* user, const char* pass);
+bson_bool_t mongo_cmd_authenticate(mongo_connection* conn, const char* db, const char* user, const char* pass);
+
+/* return value is master status */
+bson_bool_t mongo_cmd_ismaster(mongo_connection * conn, bson * out);
+
+/* true return indicates error */
+bson_bool_t mongo_cmd_get_last_error(mongo_connection * conn, const char * db, bson * out);
+bson_bool_t mongo_cmd_get_prev_error(mongo_connection * conn, const char * db, bson * out);
+void        mongo_cmd_reset_error(mongo_connection * conn, const char * db);
+
+#endif
+
+static int lua_mongo_help( lua_State *L )
+{
+  printf(".help()    -- dumps out commands \r\n\r\n");
+  return 0;
+}   
+
+static int description( lua_State *L )
+{
+  lua_pushstring(L,"provide lua interface to mongo db ");
+  return 1;
+}
+
+
+static const struct luaL_reg  lua_patString[] = 
+{
+   {"setup",        lua_mongo_setup },
+   {"connect",      lua_mongo_connect },
+   {"connect_pair", lua_mongo_connect_pair },    
+   {"reconnect",    lua_mongo_reconnect },
+   {"disconnect",   lua_mongo_disconnect },
+   {"destroy",      lua_mongo_destroy },   {"insert",       lua_mongo_insert },
+   {"update",       lua_mongo_update },
+   {"remove",       lua_mongo_remove },
+   {"find",         lua_mongo_find   },
+   {"next",         lua_mongo_cursor_next },
+   {"destroy",      lua_mongo_cursor_destroy },
+   {"count",        lua_mongo_count },
+
+   {"help",              lua_mongo_help   },
+   {"description",       description         },
+   { NULL, NULL },      
+   
+};
+
+
+
+
+
+
+
+extern void lua_dobuffer( lua_State * L, const char *buffer, int size, char *chunkName );
+
+
+
+#if 0
+
+// added  for possible script support
+static int lua_loadScript(lua_State *L)
+{
+  
+
+
+  #include "init.h"
+
+  return 0;
+}
+
+#endif
+
+

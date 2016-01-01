@@ -1,0 +1,648 @@
+/*
+**
+**
+** File: cJSON_c.c
+**
+**
+**
+**
+*/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include "cJSON_freeForm.h"
+
+ 
+static int move_byte( cJSON   *json_object, cJSON_PARSE  *json_parse );
+static int move_short(cJSON   *json_object, cJSON_PARSE  *json_parse );
+static int move_int( cJSON    *json_object, cJSON_PARSE  *json_parse );
+static int move_float( cJSON  *json_object, cJSON_PARSE  *json_parse );
+static int move_double(cJSON  *json_object, cJSON_PARSE  *json_parse );
+static int move_string(cJSON  *json_object, cJSON_PARSE  *json_parse );
+static int move_array( cJSON  *json_object, cJSON_PARSE  *json_parse );
+static int move_object(cJSON  *json_object, cJSON_PARSE  *json_parse );
+
+static int get_byte( cJSON   *json_object, cJSON_PARSE  *json_parse );
+static int get_short(cJSON   *json_object, cJSON_PARSE  *json_parse );
+static int get_int( cJSON    *json_object, cJSON_PARSE  *json_parse );
+static int get_float( cJSON  *json_object, cJSON_PARSE  *json_parse );
+static int get_double(cJSON  *json_object, cJSON_PARSE  *json_parse );
+static int get_string(cJSON  *json_object, cJSON_PARSE  *json_parse );
+static int get_array( cJSON  *json_object, cJSON_PARSE  *json_parse );
+static int get_object(cJSON  *json_object, cJSON_PARSE  *json_parse );
+
+
+int cJSON_move_value( int          *step,
+                      cJSON        *json_object, 
+                      cJSON_PARSE  *json_parse )
+{
+   int returnValue;
+
+
+   returnValue = 0;
+   *step = 0;
+   while( (json_parse->c_data_structure != NULL ) && (returnValue == 0 ) && (json_object != NULL ))
+   {
+     *step += 1;
+     switch( json_parse->type )
+     {
+       case cJSON_TYPE_char:
+           returnValue = move_byte( json_object,json_parse );
+           break;
+
+       case cJSON_TYPE_short:
+           returnValue = move_short( json_object,json_parse );
+           break;
+
+       case cJSON_TYPE_int:
+           returnValue = move_int( json_object,json_parse );
+           break;
+
+       case cJSON_TYPE_float:
+           returnValue = move_float( json_object,json_parse );
+           break;
+
+       case cJSON_TYPE_double:
+           returnValue = move_double( json_object,json_parse );
+           break;
+
+       case cJSON_TYPE_string:
+           returnValue = move_string( json_object,json_parse );
+           break;
+
+       case cJSON_TYPE_array:
+           returnValue = move_array( json_object,json_parse );
+           break;
+
+       case cJSON_TYPE_object:
+           returnValue = move_object( json_object,json_parse );
+           break;
+
+      }
+
+      json_object = json_object->next;
+      json_parse++;
+   }
+
+   return returnValue;
+
+}
+                       
+int cJSON_get_value( int         *step,
+                     cJSON       *json_object,
+                     cJSON_PARSE *json_parse )
+{
+ 
+   int returnValue;
+
+   returnValue = 0;
+
+   while( (json_parse->c_data_structure != NULL ) && (returnValue == 0 ))
+   {
+     switch( json_parse->type )
+     {
+       case cJSON_TYPE_char:
+           returnValue = get_byte( json_object,json_parse );
+           break;
+
+       case cJSON_TYPE_short:
+           returnValue = get_short( json_object,json_parse );
+           break;
+
+       case cJSON_TYPE_int:
+           returnValue = get_int( json_object,json_parse );
+           break;
+
+       case cJSON_TYPE_float:
+           returnValue = get_float( json_object,json_parse );
+           break;
+
+       case cJSON_TYPE_double:
+           returnValue = get_double( json_object,json_parse );
+           break;
+
+       case cJSON_TYPE_string:
+           returnValue = get_string( json_object,json_parse );
+           break;
+
+       case cJSON_TYPE_array:
+           returnValue = get_array( json_object,json_parse );
+           break;
+
+       case cJSON_TYPE_object:
+           returnValue = get_object( json_object,json_parse );
+           break;
+
+      }
+
+      json_object = json_object->next;
+      json_parse++;
+   }
+
+   return returnValue;
+
+}
+
+
+
+
+static int move_byte( cJSON   *json_object, cJSON_PARSE  *json_parse )
+{
+   int    returnValue;
+   char   *temp;
+
+   temp = json_parse->c_data_structure;
+   temp += json_parse->structure_offset;
+   switch( json_object->type)
+   {
+ 
+     case cJSON_False:
+     case cJSON_True:
+     case cJSON_NULL:
+     case cJSON_Number:
+        returnValue = 0;
+        *temp = json_object->valueint;
+        break;
+
+     case cJSON_String:
+     case cJSON_Array:
+     case cJSON_Object:
+     default:
+        returnValue = -1;
+   }
+   return returnValue;
+}
+
+static int move_short(cJSON   *json_object, cJSON_PARSE  *json_parse )
+{
+   int    returnValue;
+   char   *temp;
+   short  *temp1;
+
+   temp = json_parse->c_data_structure;
+   temp += json_parse->structure_offset;
+   temp1 = (short *)temp;
+   switch( json_object->type)
+   {
+ 
+     case cJSON_False:
+     case cJSON_True:
+     case cJSON_NULL:
+     case cJSON_Number:
+        returnValue = 0;
+        *temp1 = json_object->valueint;
+        break;
+
+     case cJSON_String:
+     case cJSON_Array:
+     case cJSON_Object:
+     default:
+        returnValue = -1;
+   }
+   return returnValue;
+}
+
+static int move_int( cJSON    *json_object, cJSON_PARSE  *json_parse )
+{
+   int    returnValue;
+   char   *temp;
+   int  *temp1;
+
+   temp = json_parse->c_data_structure;
+   temp += json_parse->structure_offset;
+   temp1 = (int *)temp;
+   switch( json_object->type)
+   {
+ 
+     case cJSON_False:
+     case cJSON_True:
+     case cJSON_NULL:
+     case cJSON_Number:
+        returnValue = 0;
+        *temp1 = json_object->valueint;
+        break;
+
+     case cJSON_String:
+     case cJSON_Array:
+     case cJSON_Object:
+     default:
+        returnValue = -1;
+   }
+   return returnValue;
+}
+
+static int move_float( cJSON  *json_object, cJSON_PARSE  *json_parse )
+{
+   int    returnValue;
+   char   *temp;
+   float  *temp1;
+
+   temp = json_parse->c_data_structure;
+   temp += json_parse->structure_offset;
+   temp1 = (float *)temp;
+   switch( json_object->type)
+   {
+ 
+     case cJSON_False:
+     case cJSON_True:
+     case cJSON_NULL:
+     case cJSON_Number:
+        returnValue = 0;
+        *temp1 = json_object->valuedouble;
+        break;
+
+     case cJSON_String:
+     case cJSON_Array:
+     case cJSON_Object:
+     default:
+        returnValue = -1;
+   }
+   return returnValue;
+}
+
+
+static int move_double(cJSON  *json_object, cJSON_PARSE  *json_parse )
+{
+   int    returnValue;
+   char   *temp;
+   float  *temp1;
+
+   temp = json_parse->c_data_structure;
+   temp += json_parse->structure_offset;
+   temp1 = (float *)temp;
+   switch( json_object->type)
+   {
+ 
+     case cJSON_False:
+     case cJSON_True:
+     case cJSON_NULL:
+     case cJSON_Number:
+        returnValue = 0;
+        *temp1 = json_object->valuedouble;
+        break;
+
+     case cJSON_String:
+     case cJSON_Array:
+     case cJSON_Object:
+     default:
+        returnValue = -1;
+   }
+   return returnValue;
+}
+
+static int move_string(cJSON  *json_object, cJSON_PARSE  *json_parse )
+{
+   int    returnValue;
+   char   *temp;
+   
+
+   temp = json_parse->c_data_structure;
+   temp += json_parse->structure_offset;
+ 
+   switch( json_object->type)
+   {
+ 
+     case cJSON_String:
+        returnValue = 0;
+        strncat ( temp, json_object->valuestring, json_parse->size );
+        break;
+     case cJSON_False:
+     case cJSON_True:
+     case cJSON_NULL:
+     case cJSON_Number:
+     case cJSON_Array:
+     case cJSON_Object:
+     default:
+        returnValue = -1;
+   }
+   return returnValue;
+}
+
+
+static int move_array( cJSON  *json_object, cJSON_PARSE  *json_parse )
+{
+   int returnValue;
+   int index;
+   int step;
+   cJSON_PARSE  *array_object;
+
+   returnValue = 0;
+   array_object = (cJSON_PARSE *)json_parse->link_json_object;
+   for( index = 0; index < json_parse->size; index++ )
+   {
+     switch( json_object->type)
+     {
+       case cJSON_Array:
+          
+          returnValue =  cJSON_move_value( &step, json_object->child,array_object );
+          array_object++;
+          break;
+ 
+        case cJSON_String:
+        case cJSON_False:
+        case cJSON_True:
+        case cJSON_NULL:
+        case cJSON_Number:
+  
+        case cJSON_Object:
+        default:
+           returnValue = -1;
+      }
+      json_object = json_object->next;
+      if( json_object == NULL )
+      {
+        break;
+      }
+      
+   }
+   return returnValue;
+}
+
+static int move_object(cJSON  *json_object, cJSON_PARSE  *json_parse )
+{
+   int returnValue;
+   int index;
+   int step;
+   cJSON_PARSE  *array_object;
+
+   returnValue = 0;
+   array_object = (cJSON_PARSE *)json_parse->link_json_object;
+   for( index = 0; index < json_parse->size; index++ )
+   {
+     switch( json_object->type)
+     {
+        case cJSON_Object:
+          
+          returnValue =  cJSON_move_value( &step, json_object->child,array_object );
+          array_object++;
+          break;
+ 
+        case cJSON_String:
+        case cJSON_False:
+        case cJSON_True:
+        case cJSON_NULL:
+        case cJSON_Number:
+        case cJSON_Array:
+        default:
+           returnValue = -1;
+      }
+      json_object = json_object->next;
+      if( json_object == NULL )
+      {
+        break;
+      }
+      
+   }
+   return returnValue;
+}
+
+
+static int get_byte( cJSON   *json_object, cJSON_PARSE  *json_parse )
+{
+   int    returnValue;
+   char   *temp;
+
+   temp = json_parse->c_data_structure;
+   temp += json_parse->structure_offset;
+   switch( json_object->type)
+   {
+ 
+     case cJSON_False:
+     case cJSON_True:
+     case cJSON_NULL:
+     case cJSON_Number:
+        returnValue = 0;
+        json_object->valueint = *temp;
+        break;
+
+     case cJSON_String:
+     case cJSON_Array:
+     case cJSON_Object:
+     default:
+        returnValue = -1;
+   }
+   return returnValue;
+}
+
+static int get_short(cJSON   *json_object, cJSON_PARSE  *json_parse )
+{
+   int    returnValue;
+   char   *temp;
+   short  *temp1;
+
+   temp = json_parse->c_data_structure;
+   temp += json_parse->structure_offset;
+   temp1 = (short *)temp;
+   switch( json_object->type)
+   {
+ 
+     case cJSON_False:
+     case cJSON_True:
+     case cJSON_NULL:
+     case cJSON_Number:
+        returnValue = 0;
+        json_object->valueint = *temp1;
+        break;
+
+     case cJSON_String:
+     case cJSON_Array:
+     case cJSON_Object:
+     default:
+        returnValue = -1;
+   }
+   return returnValue;
+}
+
+static int get_int( cJSON    *json_object, cJSON_PARSE  *json_parse )
+{
+   int    returnValue;
+   char   *temp;
+   int  *temp1;
+
+   temp = json_parse->c_data_structure;
+   temp += json_parse->structure_offset;
+   temp1 = (int*)temp;
+   switch( json_object->type)
+   {
+ 
+     case cJSON_False:
+     case cJSON_True:
+     case cJSON_NULL:
+     case cJSON_Number:
+        returnValue = 0;
+        json_object->valueint = *temp1;
+        break;
+
+     case cJSON_String:
+     case cJSON_Array:
+     case cJSON_Object:
+     default:
+        returnValue = -1;
+   }
+   return returnValue;
+}
+
+static int get_float( cJSON  *json_object, cJSON_PARSE  *json_parse )
+{
+   int    returnValue;
+   char   *temp;
+   float  *temp1;
+
+   temp = json_parse->c_data_structure;
+   temp += json_parse->structure_offset;
+   temp1 = (float *)temp;
+   switch( json_object->type)
+   {
+ 
+     case cJSON_False:
+     case cJSON_True:
+     case cJSON_NULL:
+     case cJSON_Number:
+        returnValue = 0;
+        json_object->valuedouble = *temp1;
+        break;
+
+     case cJSON_String:
+     case cJSON_Array:
+     case cJSON_Object:
+     default:
+        returnValue = -1;
+   }
+   return returnValue;
+}
+
+static int get_double(cJSON  *json_object, cJSON_PARSE  *json_parse )
+{
+   int    returnValue;
+   char   *temp;
+   double  *temp1;
+
+   temp = json_parse->c_data_structure;
+   temp += json_parse->structure_offset;
+   temp1 = (double *)temp;
+   switch( json_object->type)
+   {
+ 
+     case cJSON_False:
+     case cJSON_True:
+     case cJSON_NULL:
+     case cJSON_Number:
+        returnValue = 0;
+        json_object->valuedouble = *temp1;
+        break;
+
+     case cJSON_String:
+     case cJSON_Array:
+     case cJSON_Object:
+     default:
+        returnValue = -1;
+   }
+   return returnValue;
+}
+
+static int get_string(cJSON  *json_object, cJSON_PARSE  *json_parse )
+{
+   int    returnValue;
+   char   *temp;
+   
+
+   temp = json_parse->c_data_structure;
+   temp += json_parse->structure_offset;
+ 
+   switch( json_object->type)
+   {
+ 
+     case cJSON_String:
+        returnValue = 0;
+        strncat (  json_object->valuestring, temp, json_parse->size );
+        break;
+     case cJSON_False:
+     case cJSON_True:
+     case cJSON_NULL:
+     case cJSON_Number:
+     case cJSON_Array:
+     case cJSON_Object:
+     default:
+        returnValue = -1;
+   }
+   return returnValue;
+}
+
+static int get_array( cJSON  *json_object, cJSON_PARSE  *json_parse )
+{
+   int returnValue;
+   int index;
+   int step;
+   cJSON_PARSE  *array_object;
+
+   returnValue = 0;
+   array_object = (cJSON_PARSE *)json_parse->link_json_object;
+   for( index = 0; index < json_parse->size; index++ )
+   {
+     switch( json_object->type)
+     {
+       case cJSON_Array:
+          
+          returnValue =  cJSON_get_value( &step, json_object->child,array_object );
+          array_object++;
+          break;
+ 
+        case cJSON_String:
+        case cJSON_False:
+        case cJSON_True:
+        case cJSON_NULL:
+        case cJSON_Number:
+  
+        case cJSON_Object:
+        default:
+           returnValue = -1;
+      }
+      json_object = json_object->next;
+      if( json_object == NULL )
+      {
+        break;
+      }
+      
+   }
+   return returnValue;
+}
+
+static int get_object(cJSON  *json_object, cJSON_PARSE  *json_parse )
+{
+   int returnValue;
+   int index;
+   int step;
+   cJSON_PARSE  *array_object;
+
+   returnValue = 0;
+   array_object = (cJSON_PARSE *)json_parse->link_json_object;
+   for( index = 0; index < json_parse->size; index++ )
+   {
+     switch( json_object->type)
+     {
+        case cJSON_Object:
+          
+          returnValue =  cJSON_get_value( &step, json_object->child,array_object );
+          array_object++;
+          break;
+ 
+        case cJSON_String:
+        case cJSON_False:
+        case cJSON_True:
+        case cJSON_NULL:
+        case cJSON_Number:
+        case cJSON_Array:
+        default:
+           returnValue = -1;
+      }
+      json_object = json_object->next;
+      if( json_object == NULL )
+      {
+        break;
+      }
+      
+   }
+   return returnValue;
+}
+

@@ -1,0 +1,23 @@
+/*
+**
+** Interface for lua_process.c
+**
+**
+**
+**
+*/
+
+#ifndef _LUA_PROCESS_H_
+#define _LUA_PROCESS_H_
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+
+
+int lua_process_load( lua_State *L );
+
+
+
+#endif

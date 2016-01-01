@@ -1,0 +1,122 @@
+/*
+**
+File: c_staticObjects.c
+This file contains a dictionary of c static objects
+**
+*/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+#include "basicMemOps.h"
+#include "cs_assert.h"
+#include "c_structures.h"
+#include "c_staticObjects.h"
+
+#include "c_dynamicObjects.h"
+#include "FPsystem.h"
+
+extern FILE *lout;
+extern FILE *lin;
+
+STATIC_OBJECTS * 
+findStaticObjectName( STATIC_OBJECTS *stObs, const char *name )
+{
+  STATIC_OBJECTS        *returnValue;
+ 
+  returnValue = NULL;
+ 
+  // check for null
+  if( stObs == NULL )
+  { 
+    goto end;
+  }
+  // verify magic value of structure
+  if( stObs->magic != STATIC_MAGIC )
+  {
+    goto end;
+  }
+ 
+ 
+ 
+  while( stObs->name != 0 )
+  {
+    if( strcmp(name, stObs->name ) == 0 )
+    {
+      returnValue = stObs;
+      goto end;
+    }
+    stObs++;
+  }
+end:
+  return returnValue;
+}
+
+/*
+**
+** Values on stack
+** Static Object Table
+** name of static object
+**
+*/
+
+
+int lua_c_staticObjMkPointer( lua_State *L )
+{
+  const char            *name;
+  const STATIC_OBJECTS  *staticObj;
+  STATIC_OBJECTS        *temp;
+
+  staticObj = lua_topointer( L, -2 );
+  if( staticObj == NULL )
+  {
+     luaL_error(L,"Expectiong Static Object Table ");
+     goto error;
+  }
+  if( staticObj->magic != STATIC_MAGIC )
+  {
+     luaL_error(L,"Expectiong Static Object Table ");
+     goto error;
+  }
+
+  name      = lua_tostring(L,-1 );
+  if( name == NULL )
+  {
+     luaL_error( L,"Expecting Object Name ");
+     lua_pushnil(L);
+     goto error;
+  }
+
+  temp =  findStaticObjectName( (STATIC_OBJECTS  *) staticObj,name);
+  
+ 
+  if( temp == NULL )
+  {
+    
+   luaL_error( L, "Unknown static object Name %s ",name);
+   lua_pushnil(L );
+   
+  }
+  else
+  {
+
+    packObject( L, 
+                temp->format,
+                getTypeString( temp->format),
+                -1, // not allocated
+                temp->address,
+                temp->elementSize,
+                temp->structureDefinition,
+                temp->structureName );
+ }
+error:
+  return 1;
+}
+
+
+
+

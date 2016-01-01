@@ -1,0 +1,45 @@
+/*
+**
+**  cgi.c
+**  Wrapper interface for indyme CGI
+**  
+**
+**
+**
+**
+*/
+
+#include <ctype.h>
+#include <errno.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <pthread.h>
+#include <assert.h>
+#include <unistd.h>
+
+
+#include "mongoose.h"
+#include "file_upload.h"
+
+
+#define  web_printf   mg_printf
+
+extern struct mg_context *ctx; 
+
+typedef void (*WEB_FUNCTION)(struct mg_connection *ctx, char *queryString);
+
+
+
+
+  
+void register_C_CGI( struct mg_context *ctx )
+{
+
+  initialize_file_upload();
+
+//  mg_bind_to_uri( ctx, "/advanced/audioUpload.html", file_upload, "msg/" );
+
+}
+

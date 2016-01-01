@@ -1,0 +1,23 @@
+/*
+**
+** File: lua_serial.h
+**
+** Interface file for lua_serial.h
+**
+**
+**
+**
+*/
+
+#ifndef _LUA_SERIAL_H_
+#define _LUA_SERIAL_H_
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+
+
+int lua_serial_load( lua_State *L);
+
+#endif

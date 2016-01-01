@@ -1,0 +1,265 @@
+/*
+**
+** File: file_upload.c
+**
+**
+**
+**
+**
+**
+*/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include "mongoose.h"
+#include "pat_string.h"
+
+
+#define FILE_NAME_LENGTH 256
+
+typedef struct
+{
+  
+  char        *fileName;
+  PAT_STRING  markerPat;
+  PAT_STRING  filePat;
+  PAT_STRING  startPat;
+  char        *endMarker; 
+  FILE        *fp;
+}FILE_UP_LOAD_STRUCT;
+
+
+
+
+static char fileName[ FILE_NAME_LENGTH];
+static FILE_UP_LOAD_STRUCT fileUpLoad;
+
+
+static int  lua_upLoadFindMarker(  void  );
+static int  lua_upLoadFindFile( void  );
+static int  lua_upLoadOpenFile(  char *file_directory  );
+static int  lua_findStart( void   );
+static int  lua_findEndMarker( void );
+static int  lua_upLoadWriteDataStream( void   );
+static int  lua_upLoadCloseStream( void   );
+
+
+/*
+**
+** Returns error code through error flag
+**
+*/
+
+char  *file_upload( int *errorflag, int post_data_length, char *post_data, char *file_directory)
+{
+   int  error;
+
+   error = 0;
+   
+   memset(fileName,0,sizeof(fileName));
+   memset( &fileUpLoad,0,sizeof(FILE_UP_LOAD_STRUCT));
+    
+    // initialize pat buffers
+   fileUpLoad.markerPat.string = post_data;
+   fileUpLoad.markerPat.length = post_data_length;
+
+   fileUpLoad.filePat.string = post_data;
+   fileUpLoad.filePat.length = post_data_length;
+
+
+  
+   fileUpLoad.startPat.string = post_data;
+   fileUpLoad.startPat.length = post_data_length;
+ 
+    // parse out data
+    error |= lua_upLoadFindMarker( );
+
+    error |= lua_upLoadFindFile( );
+    
+
+    error |= lua_upLoadOpenFile( file_directory );
+    error |= lua_findStart();
+   
+   
+
+
+  /*
+
+  
+  ** Write data stream
+  **
+  ** 
+  */
+  if( error != 0 )
+  {
+      lua_upLoadCloseStream(  );
+ 
+  }
+  else if ( lua_findEndMarker( ) != 0 )
+
+  {
+     lua_upLoadWriteDataStream();
+     lua_upLoadCloseStream(  );
+  } 
+
+  else
+  {
+     //printf("cannot find end marker");
+     lua_upLoadCloseStream(  );
+  }
+  *errorflag = error;
+  
+  return fileName;
+
+  
+}
+
+
+
+
+static int  lua_upLoadFindMarker(  void )
+{
+   int                   returnValue;
+   int                   markerLength;
+    
+   markerLength =  PT_find( &fileUpLoad.markerPat,"\r\n",0 ); 
+   if( markerLength > 0 )
+   {
+      fileUpLoad.markerPat.length = markerLength;
+      fileUpLoad.endMarker = malloc( markerLength +2 );
+      PT_toString( markerLength+1, fileUpLoad.endMarker,&fileUpLoad.markerPat); 
+     returnValue = 0;
+   }
+   else
+   {
+      //printf("cannot find file marker \n");
+      returnValue = -1;
+   }
+   return returnValue;
+   
+}
+
+
+static int  lua_upLoadFindFile( void  )
+{
+   
+   int                  found;
+   int                  position;
+   int                  returnValue;
+
+  
+   returnValue = -1;
+  
+   found =  PT_findAndAdvance( &fileUpLoad.filePat,"filename=\"", 0 ); 
+   if( found > 0 )
+   {
+      position =  PT_find( &fileUpLoad.filePat,"\"",0 );
+      if( position > 0 )
+      {
+        fileUpLoad.filePat.length = position;
+        fileUpLoad.fileName = malloc( position +2 );
+        PT_toString( position+1, fileUpLoad.fileName ,&fileUpLoad.filePat);
+        strcpy(fileName,fileUpLoad.fileName);
+       
+        returnValue = 0;
+      }
+   }
+   if( returnValue == -1 )
+   {
+    ;//printf( "Bad header for file name field \n");
+   }
+   return returnValue;
+}
+
+
+static int  lua_upLoadOpenFile(  char *directory   )
+{
+   char path[256];
+   int  returnValue;
+
+   
+   strcpy( path, directory);
+   strcat(path,fileUpLoad.fileName );
+ 
+   fileUpLoad.fp = fopen(path, "wb+"); 
+ 
+  
+   if( fileUpLoad.fp == NULL )
+   {
+     
+     ;//printf( "Cannot open file %s",path);
+     returnValue = -1;
+   }
+   else
+   {
+     returnValue = 0;
+   }
+   return returnValue;
+}
+
+static int  lua_findStart( void  )
+{
+   int startPosition;
+
+
+   startPosition =  PT_findAndAdvance( &fileUpLoad.startPat, "\r\n\r\n", 0 ); 
+   if( startPosition < 0 )
+   {
+      ;//printf( "Cannot find starting postion \n");
+   }
+   else
+   {
+     startPosition = 0;
+   }
+   
+   return startPosition;
+}
+
+
+static int  lua_findEndMarker( void )
+{
+   int                   returnValue;
+   int                   length;
+
+ 
+   length =  PT_find( &fileUpLoad.startPat, fileUpLoad.endMarker , 0 );
+   if( length < 0 )
+   {
+     returnValue = 0;
+   }
+   else
+   {
+     returnValue = 1;
+     // -2 is to remove previous \r\n"
+     fileUpLoad.startPat.length = length - 2;
+  }  
+   return returnValue; 
+}
+
+static int  lua_upLoadWriteDataStream( void   )
+{
+
+ 
+  fwrite( fileUpLoad.startPat.string, fileUpLoad.startPat.length, 1, fileUpLoad.fp);
+  
+  return 0;
+}
+
+
+static int  lua_upLoadCloseStream(  void   )
+{
+   
+  
+   if(  fileUpLoad.fp != NULL )
+   {
+     fclose(fileUpLoad.fp);
+   }
+   
+
+   return 0;
+}
+
+
+
+

@@ -1,0 +1,83 @@
+---
+--- File: lua_getVersion.lua
+---
+---
+---
+---
+---
+---
+---
+
+version_report = {}
+
+
+function version_report.execute( resultList)
+  version_report.doTitle( resultList )
+  version_report.doBad( resultList )
+  version_report.doDetail(resultList)
+end
+
+
+function version_report.doTitle( resultList )
+ local temp
+ local count
+
+ temp = tgs.reports.filter(resultList , { {"action",actions.ops.getVersion} } )
+ count = tgs.reports.count( temp )
+
+ reports.addLine(" ")
+ reports.addLine("Version Report for "..count.." Stores ")
+ reports.addLine(os.date())
+ reports.addLine(" ")
+
+end
+
+
+
+function version_report.doBad( resultList )
+  local temp
+  local count
+  local tempString
+  
+  temp = tgs.reports.filter( resultList, { {"action",actions.ops.getVersion},{"status",false} })
+  count = tgs.reports.count(temp)
+  reports.addLine("Stores where version access failed "..count )
+  for i, j in ipairs( temp ) do
+   for l,m in ipairs( j ) do
+     
+     if  ( m.action == actions.ops.getVersion) and ( m.status == false ) then
+       tempString = string.format("%d   %s    ",i,m.id )
+       reports.addLine( tempString)
+     end
+   end
+  end
+end
+
+
+function version_report.doDetail( resultList )
+  local temp
+  local count
+  local tempString
+  
+  temp = tgs.reports.filter( resultList, { {"action",actions.ops.getVersion},{"status",true} })
+  count = tgs.reports.count(temp)
+  reports.addLine("Stores for which versions were obtained "..count )
+  for i, j in ipairs( temp ) do
+   for l,m in ipairs( j ) do
+     
+     if  ( m.action == actions.ops.getVersion) and ( m.status == true ) then
+       
+       tempString = string.format("%d   %s   \n%s ",i,m.id,m.result.data )
+       reports.addLine( tempString)
+     end
+   end
+  end
+end
+
+
+
+
+
+
+tgs.reports.addReport("VERSION_REPORT",version_report )
+

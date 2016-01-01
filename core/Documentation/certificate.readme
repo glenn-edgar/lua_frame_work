@@ -1,0 +1,57 @@
+Notes on creating self-signed certificates with OpenSSL. Self-signed certificates usually should not be used in production. Instead, if possible, setup a local Certificate Authority (CA), or consider free certificates from a provider like cacert.org. Public-facing secure websites and other TLS services should use a third-party CA, ideally one a majority of client systems will already have installed.
+
+Modern systems ship with OpenSSL as part of the base system, or make it available via a package system. These notes cover OpenSSL 0.9.6e as shipped with Mac OS X 10.2 (plus Developers Tools for the OpenSSL headers), but should be applicable to similar OpenSSL versions on any Unix-like system.
+
+Certificates must be checked for expiration, to avoid at best nuisance browser warnings, and at worst service outages.
+
+For more information on the TLS protocol, consult SSL and TLS: Designing and Building Secure Systems.
+Self-signed Certificates
+
+Use self-signed certificates only in throwaway test environments, or in peer-to-peer relationships where only a limited number of connections will ever be established. Example peer-to-peer relationships would be a custom VPN or AS2 link between to companies, or between two different sites of the same company. Self-signed certificates become impractical in most other cases, as the number of certificates necessary to manage grows linearly with the number of peering relationships. A local CA, while more complex to setup, reduces the number of keys that need to be distributed for verification, and replicates a real world certificate environment. A CA should cost less to manage than hundreds or thousands of individual certificates on each and every peer system.
+
+Certificate creation requires the openssl utility. This command should be part of an OpenSSL installation, though may be installed outside the standard search path in /usr/local/ssl/bin or elsewhere.
+
+$ which openssl
+/usr/bin/openssl
+
+   1. Generate the Rivest, Shamir and Adleman (RSA) key
+
+      OpenSSL can generate a Digital Signature Algorithm (DSA) key (with the gendsa option), though for compatibility RSA keys are most frequently used. Learn more about the genrsa option to openssl. 1024-bits is a common key size; a smaller 512-bit key may not be secure enough, while larger key sizes might not be supported by all software.
+
+      $ openssl genrsa 1024 > host.key
+      $ chmod 400 host.key
+
+      Modern systems should provide a random device and sufficient entropy for key generation. The data in the host.key file must be protected, as anyone possessing the private key can read any data encrypted with this key! Also, be sure to periodically generate a completely new private key (yearly is common), as this will limit the amount of information someone with a specific private key will have access to over time.
+   2. Create the Certificate
+
+      Learn more about the req option to openssl. The -new, -x509 and -nodes arguments are required to create an unencrypted certificate. The -days argument specifies how long the certificate will be valid for. Encrypted certificates are possible, though require a password to be typed every time the key is loaded. In most cases, encrypted certificates are not worth the operational burden, as each process restart or system reboot will require someone to manually supply a password.
+
+      $ openssl req -new -x509 -nodes -sha1 -days 365 -key host.key > host.cert
+
+      Questions may be asked to fill out the certificate’s X.509 attributes. The answers should be adjusted for the locale. If frequently typed, the system openssl.cnf should be updated with the correct defaults (see below), or the process automated with Expect or similar.
+
+      Country Name (2 letter code) [AU]:US
+      State or Province Name (full name) [Some-State]:Washington
+      Locality Name (eg, city) []:Seattle
+      Organization Name (eg, company) [Internet Widgits Pty Ltd]:Sial.org
+      Organizational Unit Name (eg, section) []:
+      Common Name (eg, YOUR name) []:mail.example.org
+      Email Address []:postmaster@example.org
+
+      For web services, the Common Name field usually must exactly match the hostname (or VIP name, for hosts behind a load balancer) of the system the certificate will be used on; otherwise, clients should complain about a certificate to hostname mismatch. In peer-to-peer setups for AS2, this field is usually not important, and can usually be set to a descriptive string.
+
+      The certificate data in the host.cert file does not need to be protected like the private key file does. In fact, it must be transferred to all the client systems that need to verify the key of the server being connected to. Should this method not scale, instead setup a CA, and distribute the signing certificate to the clients instead of each self-signed certificate. The host.cert data is usually also available to any remote system that can connect, for example via the openssl s_client -showcerts … command. However, without a CA signed certificate or some other means of exchanging and verifying the certificate, a client may instead be talking to a malicious man-in-the-middle server.
+   3. Extract Metadata (Optional)
+
+      Optionally, various certificate metadata can be saved for quick reference, for example to verify the key fingerprint. Learn more about the x509 option to openssl.
+
+      $ openssl x509 -noout -fingerprint -text < host.cert > host.info
+   4. Combine Key and Certificate Data (Optional)
+
+      Some applications may require that the key and certificate data be in a single file. I recommend keeping the key and certificate data separate if possible, as the key data needs to be protected, and the certificate data available to all. Combining the data means the resulting file must be protected like a key file.
+
+      $ cat host.cert host.key > host.pem \
+      && rm host.key
+      $ chmod 400 host.pem
+
+The host.cert certificate data will need to be exported to every client system.

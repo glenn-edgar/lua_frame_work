@@ -1,0 +1,28 @@
+/*
+** File: lua_loadApplications.c
+** This coordinates loading application specific modues
+**
+**
+**
+**
+*/
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+#include "lua_sunrise.h"
+#include "lua_digi_zigbee.h"
+#include "lua_api_zigbee.h"
+
+
+void loadApplicationExtensions( lua_State *L)
+{
+  printf("loading sunrise \n");
+  lua_loadSunrise( L );
+  printf("loading digi zigbee \n");
+  lua_digi_zigbee_load( L );
+  printf("loading digi app zigbee \n");
+  lua_api_zigbee_load( L );
+
+}
+
+

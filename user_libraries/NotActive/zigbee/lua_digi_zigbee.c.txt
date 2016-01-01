@@ -1,0 +1,372 @@
+/*
+**
+** Copyright 2008 Onyx Engineering
+** This file is licensed MIT
+** File: lua_serial.c
+** Adds low level linux serial support to lua
+**
+**
+**
+**
+*/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <termios.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include "lua_digi_zigbee.h"
+
+static void setBaudRate( int handle, int speed );
+
+
+static int lua_zigbeeRawRead( lua_State *L )
+{
+  int    handle;
+  char   string[256];
+  int    size;
+
+  handle =  lua_tointeger(L,1);
+  
+  
+    
+  memset( string,0,sizeof(string ));
+  
+  size = read( handle, string, 255 );
+  
+
+  lua_pushinteger( L, size );
+  if( size > 0 )
+  {
+    lua_pushlstring(  L,  string, size );
+  }
+  else
+  {
+     lua_pushnil(L );
+  }
+  return 2;
+}  
+
+
+static int lua_zigbeeRawWrite( lua_State *L )
+{
+  int        handle;
+  char      *string;
+  unsigned  size;
+
+  handle =         lua_tointeger(L,1);
+  string = (char *)lua_tolstring(L, 2, &size);
+  write( handle, string, size); 
+  return 0;
+}
+
+static int  lua_zigbeeAPIWrite ( lua_State *L )
+{
+   int              loopCount;
+   int              index;
+   int              handle;
+   unsigned char    buffer[256];
+   unsigned         checkSum;
+
+  
+   handle = lua_tointeger(L,1 );
+   luaL_checktype(L,2, LUA_TTABLE );
+   loopCount = lua_objlen( L, 2 );
+   if( loopCount > 0 )
+   {
+      memset( buffer,0,sizeof( buffer ));
+      buffer[0] = 0x7e;
+      buffer[1] = (loopCount >> 8)& 0xff;
+      buffer[2] = (loopCount ) & 0xff;
+      checkSum = 0;
+      for( index = 3; index < loopCount+3; index++ )
+      {
+         lua_rawgeti(L, 2, index -2 );
+         buffer[index] = lua_tointeger(L,-1);
+         checkSum += buffer[index];
+         lua_pop(L,0); // pop to of stack
+       }
+       checkSum = checkSum & 0xff;
+       buffer[ loopCount+3 ] =  (0xff - checkSum )&0xff;
+       write( handle, buffer, loopCount +4 ); 
+    }
+    return 0;
+}
+   
+
+typedef enum
+{
+  LOOKING_FOR_HEADER          = 0,
+  LOOKING_FOR_LENGTH_HIGH     = 1,
+  LOOKING_FOR_LENGTH_LOW      = 2,
+  BUILDING_MESSAGE            = 3,
+  LOOKING_FOR_CHECK_SUM       = 4,
+}ZIGBEE_RX_STATES;
+
+
+static unsigned int  rd_state = LOOKING_FOR_HEADER;
+static unsigned char rd_lengthHigh;
+static unsigned      rd_messageLength;
+static unsigned int  rd_index;
+static unsigned int  checkSum;
+static char unsigned rd_messageBuffer[ 256 ];
+
+static int lua_zigbeeGetMessage ( lua_State *L )
+{
+   int returnValue;
+   int loopFlag;
+   int size;
+   int handle;
+   unsigned char temp[2];
+   
+   returnValue = 0;
+
+   handle =  lua_tointeger(L,1);
+  
+   loopFlag = 1;
+   while( loopFlag != 0)
+   {
+     size = read( handle, &temp, 1 );
+     //printf("size %d rd_state %d %x %c\n",size,rd_state,temp[0],temp[0]);
+     if( size > 0 )
+     {
+        switch( rd_state )
+        {
+           case LOOKING_FOR_HEADER:
+            if( temp[0] == 0x7e )
+            {
+               rd_state = LOOKING_FOR_LENGTH_HIGH;
+            }
+            else
+            { 
+               ; // stay in looking for header state
+            }
+            break;
+
+          case  LOOKING_FOR_LENGTH_HIGH:
+               rd_lengthHigh = temp[0];
+               rd_state = LOOKING_FOR_LENGTH_LOW;
+             break;
+
+          case  LOOKING_FOR_LENGTH_LOW:
+                rd_messageLength = temp[0] + ((rd_lengthHigh << 8 )&0xff00);
+                rd_index = 0;
+                checkSum = 0;
+                rd_state = BUILDING_MESSAGE;
+             break;
+
+          case  BUILDING_MESSAGE:
+               rd_messageBuffer[ rd_index ] = temp[0];
+               checkSum += temp[0]; 
+               rd_index += 1;
+               rd_messageLength -= 1;
+               if( rd_messageLength <= 0 )
+               {
+                  rd_state = LOOKING_FOR_CHECK_SUM;
+               }
+               break;
+
+          case  LOOKING_FOR_CHECK_SUM:
+             checkSum += temp[0];
+             checkSum &= 0xff;
+             lua_pushinteger(L,checkSum);
+             lua_pushinteger(L,rd_messageBuffer[0] );
+             lua_pushlstring(L,(char*) rd_messageBuffer,(unsigned) rd_index );
+             returnValue = 3;
+             rd_state = LOOKING_FOR_HEADER;
+             goto exit;
+             break;
+
+         }
+   
+    }
+    else
+    {
+       loopFlag = 0;
+    }
+
+
+   }
+exit:
+   return returnValue;
+}
+
+static int lua_zigbeeDiagConvert( lua_State *L )
+{
+  int           handle;
+  char          *string;
+  char          asciiString[256];
+  char          tempString[16];
+  size_t        size;
+  int           index;
+  unsigned char temp;
+
+  handle =  lua_tointeger(L,1);
+  
+  string =  (char *) lua_tolstring(L,1,&size );
+  
+    
+ 
+  memset( asciiString,0,sizeof(asciiString ));  
+
+  
+  if( size < 127 )
+  {
+    for( index = 0; index < size; index++ )
+    {
+       temp = (unsigned char) string[ index ];
+       sprintf( tempString,"%3x", temp );
+       strcat( asciiString, tempString );
+    }
+  
+  }
+  else
+  {
+     strcpy( asciiString,"string too big");
+  }
+  lua_pushstring( L, asciiString );
+  
+  return 1;
+}  
+
+static int  lua_zigbeeOpen( lua_State *L )
+{
+   
+   char *device;
+   int  handle;
+   int  speed;
+
+    rd_state = LOOKING_FOR_HEADER;
+
+   device = (char *)lua_tostring(L,1);
+   speed  = lua_tointeger( L, 2 );
+   handle = open(device, O_RDWR | O_NONBLOCK );
+   if( handle > 0 )
+   {
+      setBaudRate( handle , speed );
+   }
+   lua_pushinteger(L,handle);
+   return 1;
+}
+
+static int lua_zigbeeClose( lua_State *L )
+{
+  int handle;
+
+  rd_state = LOOKING_FOR_HEADER;
+ 
+  handle =  lua_tointeger(L,-1);
+  close(handle);
+
+  return 0;
+}
+
+
+
+
+static int lua_zigbeeHelp( lua_State *L )
+{
+  printf("list of low level digi commands commands \r\n\r\n");
+  printf("zigbee.open(device,speed) -- opens serial port \r\n");
+  printf("    speed is defined as follows     \n");
+  printf("    --- where 0 = 9600              \n");
+  printf("    --- where 1 = 19200             \n");
+  printf("    --- where 2 = 38K               \n");
+  printf("    --- where 3 = 56K               \n");
+  printf("    --- where 4 = 115K              \n");
+  printf("zigbee.close(handle)             -- closes serial port \n");
+  printf("zigbee.rawRead(handle)                 \n");
+  printf("  -- returns size string            \n");
+  printf("zigbee.diagConvert( handle, string )  \n");
+  printf(" -- returns asii string  \n"); 
+  printf("zigbee.getMessage( handle ) \n");
+  printf("zigbee.rawWrite(handle,string)        \n");
+  printf("zigbee.APIWrite( handle, messageList ) \n");
+  printf("  -- builds and writes API packet \n");
+  printf("zigbee.help()                    -- dumps out commands \n");
+  return 0;
+}   
+
+
+static const struct luaL_reg  lua_zigbee[] = 
+{
+   {"open",              lua_zigbeeOpen   },
+   {"close",             lua_zigbeeClose  },
+   {"rawRead",           lua_zigbeeRawRead   },
+   {"rawWrite",          lua_zigbeeRawWrite  },
+   {"APIWrite",          lua_zigbeeAPIWrite },
+   {"diagConvert",       lua_zigbeeDiagConvert    },
+   {"getMessage",        lua_zigbeeGetMessage },
+   {"help",              lua_zigbeeHelp   }, 
+   { NULL, NULL },      
+   
+};
+
+
+
+int lua_digi_zigbee_load( lua_State *L )
+{
+   
+
+
+   luaL_openlib(L,"zigbee",lua_zigbee,0 );
+   return 1;
+}
+
+/*
+**
+** Static Support Functions
+**
+**
+*/
+
+static void setBaudRate( int handle, int speed )
+{
+ struct termios reading;
+
+  
+
+  tcgetattr( handle,&reading);
+  switch( speed)
+  {
+    case 0:
+      cfsetispeed( &reading, B9600);
+      cfsetospeed( &reading, B9600);
+      break;
+
+    case 1:
+      cfsetispeed( &reading, B19200);
+      cfsetospeed( &reading, B19200);
+      break;
+
+    case 2:
+      cfsetispeed( &reading, B38400);
+      cfsetospeed( &reading, B38400);
+      break;
+
+    case 3:
+      cfsetispeed( &reading, B57600);
+      cfsetospeed( &reading, B57600);
+      break;
+
+    case 4:
+      cfsetispeed( &reading, B115200);
+      cfsetospeed( &reading, B115200);
+      break;
+   }
+  reading.c_cflag |= CRTSCTS | CREAD;
+  reading.c_cc[VMIN]=1;
+  reading.c_cc[VTIME]=0;
+  reading.c_lflag &= ~ICANON;        /* unbuffered input */
+  reading.c_iflag = IGNPAR;
+  reading.c_oflag = 0;
+
+  tcsetattr( handle,TCSANOW,&reading);
+
+ 
+}
+
+

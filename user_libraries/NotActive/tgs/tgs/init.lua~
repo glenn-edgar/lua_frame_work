@@ -1,0 +1,31 @@
+--
+--
+-- File: to load lua scripts at runtime
+--
+--
+--
+local line
+local path
+
+path = tgsLib.path()
+
+tgs = {}
+
+function tgs.description()
+  return "tgs package"
+end
+
+function tgs.help()
+ print("tgs major classes ")
+ print("   type .help() for more help")
+ print(".store -- supports store management")
+ print(".ctPacket -- contact packet ")
+ print(".devices  -- device manager ")
+ print("")
+end
+
+for line in io.lines(path.."/init.dat" ) do
+ line = string.trim(line)
+ dofile(path..line)
+end
+ 

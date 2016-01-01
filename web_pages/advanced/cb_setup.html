@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"/>
+		<title>Input Setup</title>
+		<link type="text/css" href="/themes/base/ui.all.css" rel="stylesheet"/>
+		<link type="text/css" href="/css/indyme.css" rel="stylesheet"/>
+		<script type="text/javascript" src="/jquery-1.3.2.min.js"></script>	
+		<script type="text/javascript" src="/jquery-ui-1.7.custom.min.js"></script>
+		<script type="text/javascript" src="/javaScript/cb_setup.js"></script>
+		<script type="text/javascript" src="/javaScript/indyme_utils.js"></script>
+		<script type="text/javascript" src="/javaScript/inputHandlers.js"></script>
+		<script type="text/javascript" src="/javaScript/json2.js"></script>
+		<script type="text/javascript" src="/javaScript/select_support.js"></script>
+		<script type="text/javascript" src="/javaScript/table_handlers.js"></script>
+                <script type="text/javascript" src="/javaScript/table_handlers_input.js"></script>
+	</head>
+	
+	<body class="main">
+		
+		<form action="editScriptStore.lua" method="post">
+			
+			<div id="row-0">
+				<!--#include virtual="/advanced/banner.html"-->
+										<label>Input Setup</label>
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+				
+				<!--#include virtual="/advanced/function.html"-->
+				
+				<div id="tabs" class="tab">
+					<ul>
+						<li><a href="#tabs-blank">1-100</a></li>
+						<li><a href="#tabs-blank">101-200</a></li>
+						<li><a href="#tabs-blank">201-300</a></li>
+						<li><a href="#tabs-blank">301-400</a></li>
+						<li><a href="#tabs-blank">401-500</a></li>
+						<li><a href="#tabs-blank">501-600</a></li>
+						<li><a href="#tabs-blank">601-700</a></li>
+						<li><a href="#tabs-blank">701-800</a></li>
+						<li><a href="#tabs-blank">801-900</a></li>
+						<li><a href="#tabs-blank">901-999</a></li>
+					</ul>
+				</div>
+	 			
+				<div id="tabs-blank" class="tbl">
+					<table id="table-0" width=100% cellspacing=0 cellpadding=5 border=0>
+						<tr align=center>
+							<td width=30><input type=checkbox id="TOP_CH-0"></td>
+							<td width=1></td>
+							<td width=100></td>
+							<td width=125><b>INPUT NUMBER</b></td>
+							<td width=300><b>INPUT NAME</b></td>
+							<td width=125><b>ALARM NUMBER</b></td>
+							<td></td>
+						</tr>
+					</table>
+				</div>
+			</div>
+			
+	        <!--#include virtual="/advanced/ebanner.html"-->
+										<label id="editTitle"></label>
+					               	</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+				
+				<br><br>
+				
+				<table>
+					<tr>
+						<td width=20></td>
+						<td><label id="editLabela-0"><b>Input Number:</b></label></td>
+						<td width=30></td>
+						<td><label id="editLabelb-0"><b>Input Name:</b></label></td>
+					</tr>
+					
+					<tr>
+						<td width=20></td>
+						<td><input type=text id="editNumber-0"></td>
+						<td width=30></td>
+						<td><input  size = 30  maxlength = 30 type=text id="editName-0"></td>
+					</tr>
+				</table>
+				
+				<br>
+				
+				<table>
+					<tr>
+						<td width=20></td>
+						<td><label id="editLabelc-0"><b>Alarm Number:</b></label></td>
+					</tr>
+					
+					<tr>
+						<td width=20></td>
+						<td><select id="editAlarmNumber-0"></select></td>
+					</tr>
+
+				</table>
+				<table>
+					<tr>
+						<td width=20></td>
+						<td><label id="editLabelc-0"><b>Append Low Battery</b></label></td>
+					</tr>
+					
+					<tr>
+						<td width=20></td>
+						<td><input type=checkbox id="lowBattery"></td>
+					</tr>
+
+				</table>
+
+			</div>
+		</form>
+		<!--#include virtual="/advanced/table_handler.html"-->
+	</body>
+</html>

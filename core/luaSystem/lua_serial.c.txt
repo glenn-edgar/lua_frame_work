@@ -1,0 +1,191 @@
+/*
+**
+** Copyright Onyx Engineering, Inc.
+** File: lua_serial.c
+** Adds low level linux serial support to lua
+**
+**
+**
+**
+*/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <termios.h>
+
+
+#include "lua_serial.h"
+
+
+static int  lua_serialOpen( lua_State *L )
+{
+   int  mode;
+   char *device;
+   FILE *handle;
+
+   device = (char *)lua_tostring(L,1);
+   mode   = lua_tointeger(L,2);
+
+   if( mode != 0)
+   {
+     handle = fopen(device,"w");
+   }
+   else
+   {
+      handle = fopen(device,"r");
+   }
+   lua_pushlightuserdata(L,(void *)handle);
+   return 1;
+}
+
+static int lua_serialClose( lua_State *L )
+{
+  FILE *handle;
+
+  handle = (FILE *)lua_tointeger(L,-1);
+  fclose(handle);
+
+  return 0;
+}
+
+static int lua_setBaudRate( lua_State *L )
+{
+  FILE *handle;
+  int  speed;
+  struct termios reading;
+
+  handle = (FILE *)lua_topointer(L,1);
+  speed  = lua_tointeger(L,2);
+
+  tcgetattr( fileno(handle),&reading);
+  switch( speed)
+  {
+    case 0:
+      cfsetispeed( &reading, B9600);
+      cfsetospeed( &reading, B9600);
+      break;
+
+    case 1:
+      cfsetispeed( &reading, B19200);
+      cfsetospeed( &reading, B19200);
+      break;
+
+    case 2:
+      cfsetispeed( &reading, B38400);
+      cfsetospeed( &reading, B38400);
+      break;
+
+    case 3:
+      cfsetispeed( &reading, B57600);
+      cfsetospeed( &reading, B57600);
+      break;
+
+    case 4:
+      cfsetispeed( &reading, B115200);
+      cfsetospeed( &reading, B115200);
+      break;
+   }
+
+  tcsetattr( fileno(handle),TCSANOW,&reading);
+
+  return 0;
+}
+
+
+static int lua_serialRead( lua_State *L )
+{
+  FILE *handle;
+  char string[256];
+  fd_set rfds;
+  struct timeval tv;
+  int    returnValue;
+
+  handle = (FILE *)lua_topointer(L,1);
+
+  FD_ZERO( &rfds );
+  FD_SET( fileno(handle), &rfds );
+  tv.tv_sec = 2;
+  tv.tv_usec = 0;
+  
+  returnValue = select(fileno(handle)+1, &rfds, NULL, NULL, &tv);
+  lua_pushinteger(L,returnValue );
+  if( returnValue > 0 )
+  { 
+    if( fgets(string,256,handle) != NULL )
+    {
+       lua_pushstring(L,string);
+    }
+    else
+    {
+      lua_pushstring(L,"");
+    }
+  }
+  else
+  {
+     lua_pushstring(L," ");
+  }
+  return 2;
+}  
+
+static int lua_serialWrite( lua_State *L )
+{
+  FILE *handle;
+  char *string;
+
+  handle = (FILE *)lua_topointer(L,1);
+  string = (char *)lua_tostring(L,2);
+  fprintf(handle,"%s\r\n",string);  
+  return 0;
+}
+
+static int description( lua_State *L )
+{
+  lua_pushstring(L,"provides lua serial port support");
+  return 1;
+}
+
+static int lua_serialHelp( lua_State *L )
+{
+  printf("list of serial commands \r\n\r\n");
+  printf("serial.open(device,mode)         -- opens serial port \r\n");
+  printf("      -- where 0 = read mode  \r\n");
+  printf("      -- where 1 = write mode \r\n");
+  printf("serial.close(handle)             -- closes serial port \r\n");
+  printf("serial.setBaudRate(handle,BAUD_RATE)  \r\n");
+  printf("    --- where 0 = 9600              \r\n");
+  printf("    --- where 1 = 19200             \r\n");
+  printf("    --- where 2 = 38K               \r\n");
+  printf("    --- where 3 = 56K               \r\n");
+  printf("    --- where 4 = 115K              \r\n");
+  printf("serial.read(handle)                 \r\n");
+  printf("serial.write(handle,string)         \r\n");
+  printf("serial.help()                    -- dumps out commands \r\n\r\n");
+  return 0;
+}   
+
+
+static const struct luaL_reg  lua_serial[] = 
+{
+   {"open",           lua_serialOpen   },
+   {"close",          lua_serialClose  },
+   {"setBaudRate",    lua_setBaudRate  },
+   {"read",           lua_serialRead   },
+   {"write",          lua_serialWrite  },
+   {"help",           lua_serialHelp   }, 
+   {"description",    description },
+   { NULL, NULL },      
+   
+};
+
+
+
+int lua_serial_load( lua_State *L )
+{
+   
+
+
+   luaL_openlib(L,"serial",lua_serial,0 );
+   return 1;
+}
+

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"/>
+		<title>TOD Setup</title>
+		<link type="text/css" href="/themes/base/ui.all.css" rel="stylesheet"/>
+		<link type="text/css" href="/css/indyme.css" rel="stylesheet"/>
+		<script type="text/javascript" src="/jquery-1.3.2.min.js"></script>	
+		<script type="text/javascript" src="/jquery-ui-1.7.custom.min.js"></script>
+		<script type="text/javascript" src="/javaScript/indyme_utils.js"></script>
+		<script type="text/javascript" src="/javaScript/inputHandlers.js"></script>
+		<script type="text/javascript" src="/javaScript/json2.js"></script>
+		<script type="text/javascript" src="/javaScript/select_support.js"></script>
+		<script type="text/javascript" src="/javaScript/table_handlers.js"></script>
+		<script type="text/javascript" src="/javaScript/tod_alarms.js"></script>	
+	</head>
+	
+	<body class="main">
+		
+		<form action="editScriptStore.lua" method="post">
+			
+			<div id="row-0">
+				<!--#include virtual="/advanced/banner.html"-->
+										<label>TOD ALARM SETUPS</label>
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+				
+				<!--#include virtual="/advanced/function.html"-->
+				
+				<table id="table-0" width=100% cellspacing=0 cellpadding=5 border=0 class="tbl">
+					<tr align=center>
+						<td width=30><input type=checkbox id="TOP_CH-1"></td>
+						<td width=1></td>
+						<td width=100></td>
+						<td width=120><b>TOD NUMBER</b></td>
+						<td width=300><b>TOD NAME</b></td>
+						<td width=120><b>ALARM NUMBER</b></td>
+						<td></td>
+					</tr>
+				</table>
+			</div>
+			
+	        <!--#include virtual="/advanced/ebanner.html"-->
+										<label id="editTitle"></label>
+					               	</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+				
+				<br><br>
+				
+				<table>
+					<tr>
+						<td width=20></td>
+						<td>
+							<table width=100% border=1 cellpadding=3>
+								<tr>
+									<td class="bannerColor"><b>GENERAL SETUP</b></td>
+								</tr>
+								
+								<tr>
+									<td>
+										<br>
+										<table>
+											<tr>
+												<td width=20></td>
+												<td><label id="edit-0-labela"><b>TOD Number:</b></label></td>
+												<td width=20></td>
+												<td><label id="edit-0-labelb"><b>TOD Name:</b></label></td>
+												<td width=20></td>
+												<td><label id="edit-0-labelc"><b>Alarm Number:</b></label></td>
+												<td width=20></td>
+											</tr>
+											
+											<tr>
+												<td width=20></td>
+												<td><input type=text id="edit-0-number"></td>
+												<td width=20></td>
+												<td><input type=text
+													size = 30  maxlength = 30 id="edit-0-name"></td>
+												<td width=20></td>
+												<td><select id="edit-0-alarmNumber"></select></td>
+												<td width=20></td>
+											</tr>
+										</table>
+										<br>
+									</td>
+								</tr>
+								
+								<tr>
+									<td class="bannerColor"><b>YEAR</b></td>
+								</tr>
+								
+								<tr>
+									<td>
+										<br>
+										<table>
+											<tr>
+												<td width=20></td>
+												<td><select id="edit-0-yearEntry" style="padding-bottom:2px"></select></td>
+												<td width=20></td>
+												<td><input type=checkbox id="edit-0-yearCheck"></td>
+												<td><label><b>Every Year<b></label></td>
+											</tr>
+										</table>
+										<br>
+									</td>
+								</tr>
+								
+								<tr>
+									<td class="bannerColor"><b>MONTH</b></td>
+                                                                </tr>
+                                                             
+								
+								<tr>
+									<td>
+										<br>
+										<table>
+											<tr>
+												<td width=20></td>
+												<td><input type=checkbox id="JANUARY"></td>
+												<td width=85>JANUARY</td>
+												<td><input type=checkbox id="APRIL"></td>
+												<td width=85>APRIL</td>
+												<td><input type=checkbox id="JULY"></td>
+												<td width=85>JULY</td>
+												<td><input type=checkbox id="OCTOBER"></td>
+												<td width=85>OCTOBER</td>
+											</tr>
+											
+											<tr>
+												<td width=20></td>
+												<td><input type=checkbox id="FEBRUARY"></td>
+												<td width=85>FEBRUARY</td>
+												<td><input type=checkbox id="MAY"></td>
+												<td width=85>MAY</td>
+												<td><input type=checkbox id="AUGUST"></td>
+			                  					<td width=85>AUGUST</td>
+												<td><input type=checkbox id="NOVEMBER"></td>
+												<td width=85>NOVEMBER</td>
+											</tr>
+											
+											<tr>
+												<td width=20></td>
+												<td><input type=checkbox id="MARCH"></td>
+												<td width=85>MARCH</td>
+												<td><input type=checkbox id="JUNE"></td>
+												<td width=85>JUNE</td>
+												<td><input type=checkbox id="SEPTEMBER"></td>
+												<td width=85>SEPTEMBER</td>
+												<td><input type=checkbox id="DECEMBER"></td>
+												<td width=85>DECEMBER</td>
+											<tr>
+										</table>
+										<br>
+									</td>
+								</tr>
+								
+								<tr>
+									<td class="bannerColor"><b>DAY</b></td>
+								</tr>
+								
+								<tr>
+									<td>
+										<br>
+										<table>
+											<tr>
+												<td width=20></td>
+												<td><input type=checkbox id="edit-0-dowCheck"></td>
+												<td colspan=14><label><b>Day of Week Selection</b></label></td>
+												<td width=20></td>
+												
+											</tr>
+										</table>
+										<br>	
+										
+										<table id="dayTable">
+											<tr>
+												<td width=20></td>
+												<td><input type=checkbox id="day-1"></td><td width=30>1</td>
+												<td><input type=checkbox id="day-2"></td><td width=30>2</td>
+												<td><input type=checkbox id="day-3"></td><td width=30>3</td>
+												<td><input type=checkbox id="day-4"></td><td width=30>4</td>
+												<td><input type=checkbox id="day-5"></td><td width=30>5</td>
+												<td><input type=checkbox id="day-6"></td><td width=30>6</td>
+												<td><input type=checkbox id="day-7"></td><td width=30>7</td>
+											</tr>
+											
+											<tr>
+												<td width=20></td>
+												<td><input type=checkbox id="day-8"></td><td width=30>8</td>
+												<td><input type=checkbox id="day-9"></td><td width=30>9</td>
+												<td><input type=checkbox id="day-10"></td><td width=30>10</td>
+												<td><input type=checkbox id="day-11"></td><td width=30>11</td>
+												<td><input type=checkbox id="day-12"></td><td width=30>12</td>
+												<td><input type=checkbox id="day-13"></td><td width=30>13</td>
+												<td><input type=checkbox id="day-14"></td><td width=30>14</td>
+											</tr>
+											
+											<tr>
+												<td width=20></td>
+												<td><input type=checkbox id="day-15"></td><td width=30>15</td>
+												<td><input type=checkbox id="day-16"></td><td width=30>16</td>
+												<td><input type=checkbox id="day-17"></td><td width=30>17</td>
+												<td><input type=checkbox id="day-18"></td><td width=30>18</td>
+												<td><input type=checkbox id="day-19"></td><td width=30>19</td>
+												<td><input type=checkbox id="day-20"></td><td width=30>20</td>
+												<td><input type=checkbox id="day-21"></td><td width=30>21</td>
+											</tr>
+											
+											<tr>
+												<td width=20></td>
+												<td><input type=checkbox id="day-22"></td><td width=30>22</td>
+												<td><input type=checkbox id="day-23"></td><td width=30>23</td>
+												<td><input type=checkbox id="day-24"></td><td width=30>24</td>
+												<td><input type=checkbox id="day-25"></td><td width=30>25</td>
+												<td><input type=checkbox id="day-26"></td><td width=30>26</td>
+												<td><input type=checkbox id="day-27"></td><td width=30>27</td>
+												<td><input type=checkbox id="day-28"></td><td width=30>28</td>
+											</tr>
+											
+											<tr>
+												<td width=20></td>
+												<td><input type=checkbox id="day-29"></td><td width=30>29</td>
+												<td><input type=checkbox id="day-30"></td><td width=30>30</td>
+												<td><input type=checkbox id="day-31"></td><td width=30>31</td>
+												
+										
+											</tr>
+										</table>
+ 										<table id = "dayTable_a">
+											<tr>
+                                                                                                <td width=20></td>
+												<td><input type=checkbox id="edit-0-lastDay">Last Day Of Month</td>
+											</tr>
+ 										</table>
+										
+										<table id="dayOfWeekTable">
+											<tr>
+												<td width=20></td>
+												<td><input type=checkbox id="dow-1"></td>
+												<td width=125>MONDAY</td>
+												<td><input type=checkbox id="dow-8"></td>
+												<td>FIRST WEEK</td>
+											</tr>
+											
+											<tr>
+												<td width=20></td>
+												<td><input type=checkbox id="dow-2"></td>
+												<td width=125>TUESDAY</td>
+												<td><input type=checkbox id="dow-9"></td>
+												<td>SECOND WEEK</td>
+											</tr>
+											
+											<tr>
+												<td width=20></td>
+												<td><input type=checkbox id="dow-3"></td>
+												<td width=125>WEDNESDAY</td>
+												<td><input type=checkbox id="dow-10"></td>
+												<td>THIRD WEEK</td>
+											</tr>
+											
+											<tr>
+												<td width=20></td>
+												<td><input type=checkbox id="dow-4"></td>
+												<td width=125>THURSDAY</td>
+												<td><input type=checkbox id="dow-11"></td>
+												<td>FOURTH WEEK</td>
+											</tr>
+											
+											<tr>
+												<td width=20></td>
+												<td><input type=checkbox id="dow-5"></td>
+												<td width=125>FRIDAY</td>
+												<td><input type=checkbox id="dow-12"></td>
+												<td>FIFTH WEEK</td>
+											</tr>
+											
+											<tr>
+												<td width=20></td>
+												<td><input type=checkbox id="dow-6"></td>
+												<td width=125>SATURDAY</td>
+												<td><input type=checkbox id="last_week"></td>
+												<td>LAST WEEK</td>
+											</tr>
+											
+											<tr>
+												<td width=20></td>
+												<td><input type=checkbox id="dow-7"></td>
+												<td width=125>SUNDAY</td>
+												<td></td>
+												<td></td>
+											</tr>
+											
+										</table>
+										<br>
+									</td>
+								</tr>
+								
+								<tr>
+									<td class="bannerColor"><b>TIME</b></td>
+								</tr>
+								
+								<tr>
+									<td>
+										<br>
+										<table id="hr_table">
+										<tr>
+												<td width=20></td>
+												<td><input type=checkbox id="hr-0"></td><td width=85>00:00</td>
+												<td><input type=checkbox id="hr-6"></td><td width=85>06:00</td>
+												<td><input type=checkbox id="hr-12"></td><td width=85>12:00</td>
+												<td><input type=checkbox id="hr-18"></td><td width=85>18:00</td>
+												<td width=20></td>
+											</tr>
+											
+											<tr>
+											<td width=20></td>
+												<td><input type=checkbox id="hr-1"></td><td width=85>01:00</td>
+												<td><input type=checkbox id="hr-7"></td><td width=85>07:00</td>
+												<td><input type=checkbox id="hr-13"></td><td width=85>13:00</td>
+												<td><input type=checkbox id="hr-19"></td><td width=85>19:00</td>
+												<td width=20></td>
+											</tr>
+											
+											<tr>
+												<td width=20></td>
+												<td><input type=checkbox id="hr-2"></td><td width=85>02:00</td>
+												<td><input type=checkbox id="hr-8"></td><td width=85>08:00</td>
+												<td><input type=checkbox id="hr-14"></td><td width=85>14:00</td>
+												<td><input type=checkbox id="hr-20"></td><td width=85>20:00</td>
+												<td width=20></td>
+											</tr>
+											
+											<tr>
+												<td width=20></td>
+												<td><input type=checkbox id="hr-3"></td><td width=85>03:00</td>
+												<td><input type=checkbox id="hr-9"></td><td width=85>09:00</td>
+												<td><input type=checkbox id="hr-15"></td><td width=85>15:00</td>
+												<td><input type=checkbox id="hr-21"></td><td width=85>21:00</td>
+												<td width=20></td>
+											</tr>
+											
+											<tr>
+												<td width=20></td>
+												<td><input type=checkbox id="hr-4"></td><td width=85>04:00</td>
+												<td><input type=checkbox id="hr-10"></td><td width=85>10:00</td>
+												<td><input type=checkbox id="hr-16"></td><td width=85>16:00</td>
+												<td><input type=checkbox id="hr-22"></td><td width=85>22:00</td>
+												<td width=20></td>
+											</tr>
+											
+											<tr>
+												<td width=20></td>
+												<td><input type=checkbox id="hr-5"></td><td width=85>05:00</td>
+												<td><input type=checkbox id="hr-11"></td><td width=85>11:00</td>
+												<td><input type=checkbox id="hr-17"></td><td width=85>17:00</td>
+												<td><input type=checkbox id="hr-23"></td><td width=85>23:00</td>
+												<td width=20></td>
+											</tr>
+										</table>
+										
+										<br>
+										
+										<table>
+											<tr>
+												<td width=20></td>
+												<td><label id="edit-0-labeld">Minutes</label></td>
+												<td width=20></td>
+												<td><label id="edit-0-labele">Seconds</label></td>
+											</tr>
+											
+											<tr>
+												<td width=20></td>
+												<td><select id="edit-0-minutes"></select></td>
+												<td width=20></td>
+												<td><select id="edit-0-seconds"></select></td>
+											</tr>
+										</table>
+										<br>
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</form>
+        <!--#include virtual="/advanced/table_handler.html"-->
+	</body>
+</html>

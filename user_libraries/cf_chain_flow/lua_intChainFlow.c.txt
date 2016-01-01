@@ -1,0 +1,56 @@
+/*
+** 
+**  
+**
+**
+**
+**
+*/
+
+
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <assert.h>
+#include <string.h>
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+
+
+extern void lua_dobuffer( lua_State * L, const char *buffer, int size, char *chunkName );
+extern int ficlLzUncompress(const unsigned char *compressed, unsigned char **uncompressed_p, size_t *uncompressedSize_p);
+
+
+
+
+
+// well activate if pat string has attached scripts
+
+
+static int lua_loadScript(lua_State *L)
+{
+  
+ 
+  #include "init.h"
+
+  return 0;
+}
+
+
+
+
+
+
+int lua_registerPatString( lua_State *L  )
+{
+   
+   lua_stringBufferLoad( L );
+
+
+   return 1;
+}
+

@@ -1,0 +1,20 @@
+/*
+**
+** file: termHandler.h
+** Derived work for cmdedit.c
+** which was released under BSD license
+**
+** Setups linux terminals
+*/
+
+
+
+
+#ifndef _TERM_HANDLER_H_
+#define _TERM_HANDLER_H_
+
+void initializeTerminal(void);
+
+void restoreTerminal( void);
+
+#endif /* TERM_HANDLER */

@@ -1,0 +1,293 @@
+/*
+**
+** Copyright 2008 Onyx Engineering
+** This file is licensed MIT
+**
+** File: stringBuffer.c
+**
+**
+*/
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <assert.h>
+
+
+#include "stringBuffer.h"
+
+#define STRING_BUFFER_MAGIC 0x44556677
+
+typedef struct
+{
+  int   magic;
+  int   size;
+  int   free;
+  char *end;
+  char *buffer;
+}SB_CTRL;
+
+
+
+
+SB_HANDLE SB_create( unsigned size )
+{
+   SB_CTRL *returnValue;
+
+   returnValue = malloc( sizeof( SB_CTRL ) );
+   if( returnValue == NULL )
+   {
+      goto end;
+   }
+   returnValue->buffer = malloc( size +1 );
+   if( returnValue->buffer == NULL )
+   {
+     free( returnValue );
+     returnValue = NULL;
+     goto end;
+   }
+   memset( returnValue->buffer,0,size);
+   returnValue->magic = STRING_BUFFER_MAGIC;
+   returnValue->size  = size;
+   returnValue->free  = size;
+   returnValue->end   = returnValue->buffer;
+end:
+   return returnValue;
+}
+
+
+int SB_resize( SB_HANDLE handle, int newSize )
+{
+  int  returnValue;
+  char *buffer;int SB_currentSize( SB_HANDLE handle );
+  SB_CTRL *temp;
+
+  temp = (SB_CTRL *)(handle );
+  assert( temp->magic == STRING_BUFFER_MAGIC );
+  
+  if( newSize < ( temp->end - temp->buffer ))
+  {
+    returnValue = -1;
+    goto end;
+  }
+  buffer      = malloc( newSize );
+  if( buffer == NULL )
+  {
+    returnValue = -1;
+    goto end;
+  }
+  returnValue = 0;
+  memcpy( buffer, temp->buffer, (temp->end-temp->buffer));
+  free( temp->buffer );
+  temp->buffer = buffer;
+  temp->size  = newSize;
+  temp->free  = newSize;
+
+
+end:
+  return returnValue;
+}
+
+void SB_terminate( SB_HANDLE handle )
+{
+  SB_CTRL *temp;
+
+  temp = (SB_CTRL *)(handle );
+  assert( temp->magic == STRING_BUFFER_MAGIC );
+  int SB_currentSize( SB_HANDLE handle );int SB_currentSize( SB_HANDLE handle );
+  if( temp->buffer != NULL )
+  {
+     free( temp->buffer );
+  }
+  if( temp != NULL )
+  {
+    temp->magic = 0;
+    free( temp );
+  } 
+}
+
+char *SB_getBuffer( SB_HANDLE handle )
+{
+  SB_CTRL *temp;
+
+  temp = (SB_CTRL *)(handle );
+  assert( temp->magic == STRING_BUFFER_MAGIC );
+  return temp->buffer;
+}
+
+int SB_currentSize( SB_HANDLE handle );int SB_currentSize( SB_HANDLE handle );
+
+
+int SB_currentSize( SB_HANDLE handle );
+
+
+
+int  SB_bufferSize( SB_HANDLE handle )
+{
+  SB_CTRL *temp;
+
+  temp = (SB_CTRL *)(handle );
+  assert( temp->magic == STRING_BUFFER_MAGIC );
+  
+  return temp->size;
+  
+}
+
+void SB_freeBuffer( SB_HANDLE handle )
+{
+  SB_CTRL *temp;
+
+  temp = (SB_CTRL *)(handle );
+  assert( temp->magic == STRING_BUFFER_MAGIC );
+  temp->free  = temp->size;
+  temp->end   = temp->buffer;
+}int SB_currentSize( SB_HANDLE handle );
+
+
+int SB_currentSize( SB_HANDLE handle )
+{
+  SB_CTRL *temp;
+
+  temp = (SB_CTRL *)(handle );
+  assert( temp->magic == STRING_BUFFER_MAGIC );
+  
+  return temp->size - temp->free;
+  
+}
+
+
+int SB_freeSize( SB_HANDLE handle )
+{
+  SB_CTRL *temp;
+int SB_currentSize( SB_HANDLE handle );
+  temp = (SB_CTRL *)(handle );
+  assert( temp->magic == STRING_BUFFER_MAGIC );
+  
+  return temp->free;
+  
+}int SB_currentSize( SB_HANDLE handle );
+
+int SB_appendString( SB_HANDLE handle, char *appendString )
+{
+  SB_CTRL *temp;
+  int     returnValue;
+  int     tempSize;
+
+  temp = (SB_CTRL *)(handle );
+  assert( temp->magic == STRING_BUFFER_MAGIC );
+  
+  tempSize = strlen( appendString );
+  returnValue = SB_appendBytes( handle, appendString, tempSize );
+  return returnValue;
+}
+
+
+int SB_currentSize( SB_HANDLE handle );
+int SB_appendBytes( SB_HANDLE handle, char *start, int number )
+{
+  SB_CTRL *temp;
+  int     returnValue;
+
+  temp = (SB_CTRL *)(handle );int SB_currentSize( SB_HANDLE handle );
+  assert( temp->magic == STRING_BUFFER_MAGIC );
+  
+  if( number < temp->free )
+  {
+    returnValue = 0;
+    memcpy( temp->end, start, number );
+    temp->end  +=  number;
+    temp->free -=  number;
+  }
+  else
+  { 
+    returnValue = -1;
+  }
+  return returnValue;
+}
+
+
+int SB_appendFile( SB_HANDLE handle, FILE *fp )
+{
+  SB_CTRL *temp;
+  char    buffer[256];
+  char    *str;
+  int     returnValue;
+ 
+
+  temp = (SB_CTRL *)(handle );
+  assert( temp->magic == STRING_BUFFER_MAGIC );
+
+  returnValue = 0;
+
+  while(1)
+  {
+   
+      str = fgets( buffer, 256, fp );
+      if( str == NULL )
+      {
+        goto done;
+      }
+      else
+      {
+       
+         returnValue = SB_appendString( temp, buffer );
+         if( returnValue < 0 )
+         {
+            goto done;
+         }
+
+      }
+
+  }  
+
+done:  
+
+
+  return returnValue; 
+ 
+}
+
+// end being -1 means end of the buffer
+char *SB_extract( SB_HANDLE handle, int start, int length )
+{
+  SB_CTRL *temp;
+  char    *returnValue;
+  
+ 
+
+  temp = (SB_CTRL *)(handle );
+  assert( temp->magic == STRING_BUFFER_MAGIC );
+  if( length == -1 )
+  {
+     length = temp->size-start;
+  }
+  if( length < temp->size-temp->free)
+  {
+    length = temp->size-temp->free;
+  }
+
+  if( (temp->size == 0 ) ||
+      ( start > temp->size-1 ) ||
+      ( length == 0 ) ||
+      ( ( start + length ) > temp->size ) )
+  {
+    returnValue = NULL;
+    goto end;
+  }
+  
+  returnValue = malloc( length +1 );
+  memset( returnValue,0,length+1);
+  if( returnValue == NULL )
+  {
+        goto end;
+  }
+  memcpy( returnValue, temp->buffer+start,length );
+
+ 
+end:
+  return returnValue;
+}
+
+
+

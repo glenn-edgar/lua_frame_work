@@ -1,0 +1,28 @@
+/*
+
+File: luaWeb.h
+
+
+*/
+
+
+#ifndef _LUA_HTTP_SETUP_H_
+#define _LUA_HTTP_SETUP_H_
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+#include "lua.h"
+
+int lua_initialize( lua_State *L  );
+int lua_webRegister( lua_State *L );
+
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif

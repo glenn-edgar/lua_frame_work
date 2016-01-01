@@ -1,0 +1,43 @@
+/*
+**  File:  c_dyanmicObjects.h
+**
+**  This file contains the definition of the
+**  static objects
+*/ 
+
+
+#ifndef _C_DYNAMIC_OBJECT_DEFINES_H_
+#define _C_DYNAMIC_OBJECT_DEFINES_H_
+
+#include "lua.h"
+
+
+
+#ifdef __cplusplus 
+
+extern "C"
+{
+#endif
+
+
+void initialize_C_dynamicObjects( lua_State *L );
+
+// used by c_sObj C Api functions
+void packObject( lua_State                  *L,
+                 int                        format,
+                 const char                 *type, 
+                 int                         mallocPool, 
+                 void                        *address,
+                 int                         size,
+                 const STRUCTURE_DEFINITION  *structDefinitions,
+                 const char                  *structName );
+
+
+
+#ifdef __cplusplus 
+
+}
+
+#endif
+
+#endif

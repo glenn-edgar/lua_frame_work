@@ -1,0 +1,12 @@
+/*
+**
+** Stub functions to resolve intertask lock functions
+**
+**
+**
+**
+*/
+
+#include "llimits.h"
+
+

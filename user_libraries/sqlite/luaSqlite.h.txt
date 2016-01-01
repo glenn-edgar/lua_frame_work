@@ -1,0 +1,29 @@
+/*
+**
+** File: luaSqlite.h
+**
+** File to interface to sqlite data base
+**
+**
+**
+**
+*/
+
+#ifndef _LUA_SQLITE_H_
+#define _LUA_SQLITE_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+
+
+int sqliteLoad( lua_State *L );
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+#endif

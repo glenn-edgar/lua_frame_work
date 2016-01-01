@@ -1,0 +1,135 @@
+/*
+**
+** File: lua_process.c
+** lua interface to linux process library
+**
+**
+**
+*/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/file.h>
+#include <sys/wait.h>
+#include <errno.h>
+#include <strings.h>
+#include <termios.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+
+
+#include "lua_process.h"
+
+static int lua_process_create( lua_State *L )
+{
+    pid_t   pid;
+    int     loopNumber;
+    int     loopIndex;
+    char    *args[10];
+
+    // null pointer array
+    memset( args, 0, sizeof(args));
+
+    // fill out argument array
+    loopNumber = lua_tointeger(L ,1 );
+    printf("loopNumber %d \n",loopNumber);
+    if( loopNumber > 10 )
+    {
+       loopNumber = 10;
+    }
+
+    if( loopNumber <= 0 ) {  return 0; }
+
+    for( loopIndex = 0; loopIndex < loopNumber; loopIndex++ )
+    {
+      args[ loopIndex ] = (char *)lua_tostring(L, loopIndex+2 );
+      printf("args %s \n",args[ loopIndex ] );
+    } 
+    pid = fork();
+    printf("pid is %d \n",pid);
+    if( pid == 0 )
+    {    
+       printf("spawning process \n");
+          
+        execv( args[0] ,args );
+        // should not return
+    }
+    lua_pushinteger( L, pid );
+    return 1;
+}
+
+
+static int lua_process_terminate( lua_State *L )
+{
+   pid_t childPid;
+   int   returnValue;
+
+   childPid  = lua_tointeger(L ,1 );
+
+   returnValue = kill( childPid, SIGKILL );
+
+   lua_pushinteger(L ,returnValue ); 
+   return 1;
+}
+
+
+static int lua_process_status( lua_State *L )
+{
+   pid_t childPid;
+   int   returnValue;
+
+   childPid  = lua_tointeger(L ,1 );
+
+   returnValue = waitpid( childPid, NULL, WNOHANG );
+    lua_pushinteger(L ,returnValue ); 
+   return 1;
+}
+
+
+static int description( lua_State *L )
+{
+  lua_pushstring(L,"provides process create and termination support");
+  return 1;
+}
+
+static int lua_process_help( lua_State *L )
+{
+  printf("list of commands for process management \n");
+  printf(".create( numberOfParameters, parameters ..) \n");
+  printf(".terminate(pid) -- terminates process \n");
+  printf(".status( pid ) -- returns process status \n");
+  return 0;
+}   
+
+
+static const struct luaL_reg  lua_process[] = 
+{
+   {"create",            lua_process_create  },
+   {"terminate",         lua_process_terminate  },
+   {"status",            lua_process_status     },
+   {"help",              lua_process_help   },
+   {"description",       description        },
+   { NULL, NULL },      
+   
+};
+
+
+
+int lua_process_load( lua_State *L )
+{
+   
+   luaL_openlib(L,"process",lua_process,0 );
+   return 1;
+}
+
+
+

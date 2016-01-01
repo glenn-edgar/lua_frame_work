@@ -1,0 +1,184 @@
+/*
+** 
+**  Copyright 2008 OnyxEngineering
+**  This file is licensed MIT
+**   File: lua_client.c
+**   lua interface to a tcp client with little error checking
+**
+**
+**
+**
+**
+**
+*/
+
+
+
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <netdb.h>         /* gethostbyname  */
+#include <netinet/in.h>    /* htons          */
+#include <sys/socket.h>
+#include <fcntl.h>
+#include <assert.h>
+#include "lua_client.h"
+
+
+static int lua_connect( lua_State *L)
+{
+  char  *host_address;
+  int    port;
+  struct hostent *host;
+  struct sockaddr_in saddr_in;
+  int sock = 0;
+
+  host_address = (char *)lua_tostring(L,1);
+  port         = lua_tointeger(L,2);
+
+  sock = socket(AF_INET, SOCK_STREAM, 0);
+  host = gethostbyname(host_address);
+
+  saddr_in.sin_family = AF_INET;
+  saddr_in.sin_port = htons((u_short)port);
+  saddr_in.sin_addr.s_addr = 0;
+
+  memcpy((char*)&(saddr_in.sin_addr), host->h_addr, host->h_length);
+
+  if(connect(sock, (struct sockaddr*)&saddr_in, sizeof(saddr_in)) == -1)
+  {
+      sock = -1;
+      
+  }
+  lua_pushinteger(L, sock);
+  return 1;
+}
+
+static int lua_nonBlock( lua_State *L )
+{
+   int sock;
+   int flags;
+
+   sock = lua_tointeger(L,1);
+   flags = fcntl(sock, F_GETFL);
+   fcntl(sock, F_SETFL, flags | O_NONBLOCK);
+   
+   return 0;
+
+}
+
+
+
+static int lua_send( lua_State *L)
+{
+
+  int       sock;
+  char     *data;
+  size_t   length;
+  int      status;
+
+  sock = lua_tointeger(L,1);
+  data = (char *)lua_tolstring (L,2, &length);
+  status = send(sock, data, length, MSG_NOSIGNAL);
+  lua_pushinteger(L,status);
+  return 1;
+}
+
+
+static int  lua_recv( lua_State *L )
+{
+   char *buf;
+   int  sock;
+   int  bufSize;
+   int  length;
+   int  returnNumber;
+   int  flag;
+
+   sock    = lua_tointeger(L,1);
+   bufSize = lua_tointeger(L,2);
+   if( lua_gettop(L) > 2 )
+   {
+     flag = lua_tointeger(L,3);
+   }
+   else
+   {
+     flag = 0;
+   }
+   buf     = malloc( bufSize);
+   assert( buf != NULL );
+   if( flag > 0 )
+   {
+     length = recv(sock, buf, bufSize - 1,MSG_NOSIGNAL|MSG_DONTWAIT);
+   }
+   else
+   {
+     length = recv( sock,buf,bufSize-1,MSG_NOSIGNAL);
+   }
+   if( length < 0 )
+   {
+      lua_pushboolean(L,0);
+      returnNumber = 1;
+   }
+   else
+   { 
+      returnNumber = 2;
+      lua_pushboolean(L,1);
+      lua_pushlstring(L, buf, length);
+   }
+   free( buf);
+   return returnNumber;
+} 
+      
+static int lua_socketClose( lua_State *L)
+{
+  int socket;
+
+  socket = lua_tointeger(L,1);
+  close( socket);
+  return 0;
+}
+
+
+static int description( lua_State *L )
+{
+  lua_pushstring(L, "tcp client");
+  return 1;
+}
+
+static int lua_help( lua_State *L )
+{
+  printf(".connect( host_address,port) -- returns handle or nil\n");
+  printf(".nonBlock(handle)  -- turns connection for nonblocking \n");
+  printf(".send(handle,data)  -- sends data out connection  \n");
+  printf(".recv(handle,bufSize )      -- returns data from connection \n"); 
+  printf(".close(handle) --- closes socket connection \n");    
+  printf(".help()              -- display methods \n"); 
+
+  return 0;
+}   
+
+static const struct luaL_reg  lua_tcpClientLib[] = 
+{
+   {"connect",        lua_connect  },
+   {"nonBlock",       lua_nonBlock },
+   {"send",           lua_send     },
+   {"recv",           lua_recv     },
+   {"close",          lua_socketClose },
+   {"help",           lua_help     },
+   {"description",    description }, 
+   { NULL, NULL },      
+   
+};
+
+
+
+int lua_tcpClient( lua_State *L )
+{
+   
+
+
+   luaL_openlib(L,"tcp_client",lua_tcpClientLib,0 );
+   return 1;
+}
+

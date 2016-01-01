@@ -1,0 +1,24 @@
+/*
+** Copyright 2008 Onyx Engineering
+** This file is licensed MIT
+** File: lua_serial.h
+**
+** Interface file for lua_serial.h
+**
+**
+**
+**
+*/
+
+#ifndef _LUA_DIGI_ZIGBEE_H_
+#define _LUA_DIGI_ZIGBEE_H_
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+#include "lua_digi_zigbee.h"
+
+
+int lua_digi_zigbee_load( lua_State *L);
+
+#endif

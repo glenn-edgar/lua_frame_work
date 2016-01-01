@@ -1,0 +1,47 @@
+/*
+**
+** Copyright 2008 Onyx Engineering
+** This file is licensed MIT
+**
+** File: lua_osExtend.h
+** The purpose of this file is to extend
+** the lua library OS
+**
+**
+**
+**
+*/
+
+
+#ifndef _LUA_TINY_POSIX_H_
+#define _LUA_TINY_POSIX_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "lua.h"
+
+
+
+
+int Pchdir(lua_State *L);  /** chdir(path) */
+
+
+int Pmkdir(lua_State *L); /** mkdir(path) */
+
+
+
+int Pdir(lua_State *L);	  /* dir([path]) */
+
+
+int Pgetcwd(lua_State *L);	/** getcwd() */
+
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif
+

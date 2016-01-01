@@ -1,0 +1,417 @@
+/*
+**
+File: c_supportCtrl.c
+
+Coordinates c support routines 
+**
+*/
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include "c_supportCtrl.h"
+#include "basicMemOps.h"
+#include "c_structures.h"
+#include "c_mallocMgr.h"
+#include "c_staticObjects.h"
+#include "c_dynamicObjects.h"
+#include "c_function_interface.h"
+#include "lua_c_dynamicIntf.h"
+#include <dlfcn.h>
+#include "FPsystem.h"
+
+extern FILE* lout;
+extern FILE* lin;
+
+static int 
+verifyPackageInterface( PACKAGE_INTERFACE  *packageInterface );
+
+static int 
+dynamicLoadSharedLibrary( lua_State *L);
+
+
+static int
+verifyStructure( PACKAGE_INTERFACE *packageInterface );
+
+static int
+verifyStaticObjects( PACKAGE_INTERFACE *packageInterface );
+
+static int
+verify_C_Functions( PACKAGE_INTERFACE *packageInterface );
+
+static int
+verifyStructureFields( STRUCTURE_DEFINITION *currentDefinition,
+                       STRUCTURE_DEFINITION *definitionStart );
+
+static int verifyTableName( const STRUCTURE_DEFINITION *structDefinitions, 
+                            const char *name );
+
+
+void initialize_C_support( lua_State *L )
+{
+  initialize_mallocManager( L );
+  initializeBasicMemOperations( L );
+  initialize_C_dynamicObjects( L );
+  initializeEmbedded_C_Functions(L);
+  // registering the shared library loader
+  lua_getglobal( L, "lsys" );
+  lua_pushstring(L ,"sharedLibLoad");
+  lua_pushcfunction( L, dynamicLoadSharedLibrary );
+  lua_settable(L, -3 );
+  lua_pop(L,-1);
+
+}
+
+static int dynamicLoadSharedLibrary( lua_State *L)
+{
+  const char          *moduleName;
+  const char         *functionName;
+  void               *moduleHandle;
+  void               *functionHandle;
+  int                 returnValue;
+  PACKAGE_INTERFACE  *packageInterface;
+  PACKAGE_FUNCTION    packageFunction;
+  int                 argCount;
+  
+  argCount = 2;
+  moduleName = lua_tostring(L,-2);
+  functionName = lua_tostring(L,-1);
+
+  moduleHandle = dlopen(moduleName,RTLD_NOW|RTLD_GLOBAL );
+  if( moduleHandle != NULL )
+  {
+    functionHandle = dlsym( moduleHandle, functionName);
+  }
+  else
+  { 
+    returnValue = -1;
+    goto end;
+  }
+  if( functionHandle == NULL )
+  {
+    returnValue = -2;
+    goto end;
+  }
+  packageFunction = ( PACKAGE_FUNCTION ) functionHandle;
+  packageInterface = packageFunction();
+  if( packageInterface == NULL )
+  {
+    returnValue = -3;
+    goto end;
+  }
+  if( verifyPackageInterface( packageInterface ) != 0 )
+  {
+    returnValue = -4;
+    goto end;
+  }
+  lua_newtable( L);
+  lua_pushstring(L ,"staticObjects");
+  lua_pushlightuserdata(L, packageInterface->staticObjects );
+  lua_settable(L, -3 );
+  lua_pushstring(L ,"structDefinitions");
+  lua_pushlightuserdata(L, packageInterface->structDefinitions );
+  lua_settable(L, -3 );
+  lua_pushstring(L ,"c_functionInterface");
+  lua_pushlightuserdata(L, packageInterface->c_functionInterface );
+  lua_settable(L, -3 );
+  returnValue = 0;
+ 
+end:
+  if( returnValue != 0 )
+  {
+    lua_pushnil(L);
+  }
+  lua_pushinteger(L,returnValue);
+  return argCount;
+ }
+   
+
+
+static int 
+verifyPackageInterface( PACKAGE_INTERFACE  *packageInterface )
+{
+  int returnValue;
+
+  returnValue = 0;
+  returnValue |= verifyStructure( packageInterface );
+  returnValue |= verifyStaticObjects( packageInterface );
+  returnValue |= verify_C_Functions( packageInterface );
+
+  return returnValue;
+}
+
+
+
+static int
+verifyStructure( PACKAGE_INTERFACE *packageInterface )
+{
+ 
+  STRUCTURE_DEFINITION *structDefinitions;
+  STRUCTURE_DEFINITION *baseDef;
+  int returnValue;
+
+
+  returnValue = 0;
+  structDefinitions = packageInterface->structDefinitions;
+  baseDef           = structDefinitions;
+  while( 1 )
+  {
+  
+    // detecting ending sentel
+    if( ( structDefinitions->magic == 0 ) &&
+        ( structDefinitions->name  == 0 ) &&
+        ( structDefinitions->structureSize == 0 ) &&
+        ( structDefinitions->fieldDefinitions == NULL ) )
+    {
+      goto end;
+    }
+    if( structDefinitions->magic != STRUCT_MAGIC )
+    {
+      returnValue = 0x100;
+      goto end;
+    }
+     returnValue = 
+      verifyStructureFields( structDefinitions ,baseDef );
+    if( returnValue != 0 )
+    {
+      goto end;
+    }
+
+    structDefinitions++;
+  }
+end:
+  return returnValue;
+}
+
+
+
+
+
+static int
+verifyStaticObjects( PACKAGE_INTERFACE *packageInterface )
+{
+ 
+  STATIC_OBJECTS       *staticObjects;
+  int returnValue;
+
+
+  returnValue = 0;
+  staticObjects = packageInterface->staticObjects;
+
+  
+  while( 1 )
+  {
+   
+ 
+    // detecting ending sentel
+    if( ( staticObjects->magic == 0 ) &&
+        ( staticObjects->name  == 0 ) &&
+        ( staticObjects->format == 0 ) &&
+        ( staticObjects->arraySize == 0) &&
+        ( staticObjects->elementSize == 0 ) &&
+        ( staticObjects->address == NULL ) &&
+        ( staticObjects->structureDefinition == NULL ) &&
+        ( staticObjects->structureName == NULL ) )
+    {
+      goto end;
+    }
+    if( staticObjects->magic != STATIC_MAGIC )
+    {
+      returnValue = 0x200;
+      goto end;
+    } 
+    switch( staticObjects->format )
+    {
+      case CFM_INT:
+      case CFM_STR:
+      case CFM_LONG:   	
+      case CFM_DOUBLE:
+      case CFM_SHORT:
+      case CFM_CHAR:
+      case CFM_PTR:
+      case CFM_STRUCT:
+      case CFM_STRUCT_PTR:
+        // these values are good
+        break; 
+      default:
+         // default value is bad
+         returnValue = 0x282;
+         goto end;
+     }
+     switch( staticObjects->format )
+     {
+      case CFM_STRUCT:
+      case CFM_STRUCT_PTR:
+           if( verifyTableName( packageInterface->structDefinitions, 
+                           staticObjects->structureName ) != 0 )
+           {
+             // structure name not found
+             returnValue = 0x283;
+             goto end;
+           }
+          break;
+      default:
+         ; // no further action needed
+    }
+    staticObjects++;
+  }
+end:
+  return returnValue;
+}
+
+
+
+
+
+static int
+verify_C_Functions( PACKAGE_INTERFACE *packageInterface )
+{
+ 
+  C_FUNCTION_INTERFACE *c_functionInterface;
+  int returnValue;
+
+
+  returnValue = 0;
+  c_functionInterface = packageInterface->c_functionInterface;
+
+  
+  while( 1 )
+  {
+   
+    // detecting ending sentel
+    if( ( c_functionInterface->magic == 0 ) &&
+        ( c_functionInterface->name  == 0 ) &&
+        ( c_functionInterface->format == NULL ) &&
+        ( c_functionInterface->address == 0 ) )
+    {
+      goto end;
+    }
+    if( c_functionInterface->magic != FUNCTION_MAGIC )
+    {
+      returnValue = 1;
+      goto end;
+    }
+
+    c_functionInterface++;
+  }
+end:
+  return returnValue;
+}
+
+/*
+**
+**  Static Support Functions
+**
+**
+**
+**
+**
+*/
+
+
+
+
+static int
+verifyStructureFields( STRUCTURE_DEFINITION *currentDefinition,
+                       STRUCTURE_DEFINITION *baseDefinition )
+{
+  int returnValue;
+  const FIELD_DEFINITION *fieldDefinitions;
+
+
+  fieldDefinitions = currentDefinition->fieldDefinitions;
+  returnValue = 0;
+  if( fieldDefinitions == NULL )
+  {
+    returnValue = 0x180;
+    goto end;
+  }
+  
+  while(1)
+  {
+    if( ( fieldDefinitions->magic == 0            ) &&
+        ( fieldDefinitions->name  == NULL         ) &&
+        ( fieldDefinitions->offset == 0           ) &&
+        ( fieldDefinitions->structureName == NULL ) )
+     {
+      // end of list quit
+      goto end;
+    }
+    
+    if( fieldDefinitions->magic != FIELD_MAGIC )
+    {
+      returnValue = 0x181;
+      goto end;
+    }
+    switch( fieldDefinitions->format )
+    {
+      case CFM_INT:
+      case CFM_STR:
+      case CFM_LONG:   	
+      case CFM_DOUBLE:
+      case CFM_SHORT:
+      case CFM_CHAR:
+      case CFM_PTR:
+      case CFM_STRUCT:
+      case CFM_STRUCT_PTR:
+        // these values are good
+        break; 
+      default:
+         // default value is bad
+         returnValue = 0x182;
+         goto end;
+     }
+    switch( fieldDefinitions->format )
+    {
+      case CFM_STRUCT:
+      case CFM_STRUCT_PTR:
+           if( verifyTableName( baseDefinition, 
+                           fieldDefinitions->structureName ) != 0 )
+           {
+             // structure name not found
+             returnValue = 0x183;
+             goto end;
+           }
+          break;
+      default:
+         ; // no further action needed
+    }
+
+    fieldDefinitions++;
+  }
+
+
+end:
+  return returnValue;
+}
+
+
+static int verifyTableName( const STRUCTURE_DEFINITION *structDefinitions, 
+                            const char *name )
+{
+ 
+  int returnValue;
+
+
+  returnValue = -1;
+ 
+  while( 1 )
+  {
+  
+    // detecting ending sentel
+    if( ( structDefinitions->magic == 0 ) &&
+        ( structDefinitions->name  == 0 ) &&
+        ( structDefinitions->structureSize == 0 ) &&
+        ( structDefinitions->fieldDefinitions == NULL ) )
+    {
+      goto end;
+    }
+    if( strcmp( name, structDefinitions->name ) == 0)
+    {
+       returnValue = 0;
+       goto end;
+    }
+    structDefinitions++;
+  }
+end:
+  return returnValue;
+}

@@ -1,0 +1,26 @@
+/*
+** Copyright 2008 Onyx Engineering
+** This file is licensed MIT
+** File: lua_pat_string.h
+**
+** Interface file for lua_pat_string.c
+**
+**
+**
+**
+*/
+
+#ifndef _LUA_PAT_STRING_H_
+#define _LUA_PAT_STRING_H_
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+
+
+int lua_pat_string_load( lua_State *L );
+
+
+
+#endif

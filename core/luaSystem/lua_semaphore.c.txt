@@ -1,0 +1,135 @@
+/*
+** File: lua_semaphore.c
+  Copyright 2008 Onyx Engineering
+   This file is licensed as MIT
+**
+**
+**
+**
+**
+*/
+
+#include <unistd.h>
+#include <assert.h>
+#include "cs_semaphore.h"
+#include "lua.h"
+#include "lauxlib.h"
+#include "lua_semaphore.h"
+
+#define LUA_SEMAPHORE_ID           0xaa55
+
+static int luaSemaphore;
+static int lock_count;
+
+
+
+ 
+
+int lua_lock( lua_State *L)
+{
+     
+   cs_wait_for_semaphore( luaSemaphore, 0 );
+  
+   return 0;
+}
+
+
+
+
+int lua_unlock( lua_State *L)
+{
+
+ 
+  cs_release_semaphore( luaSemaphore, 0);
+
+  return 0;
+}
+
+
+
+
+
+
+
+static int lua_timeDelay( lua_State *L )
+{
+   int timeDelay; // ms
+   int delayInterval;
+
+   timeDelay = lua_tointeger(L,-1);
+
+   
+   cs_release_semaphore( luaSemaphore, 0);
+  
+   while( timeDelay >0 )
+   {
+    if( timeDelay > 1000 )
+    {
+       delayInterval = 1000;
+    }
+    else
+    {
+        delayInterval = timeDelay;
+    }
+    timeDelay -= delayInterval;
+    usleep( delayInterval*1000 );
+   }
+
+   
+  
+   cs_wait_for_semaphore( luaSemaphore, 0 );
+
+  
+
+   return 0;
+}
+  
+
+static int description(lua_State *L )
+{
+  lua_pushstring(L,"provides lua unlock and lock support");
+  return 1;
+}
+
+static int lua_semaphoreHelp( lua_State *L )
+{
+  printf(".lock()   --- lock resources \n");
+  printf(".unlock() --- unlock resources \n");
+  printf(".timeDelay( milliseconds ) -- time Delay while unlocked \n");
+  printf(".help() -- prints list of commands \n");
+  return 0;
+}
+
+
+static const struct luaL_reg lua_semaphore[] =
+{
+   { "lock",              lua_lock },
+   { "unLock",            lua_unlock  },
+   { "timeDelay",         lua_timeDelay },
+   { "help",              lua_semaphoreHelp },
+   { "description",       description },
+   { NULL, NULL }
+};
+
+
+
+
+int lua_registerSemaphoreSupport( lua_State *L )
+{
+   lock_count = 0;
+
+   luaSemaphore = cs_create_private_semaphore( LUA_SEMAPHORE_ID, 1 );
+   assert( luaSemaphore >= 0 );
+
+   luaL_openlib(L,"semaphore",lua_semaphore,0 );
+   return 1;
+}
+
+
+
+
+
+
+
+
+

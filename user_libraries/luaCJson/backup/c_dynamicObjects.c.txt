@@ -1,0 +1,766 @@
+/*
+**
+File: c_dyanmicObjects.c
+This file contains a dictionary of C objects
+**
+*/
+
+#include "stdlib.h"
+#include "stdio.h"
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+
+#include "basicMemOps.h"
+#include "c_structures.h"
+#include "c_mallocMgr.h"
+#include "c_dynamicObjects.h"
+#include "FPsystem.h"
+
+/*
+**
+** Pointer Handle is a structure with following keys
+** address memoryPool format stuctureName arrayNumber
+**
+**
+**
+** <pointerHandle>
+** { format, type, address, structName,mallocPool, magic,  }
+**
+**
+**
+**
+*/
+extern FILE *lout;
+extern FILE *lin;
+
+#define PTR_HNDL_MAGIC 0x456789AB
+typedef struct
+{
+  int                         format;
+  char                        *type;
+  void                        *address;
+  int                         size;
+  int                         mallocPool;
+  int                         magic;
+  const char                  *structName;
+  const STRUCTURE_DEFINITION  *structDefinitions;
+  
+}POINTER_HANDLE;
+
+static void unPackObject( lua_State       *L, 
+                          int             tableIndex,
+                          POINTER_HANDLE  *pointerHandle );
+  
+
+
+static int validateHandle( lua_State       *L,
+                           POINTER_HANDLE  *pointerHandle );
+
+static void readElement( lua_State *L, POINTER_HANDLE *pHnd );
+static void writeElement( lua_State *L, POINTER_HANDLE *pHnd );
+
+// c_dObj.malInt( memPool )
+static int c_dynamicObjmallocInt( lua_State *L )
+{
+   int          mallocPool;
+   void         *address;
+
+   mallocPool = lua_tointeger( L,-1 );
+
+   address = mallocManager_allocate( L, 
+                                     mallocPool,
+                                     sizeof(int)  );
+
+   packObject( L,
+               CFM_INT, "INTEGER", 
+               mallocPool,
+               address,  sizeof(int),
+               NULL ,
+               NULL );
+   return 1;
+}
+
+// c_dObj.mkInt( address  )
+static int c_dynamicObjmakeIntPtr( lua_State *L )
+{
+
+   void         *address;
+
+   address = lua_touserdata( L,-1 );
+   packObject( L,
+               CFM_INT, "INTEGER", 
+               -1, // null Malloc Pool
+               address,  sizeof(int),
+               NULL,NULL );
+
+   return 1;
+}
+
+// c_dObj.malLong( memPool )
+static int c_dynamicObjmallocLong( lua_State *L )
+{
+   int          mallocPool;
+   void         *address;
+
+   mallocPool = lua_tointeger( L,-1 );
+   address = mallocManager_allocate( L, 
+                                     mallocPool,
+                                     sizeof(long)  );
+
+
+   packObject( L,
+               CFM_LONG, "LONG", 
+               mallocPool,
+               address,  sizeof(long),
+               NULL,NULL );
+
+   return 1;
+}
+
+// c_dObj.mkLong( address  )
+static int c_dynamicObjmakeLongPtr( lua_State *L )
+{
+
+   void         *address;
+
+   address = lua_touserdata( L,-1 );
+   packObject( L,
+               CFM_LONG, "LONG", 
+               -1, // null Malloc Pool
+               address,  sizeof(long),
+               NULL,NULL );
+
+   return 1;
+}
+// c_dObj.malShort( memPool )
+static int c_dynamicObjmallocShort( lua_State *L )
+{
+   int          mallocPool;
+   void         *address;
+
+   mallocPool = lua_tointeger( L,-1 );
+   address = mallocManager_allocate( L, 
+                                     mallocPool,
+                                     sizeof(short)  );
+
+   packObject( L,
+               CFM_SHORT, "SHORT", 
+               mallocPool,
+               address,  sizeof(short),
+               NULL,NULL );
+
+   return 1;
+}
+
+// c_dObj.mkShort( address  )
+static int c_dynamicObjmakeShortPtr( lua_State *L )
+{
+
+   void         *address;
+
+   address = lua_touserdata( L,-1 );
+   packObject( L,
+               CFM_SHORT, "SHORT", 
+               -1, // null Malloc Pool
+               address,  sizeof(short),
+               NULL , NULL );
+
+   return 1;
+}
+// c_dObj.malNum( memPool)
+static int c_dynamicObjmallocDouble( lua_State *L )
+{
+   int          mallocPool;
+   void         *address;
+
+   mallocPool = lua_tointeger( L,-1 );
+   address = mallocManager_allocate( L, 
+                                     mallocPool,
+                                     sizeof(double)  );
+
+   packObject( L,
+               CFM_DOUBLE, "DOUBLE", 
+               mallocPool,
+               address,  sizeof(double),
+               NULL, NULL );
+
+   return 1;
+}
+
+
+// c_dObj.mkNum( address  )
+static int c_dynamicObjMakeDoublePtr( lua_State *L )
+{
+
+   void         *address;
+
+   address = lua_touserdata( L,-1 );
+   packObject( L,
+               CFM_DOUBLE, "DOUBLE", 
+               -1, // null Malloc Pool
+               address,  sizeof(double),
+               NULL, NULL );
+
+   return 1;
+}
+
+// c_dObj.malStr( memPool, size )
+static int c_dynamicObjMallocString( lua_State *L )
+{
+   int          mallocPool;
+   void         *address;
+   int          size;
+
+   mallocPool = lua_tointeger( L,-2 );
+   size       = lua_tointeger( L,-1 );
+   address = mallocManager_allocate( L, 
+                                     mallocPool,
+                                     size +1  );
+   packObject( L,
+               CFM_STR, "STRING", 
+               mallocPool,
+               address,  size,
+               NULL ,NULL );
+
+   return 1;
+}
+// c_dObj.mkStr( address )
+static int c_dynamicObjmakeString( lua_State *L )
+{
+
+   void         *address;
+
+   address = lua_touserdata( L,-1);
+   packObject( L,
+               CFM_STR, "STRING", 
+               -1, // null Malloc Pool
+               address,  1,
+               NULL,NULL );
+
+   return 1;
+}
+
+// c_dObj.malStruct( memPool,structureName )
+static int c_dynamicObjMallocStructure( lua_State *L )
+{
+   int                 mallocPool;
+   void                *address;
+   const char          *structName;
+   unsigned                 size;
+   const STRUCTURE_DEFINITION *structureDefinition;
+
+   mallocPool          = lua_tointeger( L,-3 );
+   structName          = lua_tostring( L, -2 );
+
+   structureDefinition = ( const STRUCTURE_DEFINITION *)
+                         lua_topointer(L,-1);
+
+   size = getStructureSize( structureDefinition, structName );
+  
+   address = mallocManager_allocate( L, 
+                                     mallocPool,
+                                     size  );
+   packObject( L,
+               CFM_STRUCT, "STRUCTURE", 
+               mallocPool,
+               address,  size,
+               structureDefinition,
+               structName );
+
+   return 1;
+}
+
+// c_dObj.mkStruct( address,structureName )
+static int c_dynamicObjMakeStructure( lua_State *L )
+{
+  
+   void                       *address;
+   const char                 *structName;
+   int                        size;
+   const STRUCTURE_DEFINITION *structureDefinition;
+
+
+   address = lua_touserdata( L, -3 );
+   structName = lua_tostring( L, -2 );
+   structureDefinition = ( const STRUCTURE_DEFINITION *)
+                         lua_topointer(L,-1);
+
+   size = getStructureSize( structureDefinition, structName );
+   packObject( L,
+               CFM_STRUCT, "STRUCTURE", 
+               -1, // null Malloc Pool
+               address,  size,
+               structureDefinition,
+               structName );
+   return 1;
+}
+
+// c_dObj.addPtr( ptrHandle, increment )
+static int c_dynamicObjAddPointer( lua_State *L )
+{
+  POINTER_HANDLE x;
+  int            increment;
+  
+  unPackObject( L, -2, &x );
+  increment = lua_tointeger(L,-1);
+  if( validateHandle(L,&x) == 0 )
+  {
+       luaL_error(L,"Not a valid ptr handle \r\n" );
+  }
+  else if( x.mallocPool >= 0 )
+  {
+     luaL_error(L,"Malloc'd objects can not have pointers modified \r\n" );
+  }
+  else 
+  {       
+    lua_pushlightuserdata(L,(void *)((int)x.address+(x.size*increment)));
+    lua_setfield(L,-3,"address");
+
+  }
+
+  return 0;
+}
+
+// c_dObj.freePtr( ptrHandle )
+static int c_dynamicObjFreePointer( lua_State *L )
+{
+  POINTER_HANDLE x;
+  
+  unPackObject( L, -1, &x );
+  if( validateHandle(L,&x) == 0 )
+  {
+    luaL_error(L,"Not a valid ptr handle \r\n" );
+   
+  }
+  else if( x.mallocPool >= 0 )
+  {
+    mallocManager_free( L, x.mallocPool, x.address );
+    lua_pushinteger(L,0);
+    lua_setfield(L,-2,"address");
+    lua_pushinteger(L,0);
+    lua_setfield(L,-2,"magic");
+    lua_pushinteger(L,-1);
+    lua_setfield(L,-2,"mallocPool");
+
+  }
+  else
+  {
+    luaL_error(L,"Object is not a malloc'd object \r\n" );
+  }
+
+  return 0;
+}
+
+// int c_dObj.findNode( ptrHandle,Node)
+static int c_dynamicObjFindNode( lua_State *L )
+{
+   POINTER_HANDLE             x;
+   const char                 *fieldName; 
+   const STRUCTURE_DEFINITION *structDef;
+   const STRUCTURE_DEFINITION *newStructDef;
+   const FIELD_DEFINITION     *fieldDef;
+   void                       *address;
+   unsigned                   size;
+
+   unPackObject( L, -2, &x );
+   fieldName = lua_tostring(L,-1);
+   if( validateHandle(L,&x) == 0 )
+   {
+    luaL_error(L,"Not a valid ptr handle \n" );
+    goto error;
+   }
+   if( x.structName == NULL )
+   {
+    luaL_error(L,"need structure Name \n");
+    goto error;
+   }
+   if( x.structDefinitions == NULL )
+   {
+     luaL_error(L,"need structure definitions \n");
+   }
+
+   structDef = findStructureDefinition( x.structDefinitions,
+                                   x.structName );
+
+   if( structDef == NULL )
+   {
+    luaL_error(L,"invalid structure name \r\n");
+    goto error;
+   }
+   fieldDef = 
+   findStructureField( structDef->fieldDefinitions, fieldName );
+   if( fieldDef == NULL )
+   {
+     luaL_error(L,"invalid field name \r\n");
+   }
+   address = (void *)((char *)(x.address)+fieldDef->offset);
+   if(  fieldDef->format == CFM_STRUCT  ) 
+   { 
+  
+      newStructDef = 
+      findStructureDefinition( x.structDefinitions,
+                               fieldDef->structureName );
+      if( newStructDef == NULL )
+      {
+        luaL_error(L,"invalid substructure name \r\n");
+        goto error;
+      }
+      size = newStructDef->structureSize;
+   }
+   else
+   {
+      size =  getScalarSize( fieldDef->format, address );
+   } 
+   packObject( L,
+               fieldDef->format,
+               getTypeString( fieldDef->format),
+               -1,
+               address,
+               size,
+               x.structDefinitions,
+               fieldDef->structureName );
+                 
+ 
+
+   return 1;
+error:
+   return 0;
+}
+
+// int c_dObj.read( ptrHandle )
+static int c_dynamicObjRead( lua_State *L )
+{
+   POINTER_HANDLE x;
+    
+   unPackObject( L, -1, &x );
+   if( validateHandle(L,&x) == 0 )
+   {
+    luaL_error(L,"Not a valid ptr handle \r\n" );
+    goto error;
+   }
+   else
+   {
+     readElement( L, &x );
+   }
+
+   return 1;
+error:
+   return 0;
+}
+
+// int c_dObj.write( ptrHandle, value )
+static int c_dynamicObjWrite( lua_State *L )
+{
+   POINTER_HANDLE x;
+    
+   unPackObject( L, -2, &x );
+   if( validateHandle(L,&x) == 0 )
+   {
+    luaL_error(L,"Not a valid ptr handle \r\n" );
+    goto error;
+   }
+   else
+   {
+     writeElement( L, &x );
+   }
+
+   
+error:
+   return 0;
+}
+
+static int c_dynamicObjReadArray( lua_State *L )
+{
+   POINTER_HANDLE x;
+   int            increment;
+
+   increment = lua_tointeger(L,-1);
+   unPackObject( L, -2, &x );
+
+   if( validateHandle(L,&x) == 0 )
+   {
+    luaL_error(L,"Not a valid ptr handle \r\n" );
+    goto error;
+   }
+   else
+   {
+     x.address = (void *)((int)x.address+(x.size*increment));
+     readElement( L, &x );
+   }
+
+   return 1;
+error:
+   return 0;
+}
+
+static int c_dynamicObjWriteArray( lua_State *L )
+{
+   POINTER_HANDLE x;
+   int            increment;
+    
+   unPackObject( L, -3, &x );
+   increment = lua_tointeger( L, -2);
+   if( validateHandle(L,&x) == 0 )
+   {
+    luaL_error(L,"Not a valid ptr handle \r\n" );
+    goto error;
+   }
+   else
+   {
+     x.address = (void *)((int)x.address+(x.size*increment));
+     writeElement( L, &x );
+   }
+
+   return 1;
+error:
+   return 0;
+}
+
+
+static int c_dynamicObjCopyPtr( lua_State *L )
+{
+
+   POINTER_HANDLE x;
+  
+   unPackObject( L, -1, &x );
+   
+   packObject( L, 
+               x.format,
+               x.type,
+               x.mallocPool,
+               x.address,
+               x.size,
+               x.structDefinitions,
+               x.structName );
+   return 1;
+}
+
+
+  
+
+
+static int c_dynamicObjDisplay( lua_State *L )
+{
+  POINTER_HANDLE x;
+  
+  unPackObject( L, -1, &x );
+
+  if( x.structName != NULL)
+  { 
+     fprintf(lout,
+    "address 0x%x type %s structName %s size %d Pool %d magic 0x%x\r\n",
+          ( unsigned )x.address, x.type, x.structName, x.size, x.mallocPool,
+          x.magic );
+  }
+  else
+  {
+     fprintf(lout,
+             "address 0x%x type %s Size %d Pool %d magic 0x%x\r\n",
+            (unsigned )x.address, x.type, x.size, x.mallocPool,
+            x.magic );
+  }
+  return 0;
+                    
+}
+
+static int lua_c_dynamicObjHelp  ( lua_State *L )
+{   
+  fprintf(lout,"\r\n");
+  fprintf(lout,".malInt       malloc an integer object   \r\n");
+  fprintf(lout,".mkInt        make an integer pointer \r\n");
+  fprintf(lout,".malLong      malloc a long         \r\n");
+  fprintf(lout,".mkLong       make a long pointer \r\n");
+  fprintf(lout,".malShort     malloc a short object  \r\n");       
+  fprintf(lout,".mkShort      make a short pointer \r\n");
+  fprintf(lout,".malDouble    malloc a double object \r\n");
+  fprintf(lout,".mkDouble     make a double pointer \r\n");
+  fprintf(lout,".malStr       malloc a string object \r\n");
+  fprintf(lout,".mkStr        make a string ptr \r\n");
+  fprintf(lout, ".malStruct    malloc structure object    \r\n");
+  fprintf(lout, ".mkStruct     make Structure Pointer   \r\n"); 
+  fprintf(lout, ".addPtr  increment or decrement Pointer Obj r\n");          
+  fprintf(lout,".freePtr      free malloced object   \r\n");
+  fprintf(lout,".mkNode       make pointer out of structure field  \r\n");
+  fprintf(lout,".read         read a pointer object          \r\n");
+  fprintf(lout,".write        write a pointer object        \r\n"); 
+  fprintf(lout,".readArray    read an array element of pointer object \r\n");
+  fprintf(lout,".writeArray   write an array element of pointer object \r\n");
+  fprintf(lout,".cpPtr        copy a pointer element \r\n");
+  fprintf(lout,".display      writes out fields of ptr handle \r\n"); 
+  fprintf(lout,".help         displays list of commands   \r\n");      
+  fprintf(lout,"\r\n");
+  return 0;
+}
+
+static const struct luaL_reg  lua_c_dynamicObjLib[] = 
+{
+  { "malInt",     c_dynamicObjmallocInt           },
+  { "mkInt",      c_dynamicObjmakeIntPtr          },
+  { "malLong",    c_dynamicObjmallocLong          },
+  { "mkLong",     c_dynamicObjmakeLongPtr         },
+  { "malShort",   c_dynamicObjmallocShort         },
+  { "mkShort",    c_dynamicObjmakeShortPtr        },
+  { "malDouble",  c_dynamicObjmallocDouble        },
+  { "mkDouble",   c_dynamicObjMakeDoublePtr       },
+  { "malStr",     c_dynamicObjMallocString        },
+  { "mkStr",      c_dynamicObjmakeString          },
+  { "malStruct",  c_dynamicObjMallocStructure     },
+  { "mkStruct",   c_dynamicObjMakeStructure       },
+  { "addPtr",     c_dynamicObjAddPointer          },
+  { "freePtr",    c_dynamicObjFreePointer         },
+  { "mkNode",     c_dynamicObjFindNode            },
+  { "read",       c_dynamicObjRead                },
+  { "write",      c_dynamicObjWrite               },
+  { "readArray",  c_dynamicObjReadArray           },
+  { "writeArray", c_dynamicObjWriteArray          },
+  { "cpPtr",      c_dynamicObjCopyPtr             },
+  { "display",    c_dynamicObjDisplay             },
+  { "help",       lua_c_dynamicObjHelp            },
+   { NULL, NULL },     
+   
+};
+
+
+void initialize_C_dynamicObjects( lua_State *L )
+{
+  luaL_openlib(L,"c_dObj", lua_c_dynamicObjLib, 0 );
+}
+
+void packObject( lua_State                  *L,
+                 int                        format,
+                 const char                 *type, 
+                 int                         mallocPool, 
+                 void                        *address,
+                 int                         size,
+                 const STRUCTURE_DEFINITION  *structDefinitions,
+                 const char                  *structName )
+{
+  lua_newtable(L);
+  lua_pushstring(L,"format");
+  lua_pushinteger(L,(int)format);
+  lua_settable(L,-3);
+  lua_pushstring(L,"type");
+  lua_pushstring(L,type);
+  lua_settable(L,-3);
+  lua_pushstring(L,"mallocPool");
+  lua_pushinteger(L,(int)mallocPool);
+  lua_settable(L,-3);
+  lua_pushstring(L,"address");
+  lua_pushlightuserdata(L,address);
+  lua_settable(L,-3);
+  lua_pushstring(L,"size");
+  lua_pushinteger(L,(int)size);
+  lua_settable(L,-3);
+  lua_pushstring(L,"structDefinitions");
+  lua_pushlightuserdata(L,address );
+  lua_settable(L,-3);
+  lua_pushstring(L,"structureName");
+  lua_pushstring(L,structName);
+  lua_settable(L,-3);
+  lua_pushstring(L,"magic");
+  lua_pushinteger(L,(int)PTR_HNDL_MAGIC);
+  lua_settable(L,-3);
+
+
+
+}
+
+static void unPackObject( lua_State       *L, 
+                          int             tableIndex,
+                          POINTER_HANDLE  *pointerHandle )
+{
+   lua_getfield(L,tableIndex,"format");  
+   pointerHandle->format=  lua_tointeger(L, -1 );
+   lua_pop(L,1);
+
+   lua_getfield(L,tableIndex,"type");
+   pointerHandle->type = (char *)lua_tostring(L,-1);
+   lua_pop(L,1);
+  
+   lua_getfield(L,tableIndex,"address");
+   pointerHandle->address= (void *)lua_touserdata(L,-1);
+   lua_pop(L,1);
+
+   lua_getfield(L, tableIndex, "structDefinitions");
+   pointerHandle->structDefinitions = ( void *)lua_touserdata(L,-1);
+   lua_pop(L,1);
+
+   lua_getfield(L,tableIndex,"structureName");  
+   pointerHandle->structName= (char *)lua_tostring(L,-1);
+   lua_pop(L,1);
+   lua_getfield(L,tableIndex,"size"); 
+   pointerHandle->size      = lua_tointeger(L,-1 );
+   lua_pop(L,1);
+   
+   lua_getfield(L,tableIndex,"mallocPool");  
+   pointerHandle->mallocPool = lua_tointeger(L,-1);
+   lua_pop(L,1);
+   
+   lua_getfield(L,tableIndex,"magic");  
+   pointerHandle->magic   = lua_tointeger(L,-1);
+   lua_pop(L,1);  
+
+}
+
+
+
+static int validateHandle( lua_State       *L,
+                           POINTER_HANDLE  *pointerHandle )
+{
+  int returnValue = 1;
+  if( pointerHandle->magic != PTR_HNDL_MAGIC)
+  {
+     returnValue = 0;
+     luaL_error(L,"Bad pointer Object\r\n" );
+  }
+  return returnValue;
+}
+
+
+static void writeElement( lua_State *L, POINTER_HANDLE *pHnd)
+{
+   
+   if( ( pHnd->format == CFM_STRUCT  ) ||
+       ( pHnd->format == CFM_STRUCT_PTR ))
+   { 
+        
+     writeStructure(L,
+                    pHnd->structDefinitions,
+                    1, // table index
+                    pHnd->structName, 
+                    pHnd->address );
+   }
+   else
+   {
+     writeCommonScalar( L, pHnd->format, pHnd->address );
+   }
+}
+
+void 
+readStructure( lua_State *L, 
+                     const STRUCTURE_DEFINITION *strDef, 
+                     const char                 *structureName, 
+                     void                       *address );
+
+static void readElement( lua_State *L, POINTER_HANDLE *pHnd )
+{
+  
+
+  
+    if( ( pHnd->format == CFM_STRUCT  ) ||
+        (  pHnd->format == CFM_STRUCT_PTR  ))
+   { 
+
+     readStructure( L,  
+                    pHnd->structDefinitions, 
+                    pHnd->structName,
+                    pHnd->address );
+   }
+   else
+   {
+     readCommonScalar(L, pHnd->format, pHnd->address );
+   }
+}
+
+

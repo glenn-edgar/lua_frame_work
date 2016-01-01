@@ -1,0 +1,116 @@
+--
+local temp;
+local handle;
+
+
+function assemblePassWord()
+
+  local passFile;
+  local user
+  local password
+  local splitArray
+
+  
+  passFile = io.open("password.web","r")
+  for line in passFile:lines() 
+  do 
+     splitArray = string.split( line, ",")
+     user = splitArray[1]
+     password = splitArray[2]
+     level = tonumber(splitArray[3])
+
+     if level > 0 then
+       web.editPassword("passwords/adminPwd","indyme.com",user,password)
+       web.editPassword("passwords/basePwd","indyme.com",user,password)
+     else
+       web.editPassword("passwords/basePwd","indyme.com",user,password)
+     end
+     
+  end
+  passFile:close();
+  os.execute(" cp passwords/adminPwd web_pages/.htpasswd")
+
+end
+
+
+
+
+function index_function()
+  web.print("lua web print function")
+end
+
+
+
+
+
+
+--------------------- START THE WEB SERVER ------------------------
+web.clear_dynamic_uri_table()
+web.set_dynamic_uri("/index.html", index_function )
+web.set_dynamic_uri("/index.htm",  index_function )
+
+os.execute("rm -f passwords/*")
+web.init()
+web.set_document_root("web_pages")
+--web.access_log_file("web_access.log")
+web.error_log_file( "web_error.log")
+web.ssl_certificate("server.pem" ) 
+web.set_listening_port("8070,8060s")
+web.put_delete_passwords_file("web_pages/.htpasswd")
+
+web.start()
+
+---
+---
+---
+assemblePassWord()
+
+
+
+--web.setOption(handle,"protect", tempString );
+
+--web.setOption(handle,"error_log","web_error.log")         -- comment out to disable
+--web.setOption(handle,"access_log","web_access.log")       -- comment out to disable
+--web.setOption("ssl_cert", "server.pem");
+--web.setOption(handle,"ports","16000")
+--web.setOption(handle,"root","./web_pages")
+-- no as /i_activate/aterm.htm has no password
+--web.setOption("auth_gpass","passwords/adminPwd");
+--web.setOption(handle,"ssi_ext","shtml,shtm,html,htm");
+--web.setOption(handle,"aliases","/audio/=msg/,/fixed/=fixed/");
+--web.setOption(handle, "auth_PUT","passwords/adminPwd");
+--os.execute("cp passwords/adminPwd  web_pages/advanced/.htpasswd ")
+--os.execute("cp passwords/basePwd web_pages/.htpasswd ")
+
+
+--
+-- register dynamic handlers
+--
+--
+
+--
+-- Auxillary non txd files
+--web.registerUri( handle, "/waveArray.json","waveArray");
+
+
+--web.registerUri( handle, "/generateTextPage.json","generateTextPage")
+--web.registerUri( handle, "/generateAudioPage.json","generateAudioPage")
+
+--web.registerUri( handle, "/clearSetInput.json","clearSetInputPage")
+--web.registerUri( handle, "/clearSetAlarm.json","clearSetAlarmPage")
+--web.registerUri( handle, "/quickLink.json","sendQuickLink")
+--web.registerUri( handle, "/getTxdFile.json","getTxdFile")
+--web.registerUri( handle, "/storeTxdFile.json","storeTxdFile")
+--web.registerUri( handle,"/getTxdNamePair.json","getTxdNamePair")
+--web.registerUri( handle, "/getTextPagers.json","getTextPagers")
+--web.registerUri( handle, "/getAudioPagers.json","getAudioPagers")
+--web.registerUri( handle, "/i_activate/aterm.htm","aterm")
+--web.registerUri( handle, "/i_activate/reboot.htm","webReboot")
+--web.registerUri( handle, "/i_activate/restart.htm","webRestart")
+--web.registerUri( handle, "/i_reports/reboot.htm","webReboot")
+--web.registerUri( handle, "/quickLinkCmd.html", "rawQuickLink")
+
+
+
+
+

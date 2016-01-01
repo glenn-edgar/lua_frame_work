@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"/>
+		<title>Top Level Menu</title>
+		<link type="text/css" href="themes/base/ui.all.css" rel="stylesheet"/>
+		<link type="text/css" href="css/indyme.css" rel="stylesheet"/>
+		<script type="text/javascript" src="jquery-1.3.2.min.js"></script>	
+		<script type="text/javascript" src="jquery-ui-1.7.custom.min.js"></script>
+		
+		<script type="text/javascript">
+		
+			$(function() {
+                                     var temp;
+                                     temp = {}
+                                     temp.autoHeight= true,
+				     temp.alwaysOpen= false,
+				     temp.active= false,
+				     temp.collapsible= true,
+				     temp.event= "hover",
+				$("#accordion").accordion(temp);
+			});
+			
+			function anchor_action(index, link) { 
+				
+				$("#accordion").accordion('activate', index); 
+				window.open(link, "right");
+				
+			}
+			function anchor_action_full(index, link) { 
+				
+				window.open(link, "_top");
+				
+			}
+			
+			function rebootSystem() { 
+				
+				var answer;
+				$("#accordion").accordion('activate', 1) ;
+				answer = confirm("Are you sure you want to reboot the system?")
+				
+				if(answer) {
+					
+					window.open("/i_activate/reboot.htm", "right"); ;
+				
+				}      
+			}
+			
+			function restartApplication() { 
+				
+				var answer;
+				$("#accordion").accordion('activate', 0) ;
+				answer = confirm("Are you sure you want to restart the application?")
+   				
+				if(answer) {
+					
+					window.open("/i_activate/restart.htm", "right");
+					
+				}      
+			}
+			
+		</script>
+		
+	</head>
+	
+	<body class="menu">
+		
+		<table width=100% class="menuBanner">
+			<tr>
+				<td height=20></td>
+			</tr>
+			
+			<tr>
+				<td align=center valign=bottom>Indyme</td>
+			</tr>
+			
+			<tr>
+				<td align=center valign=middle>CLX</td>
+			</tr>
+			
+			<tr>
+				<td align=center valign=top>Configuration</td>
+			</tr>
+			<tr>
+				<td align=center valign=top>Version 0.5 </td>
+			</tr>
+			
+			<tr>
+				<td height=20></td>
+			</tr>
+		</table>
+		
+		<div id="accordion">
+			
+			<h3><a href="javascript:restartApplication()">Restart<br>Application</a></h3>
+			<div class="menuPulldown">
+				<br>
+					This command restarts the CLX application. 
+					The application will start in less than 10 seconds.
+				<br>
+			</div>
+			<h3><a href="javascript:rebootSystem()">Reboot<br>System</a></h3>
+			<div class="menuPulldown">
+				<br>
+					This command reboots the system. Please	
+					wait 30 to 40 seconds for system to reset.
+				<br>
+			</div>
+			
+			<h3><a href="javascript:anchor_action(2,'system_config.html')">System<br>Configuration</a></h3>
+			<div class="menuPulldown">
+				<br>
+					Displays various system 
+					configuration information.
+				<br>
+			</div>
+			<h3><a href="javascript:anchor_action(3,'diagnostics.html')">Diagnostic<br>Tools</a></h3>
+			<div class="menuPulldown">
+				<br>
+					Performs system tests on alarms, 
+					inputs and output devices.
+				<br>
+			</div>
+
+			<h3><a href="javascript:anchor_action(4,'system_status.html')">System<br>Status</a></h3>
+			<div class="menuPulldown">
+				<br>
+					Displays current system status.
+				<br>
+			</div>
+			
+			<h3><a href="javascript:anchor_action(5,'system_logs.html')">Log<br>Displays</a></h3>
+			<div class="menuPulldown">
+				<br>
+					Displays system level log files.
+				<br>
+			</div>
+			<h3><a href="javascript:anchor_action_full(6,'advanced/index_full.html')">Full<br>Functions</a></h3>
+			<div class="menuPulldown">
+				<br>
+					Move to Full Function Page.  
+                                        Requires Higher Privilege 
+                                        For Entry
+				<br>
+			</div>
+                     			
+
+
+			<h3><a href="javascript:anchor_action(7,'Help.html')">Help<br>FAQ</a></h3>
+			<div class="menuPulldown">
+				<br>
+					Help and FAQ information.
+				<br>
+			</div>
+		</div>
+	</body>
+</html>

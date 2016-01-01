@@ -1,0 +1,70 @@
+/*
+**  File:  c_objects.h
+**
+**  This file defines the public in c_objects.c
+**
+*/ 
+
+
+#ifndef _C_STRUCT_DEFINITIONS_H_
+#define _C_STRUCT_DEFINITIONS_H_
+
+
+
+#ifdef __cplusplus 
+
+extern "C"
+{
+#endif
+
+
+#include "c_formatTypes.h"
+#include "c_structures.h"
+
+
+FIELD_DEFINITION  exceptionStackFields[] =
+{
+   { "exceptionCode", 
+      CFM_INT, 
+      1, 
+      offsetof( ExceptionStack,exceptionCode ),
+      NULL },
+
+   { "processorTime", 
+      CFM_INT, 
+      1, 
+      offsetof( ExceptionStack,processorTime ),
+      NULL },
+
+   { "continueFlag",  
+     CFM_INT, 
+     1, 
+     offsetof( ExceptionStack,continueFlag ),
+     NULL },
+
+   { "interlockFlag", 
+     CFM_INT, 
+     1, 
+     offsetof( ExceptionStack,interlockFlag ),
+     NULL },
+};
+
+STRUCTURE_DEFINITION structureDefinitions[] = 
+{
+  { "EXCEPTION_STACK", 
+        sizeof(ExceptionStack),
+        sizeof(exceptionStackFields)/sizeof( FIELD_DEFINITION ),
+        exceptionStackFields ,
+  }
+};
+
+#define STR_NUM (sizeof( structureDefinitions)/sizeof( STRUCTURE_DEFINITION)) 
+
+#ifdef __cplusplus 
+
+}
+
+#endif
+
+
+#endif

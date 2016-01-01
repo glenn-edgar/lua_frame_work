@@ -1,0 +1,49 @@
+/*
+**
+** File: io_pod.c
+** Performs basic operations for IO_POD
+**
+**
+**
+**
+**
+**
+*/
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include "io_pod.h"
+
+
+
+int initialialize_io_pod( char *drivePath )
+{
+   char fileBuffer[ 64 ];
+   
+   strcpy(fileBuffer,drivePath);
+   strcat(fileBuffer,"IO_POD.TXT");
+   handle = open( filePath, O_RDWR|O_SYNC ); 
+   
+   return handle;
+}
+
+void terminate_io_pod()
+{
+   close(handle );
+}
+
+int io_pod_read( int handle, char *buffer, int maxSize );
+
+int io_pod_write(int handle, char *string, int size )
+{
+  int status;
+
+  lseek( handle,0,SEEK_SET);
+  status = (int)write( handle, string, size);
+
+  return status;
+}

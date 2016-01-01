@@ -1,0 +1,244 @@
+/*
+** 
+**  Copyright 2009 Onyx Engineering, Inc
+**  This file implements the lua interface to the IO_POD
+**  
+**
+**
+**
+**
+**
+*/
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <assert.h>
+#include <string.h>
+
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+#include "io_pod.h"
+
+#if USER_MEMORY_INCLUDE
+#else
+char pathBuffer[256];
+
+#endif
+char path[256];
+
+
+
+
+
+
+
+
+
+static int description( lua_State *L )
+{
+  lua_pushstring(L,"io_pod extensions");
+  return 1;
+}
+
+static int lua_path( lua_State *L )
+{
+  lua_pushstring(L,path);
+  return 1;
+
+
+}
+
+
+#if USER_MEMORY_INCLUDE
+void lua_dobuffer( lua_State * L, const char *buffer, int size, char *chunkName );
+int ficlLzUncompress(const unsigned char *compressed, unsigned char **uncompressed_p, size_t *uncompressedSize_p);
+#endif
+
+
+static int lua_loadScript(lua_State *L)
+{
+  
+#if USER_MEMORY_INCLUDE
+  unsigned char *unCompressed;
+  unsigned unCompressedSize;
+#else
+  char *pathPtr;
+  int  error;
+#endif
+
+#if  USER_MEMORY_INCLUDE     
+    #include "init.h"
+
+#else
+   // get path for the scripts
+   pathPtr = (char *)lua_tostring(L, 1 );
+   assert( strlen( pathPtr ) < sizeof(pathBuffer) - 20 );
+   memset( path,0,sizeof(path));
+   memset( pathBuffer,0, sizeof(pathBuffer) );
+   strcpy( path, pathPtr );
+   strcpy( pathBuffer, pathPtr );
+   strcat( pathBuffer,"/init.lua");
+   error = luaL_loadfile(L, pathBuffer );
+    if( error == 0 )
+    {
+      error = lua_pcall(L, 0, LUA_MULTRET, 0);
+    }
+    if( error != 0 )
+    {
+       printf("Error --> %s \r\n",lua_tostring(L,-1));
+       lua_pop(L,1);
+    }
+   
+#endif
+
+  return 1;
+}
+
+static int lua_io_pod_open( lua_State *L )
+{
+   char *drivePath;
+   int   handle;
+   drivePath = (char *)lua_tostring( L, 1);
+   handle = initialialize_io_pod_read( drivePath );
+   lua_pushinteger(L,handle );
+   handle = initialialize_io_pod_write( drivePath );
+   lua_pushinteger(L,handle );
+
+   return 2;
+}
+
+static int lua_io_pod_read( lua_State *L )
+{
+   int status;
+   int handle;
+   char *buffer;
+   char *temp;
+   long  tempInt;
+
+   handle = lua_tointeger(L,1);
+
+   buffer = malloc(512 +512+512);
+   memset(buffer,0,512+512+512);
+   assert( buffer != NULL );
+   tempInt = (int)(buffer+511);
+   tempInt &= ~(0x1ff);
+   temp = (char *)tempInt;
+   status = io_pod_read( handle, temp, 512 );
+   lua_pushinteger(L,status);
+   lua_pushlstring(L,temp,512);
+   free( buffer);
+
+   return 2; // status data as string
+}
+
+static int lua_io_pod_write( lua_State *L )
+{
+   int      handle;
+   unsigned length;
+   int      status;
+   char     *writeString;
+
+   handle = lua_tointeger(L,1);
+ 
+   writeString = (char *)lua_tolstring ( L, 2, &length);
+   status = io_pod_write( handle, writeString, length );
+   lua_pushinteger(L,status);
+   return 1; // status
+}
+
+
+
+static int lua_io_pod_close( lua_State *L )
+{
+  int handle1,handle2;
+
+  handle1 = lua_tointeger(L,1 );
+  handle2 = lua_tointeger(L,2 );
+  
+  terminate_io_pod( handle1, handle2 );
+
+  return 0;
+}
+
+
+int lua_io_pod_get_format( lua_State *L )
+{
+   int returnValue;
+   int index;
+   char *format;
+
+
+   returnValue = -1;
+   index  = lua_tointeger(L,1);
+   format = (char *) lua_tostring(L,2);
+   printf("index %d format %s \r\n",index,format);
+   index = index -1;
+   if( index < 0 ){ goto end; }
+   if( index > (strlen(format) -1) ){ goto end;}
+   if( format[index] == 'i' )
+   {
+     returnValue = 0;
+   }
+   if( format[index] == 's' )
+   {
+      returnValue = 1;
+   }
+   if( format[index] == 'b' )
+   {
+     returnValue = 2;
+   }
+end:
+   lua_pushinteger(L, returnValue);  
+   return 1;
+}
+
+
+static int lua_help( lua_State *L )
+{
+ 
+  printf("io_pod shared  shared library \r\n");
+  printf(".path()            -- returns path of scripts \r\n");
+  printf(".loadScript(path)  -- dynamically loads scripts \r\n");
+  printf(".open( filePath) -- returns read handle and write handle \r\n");
+  printf(".close(handle1, handle2)                     \r\n");
+  printf(".read(handle)              \r\n");
+  printf(".write(handle,string)   -- can be a binary string \r\n");
+  printf(".getFormat(i,format)    -- returns integer of format \r\n");
+  printf("   0 = integer 1 = base64 encoded string \r\n");
+  printf(".help()            -- dumps out commands \r\n\r\n");
+  return 0;
+}   
+
+
+static const struct luaL_reg  lua_io_pod_Lib[] = 
+{
+   
+   {"description",           description   },
+   {"loadScript" ,           lua_loadScript  },
+   {"path",                  lua_path        },
+   {"open",                  lua_io_pod_open },
+   {"close",                 lua_io_pod_close },
+   {"read",                  lua_io_pod_read },
+   {"write",                 lua_io_pod_write },
+   {"getFormat",              lua_io_pod_get_format },
+   {"help",                  lua_help   }, 
+   { NULL, NULL },      
+   
+};
+
+
+
+int lua_registerLibrary( lua_State *L  )
+{
+
+   luaL_openlib(L,"io_pod",lua_io_pod_Lib,0 );
+
+   return 1;
+}
+

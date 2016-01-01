@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"/>
+		<title>Output Device Setup</title>
+	    <link type="text/css" href="/themes/base/ui.all.css" rel="stylesheet"/>
+	    <link type="text/css" href="/css/indyme.css" rel="stylesheet"/>
+		<script type="text/javascript" src="/jquery-1.3.2.min.js"></script>	
+		<script type="text/javascript" src="/jquery-ui-1.7.custom.min.js"></script>
+		<script type="text/javascript" src="/javaScript/inputHandlers.js"></script>
+		<script type="text/javascript" src="/javaScript/json2.js"></script>
+		<script type="text/javascript" src="/javaScript/output_page.js"></script>
+		<script type="text/javascript" src="/javaScript/select_support.js"></script>
+		<script type="text/javascript" src="/javaScript/table_handlers.js"></script>
+	</head>
+	
+	<body class="main">
+		
+		<form action="editScriptStore.lua" method="post">
+			
+			<div id="row-0">
+				<!--#include virtual="/advanced/banner.html"-->
+										<label>Output Setup</label>
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+				
+				<!--#include virtual="/advanced/function.html"-->
+				
+				<div id="tabs" class="tab">
+					<ul>
+						<li><a href="#tabs-blank">1-100</a></li>
+						<li><a href="#tabs-blank">101-200</a></li>
+						<li><a href="#tabs-blank">201-300</a></li>
+						<li><a href="#tabs-blank">301-400</a></li>
+						<li><a href="#tabs-blank">401-500</a></li>
+						<li><a href="#tabs-blank">501-600</a></li>
+						<li><a href="#tabs-blank">601-700</a></li>
+						<li><a href="#tabs-blank">701-800</a></li>
+						<li><a href="#tabs-blank">801-900</a></li>
+						<li><a href="#tabs-blank">901-999</a></li>
+					</ul>
+				</div>
+ 				
+				<div id="tabs-blank" class="tbl">
+					<table id="table-0" width=100% cellspacing=0 cellpadding=5 border=0>
+						<tr align=center>
+							<td width=30><input type=checkbox id="TOP_CH-0"></td>
+							<td width=1></td>
+							<td width=100></td>
+							<td width=150><b>PAGER NUMBER</b></td>
+							<td width=200><b>PAGER NAME</b></td>
+							<td width=150><b>PAGER TYPE</b></td>
+							<td></td>
+						</tr>
+					</table>
+				</div>
+			</div>
+			
+	        <!--#include virtual="/advanced/ebanner.html"-->
+										<label id="editTitle"></label>
+					               	</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+				
+				<br><br>
+				
+  				<table cellspacing=1 cellpadding=0>
+					<tr>
+						<td width=20></td>
+						<td width=160><label><b>Pager Number:</b></label></td>
+						<td width=23></td>
+						<td width=160><label><b>Pager Name:</b></label></td>
+					</tr>
+					
+					<tr>
+						<td width=20></td>
+						<td width=160><input type=text id="PAGER_NUMBER"></td>
+						<td width=20></td>
+						<td width=160><input size = 30  maxlength = 30 type=text id="PAGER_NAME"></td>
+					</tr>
+				</table>
+				
+				<br>
+				
+  				<table cellspacing=1 cellpadding=0>
+					<tr>
+						<td width=20></td>
+						<td valign=top>
+							<table cellspacing=0>
+								<tr>
+									<td width=160><label><b>Pager Type:</b></label></td>
+								</tr>
+								
+								<tr>
+									<td width=160>
+										<select id="PAGER_TYPE" style="width:155px">
+											<option value=0>Site Pager</option>
+											<option value=2>Audio Pager</option>
+											<option value=4>Wireless Phone</option>
+											<option value=6>Group Pager</option>
+										</select>
+									</td>
+								</tr>
+							</table>
+						</td>	
+						<td width=20></td>
+						<td>
+							<table id="SITE_PAGER_TYPE_DIV" cellspacing=0>
+								<tr>
+									<td valign=top><label><b>Site Pager Type:</b></label></td>
+								</tr>
+								
+								<tr>
+									<td height=10></td>
+								</tr>
+							</table>
+							
+							<table id="CAP_CODE_DIV" cellspacing=0>
+								<tr>
+									<td><label><b>Pager Cap Code:</b></label></td>
+								</tr>
+								
+								<tr>
+									<td><input type=text id="CAP_CODE" style="width:160px"></td>
+								</tr>
+								
+								<tr>
+									<td height=10></td>
+								</tr>
+							</table>
+							
+							<table id="PAGER_RACK_LOCATION_DIV" cellspacing=0>
+								<tr>
+									<td><label><b>Pager Rack Location:</b></label></td>
+								</tr>
+								
+								<tr>
+									<td><input type=text id="PAGER_RACK_LOCATION" style="width:160px"></td>
+								</tr>
+								
+								<tr>
+									<td height=10></td>
+								</tr>
+							</table>
+							
+							<table id="BAUD_RATE_DIV" cellspacing=0>
+								<tr>
+									<td><label><b>Baude Rate:</b></label></td>
+								</tr>
+								
+								<tr>
+									<td><input type=text id="BAUD_RATE" style="width:160px"></td>
+								</tr>
+								
+								<tr>
+									<td height=10></td>
+								</tr>
+							</table>
+							
+							<table id="DAIL_STRING_DIV" cellspacing=0>
+								<tr>
+									<td><label><b>Dial String:</b></label></td>
+								</tr>
+								
+								<tr>
+									<td><input size = 60  maxlength = 60 type=text id="DIAL_STRING" style="width:160px"></td>
+								</tr>
+								
+								<tr>
+									<td height=10></td>
+								</tr>
+							</table>
+							
+							<table id="SPECTRAL_LINK_QUEUE_DIV" cellspacing=0>
+								<tr>
+									<td><label><b>SpectraLink Queue:</b></label></td>
+								</tr>
+								
+								<tr>
+									<td><input type=text id="SPECTRAL_LINK_QUEUE" style="width:160px"></td>
+								</tr>
+								
+								<tr>
+									<td height=10></td>
+								</tr>
+							</table>
+							
+							<table id="EMAIL_DESTINATION_DIV" cellspacing=0>
+								<tr>
+									<td><label><b>Email Destination:</b></label></td>
+								</tr>
+								
+								<tr>
+									<td><input type=text id="EMAIL_DESTINATION" style="width:160px"></td>
+								</tr>
+								
+								<tr>
+									<td height=10></td>
+								</tr>
+							</table>
+							
+							<table id="EMAIL_SUBJECT_DIV" cellspacing=0>
+								<tr>
+									<td><label><b>Email Subject:</b></label></td>
+								</tr>
+								
+								<tr>
+									<td><input type=text id="EMAIL_SUBJECT" style="width:160px"></td>
+								</tr>
+								
+								<tr>
+									<td height=10></td>
+								</tr>
+							</table>
+							
+							<table id="groupPagerTable" cellspacing=0 class="tbl" style="font-size:1em">
+								<tr align=center>
+									<td><label for="textPage"><b>Available Pagers</b></label></td>
+									<td></td>
+									<td><label for="textPage"><b>Selected Pagers</b></label></td>
+								</tr>
+								
+								<tr align=center>
+									<td><select name="textPage" id="available1" multiple="multiple" size=10></td>
+									<td width=200>
+										<button type=button id="GROUP_PAGER_SELECT" style="width:150px">Select Pager ---&gt;</button><br><br>
+										<button type=button id="GROUP_PAGER_REMOVE" style="width:150px">&lt;--- Remove Pager</button>
+									</td>
+									<td valign=top><select name="textPage" id="select1" multiple="multiple" size=10 style="width:150px"></select></td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</form>
+		<!--#include virtual="/advanced/table_handler.html"-->
+	</body>
+</html>
